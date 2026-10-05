@@ -49,7 +49,11 @@ function toItemDto(item, product, variant, pricing) {
     variantId: variant.id,
     name: product.name,
     slug: product.slug,
+    // sku/categoryName feed the storefront's GA4 add_to_cart dataLayer event
+    // (item_id / item_category) — display-agnostic, not used by cart UI.
+    sku: product.sku ?? null,
     categorySlug: product.category_slug,
+    categoryName: product.category_name ?? null,
     primaryImageUrl: product.primary_image_url,
     metalType: product.metal_type,
     purity: pricing.purity,

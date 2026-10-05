@@ -52,6 +52,7 @@ const LIST_COLUMNS = `
   p.effective_making_charge_rule_id, p.effective_diamond_rule_id,
   primary_image.url AS primary_image_url,
   cat.slug AS category_slug,
+  cat.name AS category_name,
   ${AVAILABLE_STOCK_SELECT}
 `;
 

@@ -365,7 +365,9 @@ export interface CartItem {
   variantId: string;
   name: string;
   slug: string;
+  sku: string | null;
   categorySlug: string | null;
+  categoryName: string | null;
   primaryImageUrl: string | null;
   metalType: MetalType;
   purity: Purity | null;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { trackAddToCart } from '../../analytics/ecommerce';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import type { ProductCard as ProductCardType, ProductDetail, Cart } from '../../api/types';
 import { fetchProductBySlug } from '../../api/products';
@@ -23,7 +24,9 @@ export function useQuickAdd(onAdded?: (_productId: string) => void) {
   const directAddMutation = useMutation({
     mutationFn: (productId: string) => addCartItem(productId, 1),
     onSuccess: (cart: Cart, productId) => {
+      const prevCart = queryClient.getQueryData<Cart>(['cart']);
       queryClient.setQueryData(['cart'], cart);
+      trackAddToCart({ prevCart, nextCart: cart, productId, quantity: 1 });
       setJustAddedProductId(productId);
       setTimeout(() => setJustAddedProductId((cur) => (cur === productId ? null : cur)), 2000);
       onAdded?.(productId);

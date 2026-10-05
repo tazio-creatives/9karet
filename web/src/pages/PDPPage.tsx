@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { trackAddToCart } from '../analytics/ecommerce';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { fetchProductBySlug, fetchRelatedProducts, fetchMostLovedProducts } from '../api/products';
@@ -110,8 +111,10 @@ export function PDPPage() {
   const addToCartMutation = useMutation({
     mutationFn: ({ productId, variantId }: { productId: string; variantId?: string | null }) =>
       addCartItem(productId, 1, variantId),
-    onSuccess: (cart: Cart) => {
+    onSuccess: (cart: Cart, { productId, variantId }) => {
+      const prevCart = queryClient.getQueryData<Cart>(['cart']);
       queryClient.setQueryData(['cart'], cart);
+      trackAddToCart({ prevCart, nextCart: cart, productId, variantId, quantity: 1 });
       setJustAdded(true);
       setTimeout(() => setJustAdded(false), 2000);
     },

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { trackAddToCart } from '../../analytics/ecommerce';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import type { Cart, ProductDetail } from '../../api/types';
 import { addCartItem } from '../../api/cart';
@@ -51,7 +52,9 @@ export function QuickAddSheet({ product, onClose, onAdded }: QuickAddSheetProps)
   const addMutation = useMutation({
     mutationFn: () => addCartItem(product.id, 1, selectedVariantId),
     onSuccess: (cart: Cart) => {
+      const prevCart = queryClient.getQueryData<Cart>(['cart']);
       queryClient.setQueryData(['cart'], cart);
+      trackAddToCart({ prevCart, nextCart: cart, productId: product.id, variantId: selectedVariantId, quantity: 1 });
       onAdded?.(product.id);
       onClose();
     },
