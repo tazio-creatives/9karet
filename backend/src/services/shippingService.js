@@ -52,7 +52,9 @@ export async function createShipmentForOrder(orderId, packageDetails, actorAdmin
   if (!serviceability.serviceable) {
     throw new AppError(
       400,
-      `Delivery pincode ${order.shipping_address.pincode} is not serviceable by ${provider.displayName}`,
+      `Delivery pincode ${order.shipping_address.pincode} is not serviceable by ${provider.displayName}` +
+        (serviceability.reason ? ` — ${serviceability.reason}.` : '.') +
+        ' Use another courier for this order or contact the courier.',
     );
   }
 
@@ -152,7 +154,12 @@ export async function createReversePickupForReturnRequest(returnRequestId, actor
 
   const serviceability = await shippingProvider.checkServiceability(order.shipping_address.pincode);
   if (!serviceability.serviceable) {
-    throw new AppError(400, `Pickup pincode ${order.shipping_address.pincode} is not serviceable by the courier`);
+    throw new AppError(
+      400,
+      `Pickup pincode ${order.shipping_address.pincode} is not serviceable by ${shippingProvider.displayName}` +
+        (serviceability.reason ? ` — ${serviceability.reason}.` : '.') +
+        ' Arrange the return pickup manually or contact the courier.',
+    );
   }
 
   const result = await shippingProvider.createReversePickup({ order, returnRequest });

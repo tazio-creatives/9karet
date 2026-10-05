@@ -10,6 +10,7 @@
 // DELHIVERY_API_TOKEN/DELHIVERY_BASE_URL values are configured, before
 // relying on it for real orders.
 import { env } from '../../config/env.js';
+import { AppError } from '../../utils/AppError.js';
 
 function authHeaders(extra = {}) {
   return {
@@ -18,18 +19,50 @@ function authHeaders(extra = {}) {
   };
 }
 
+// Courier-side failures are thrown as AppError so the admin sees the real
+// reason. A plain Error becomes a 500, which production masks as "Internal
+// server error" — that's how a non-serviceable pincode used to surface.
+// The raw Delhivery response is still logged for debugging.
 async function parseJsonResponse(response, label) {
   const text = await response.text();
+  const hint =
+    response.status === 401 || response.status === 403
+      ? ' Delhivery refused our API credentials — check the DELHIVERY_API_TOKEN setting.'
+      : ' Please try again in a few minutes.';
   let data;
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
-    throw new Error(`Delhivery ${label} returned a non-JSON response (${response.status}): ${text.slice(0, 300)}`);
+    console.error(`Delhivery ${label} returned a non-JSON response (${response.status}):`, text.slice(0, 500));
+    throw new AppError(502, `Delhivery ${label} failed (HTTP ${response.status}).${hint}`);
   }
   if (!response.ok) {
-    throw new Error(`Delhivery ${label} failed (${response.status}): ${text.slice(0, 300)}`);
+    console.error(`Delhivery ${label} failed (${response.status}):`, text.slice(0, 500));
+    throw new AppError(502, `Delhivery ${label} failed (HTTP ${response.status}).${hint}`);
   }
   return data;
+}
+
+// Turns Delhivery's rejection remark into a clear, actionable admin message.
+// Delhivery phrases the common case as e.g. "Crashing while saving package
+// due to exception '671541 is non serviceable pincode'. Package might have
+// been partially saved."
+function describeRejection(action, remark, pincode) {
+  const text = String(remark || '').trim();
+  const partial = /partially saved/i.test(text)
+    ? ' Delhivery says the package may have been partially saved — check the Delhivery portal and cancel it there if it appears.'
+    : '';
+  if (/non[\s-]*serviceable|not\s+serviceable|unserviceable/i.test(text)) {
+    const pin = text.match(/\b(\d{6})\b/)?.[1] ?? pincode;
+    return `Delhivery cannot ${action} pincode ${pin} — this location is not serviceable by Delhivery. Use another courier for this order or contact Delhivery support.${partial}`;
+  }
+  if (/embargo/i.test(text)) {
+    return `Delhivery has temporarily stopped service (embargo) to pincode ${pincode}. Try again later or use another courier.${partial}`;
+  }
+  if (/duplicate/i.test(text)) {
+    return `Delhivery rejected this as a duplicate — a shipment for this order may already exist in the Delhivery portal. Delhivery said: "${text}"`;
+  }
+  return `Delhivery rejected this request: "${text || 'no reason given'}".${partial}`;
 }
 
 export const delhiveryShippingProvider = {
@@ -49,7 +82,17 @@ export const delhiveryShippingProvider = {
     });
     const data = await parseJsonResponse(response, 'pincode serviceability check');
     const code = data.delivery_codes?.[0]?.postal_code;
-    return { serviceable: !!code && code.pre_paid === 'Y', raw: data };
+    // A pincode can be listed with pre_paid 'Y' yet carry an embargo /
+    // non-serviceable remark — that combination is what let order BD0022
+    // pass this check and then fail at booking.
+    const remark = String(code?.remarks ?? code?.remark ?? '').trim();
+    const blockedByRemark = /embargo|non[\s-]*serviceable|not\s+serviceable/i.test(remark);
+    const serviceable = !!code && code.pre_paid === 'Y' && !blockedByRemark;
+    let reason = null;
+    if (!code) reason = 'Delhivery does not deliver to this pincode';
+    else if (code.pre_paid !== 'Y') reason = 'Delhivery does not accept prepaid deliveries to this pincode';
+    else if (blockedByRemark) reason = `Delhivery reports: ${remark}`;
+    return { serviceable, reason, raw: data };
   },
 
   // POST /api/cmu/create.json — shipments[] + pickup_location, form-encoded
@@ -101,7 +144,8 @@ export const delhiveryShippingProvider = {
     const pkg = data.packages?.[0];
     if (!pkg || pkg.status !== 'Success' || !pkg.waybill) {
       const reason = pkg?.remarks?.join?.('; ') ?? data.rmk ?? 'unknown error';
-      throw new Error(`Delhivery rejected shipment creation for order ${order.order_number}: ${reason}`);
+      console.error(`Delhivery rejected shipment creation for order ${order.order_number}:`, reason);
+      throw new AppError(422, describeRejection('deliver to', reason, address.pincode));
     }
 
     return { waybill: pkg.waybill, courierName: 'Delhivery', labelUrl: null, raw: data };
@@ -116,8 +160,9 @@ export const delhiveryShippingProvider = {
   // Delhivery's documented reverse-shipment payload shape.
   async createReversePickup({ order, returnRequest }) {
     if (!env.delhiveryReturnAddress || !env.delhiveryReturnPincode || !env.delhiveryReturnCity || !env.delhiveryReturnState || !env.delhiveryReturnPhone) {
-      throw new Error(
-        'Reverse pickup is not configured — set DELHIVERY_RETURN_ADDRESS/PINCODE/CITY/STATE/PHONE in the environment',
+      throw new AppError(
+        503,
+        'Reverse pickup is not configured — set DELHIVERY_RETURN_ADDRESS/PINCODE/CITY/STATE/PHONE in the server environment',
       );
     }
 
@@ -163,7 +208,8 @@ export const delhiveryShippingProvider = {
     const pkg = data.packages?.[0];
     if (!pkg || pkg.status !== 'Success' || !pkg.waybill) {
       const reason = pkg?.remarks?.join?.('; ') ?? data.rmk ?? 'unknown error';
-      throw new Error(`Delhivery rejected reverse pickup creation for order ${order.order_number}: ${reason}`);
+      console.error(`Delhivery rejected reverse pickup creation for order ${order.order_number}:`, reason);
+      throw new AppError(422, describeRejection('pick up from', reason, address.pincode));
     }
 
     return { waybill: pkg.waybill, courierName: 'Delhivery', raw: data };
@@ -195,13 +241,17 @@ export const delhiveryShippingProvider = {
     });
     const text = await response.text();
     if (!response.ok) {
-      throw new Error(`Delhivery shipment cancellation failed (${response.status}): ${text.slice(0, 300)}`);
+      console.error(`Delhivery shipment cancellation failed (${response.status}):`, text.slice(0, 500));
+      throw new AppError(502, `Delhivery could not cancel AWB ${waybill} (HTTP ${response.status}). Please try again, or cancel it from the Delhivery portal.`);
     }
 
     const status = /<status>\s*true\s*<\/status>/i.test(text);
     const remark = text.match(/<remark>([\s\S]*?)<\/remark>/i)?.[1] ?? null;
     if (!status) {
-      throw new Error(`Delhivery rejected cancellation of waybill ${waybill}: ${remark ?? text.slice(0, 300)}`);
+      throw new AppError(
+        422,
+        `Delhivery would not cancel AWB ${waybill}: "${(remark ?? text.slice(0, 200)).trim()}". If the courier has already picked it up, it can no longer be cancelled.`,
+      );
     }
     return { status: 'CANCELLED', remark, raw: text };
   },

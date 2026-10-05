@@ -49,6 +49,7 @@ const ORDER_STATUS_EMAIL_CONFIG = {
     heading: 'Thank you for your order',
     subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} has been confirmed and is being prepared.`,
     ctaLabel: 'View Order',
+    unboxing: 'heads-up',
   },
   ORDER_PROCESSING: {
     stepKey: 'PROCESSING',
@@ -77,6 +78,7 @@ const ORDER_STATUS_EMAIL_CONFIG = {
     heading: 'Your order is arriving today',
     subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} is out for delivery and should arrive today.`,
     ctaLabel: 'Track Your Order',
+    unboxing: 'arriving',
   },
   ORDER_DELIVERED: {
     stepKey: 'DELIVERED',
@@ -85,6 +87,7 @@ const ORDER_STATUS_EMAIL_CONFIG = {
     subtext: (ctx) =>
       `Your BOX DIAMONDS order ${ctx.orderNumber} has been delivered. We hope you love it.`,
     ctaLabel: 'View Order',
+    unboxing: 'delivered',
   },
 };
 
@@ -205,6 +208,94 @@ function renderAddress(address) {
     .join('<br>');
 }
 
+// Unboxing-video reminder (Return and Refund Policy: a continuous unboxing
+// video is mandatory for every return). Shown on the three emails a customer
+// reads around delivery — loudest on "out for delivery", which lands right
+// before they open the parcel.
+const UNBOXING_COPY = {
+  'heads-up': {
+    title: 'Before you open your parcel',
+    lines: [
+      'When your order arrives, record one continuous video from before you open the outer package until the jewellery is fully visible.',
+      'An unboxing video is mandatory for any return.',
+    ],
+    checklist: null,
+    footer: null,
+  },
+  arriving: {
+    title: 'Start recording BEFORE you open the package',
+    lines: ['Your parcel arrives today. Please record one continuous unboxing video:'],
+    checklist: [
+      'Show the sealed outer package and the shipping label',
+      'Record the whole opening without pausing or cutting',
+      'Show the jewellery box, the product, certificate and invoice',
+    ],
+    footer: 'An unboxing video is mandatory for every return — returns cannot be accepted without it.',
+  },
+  delivered: {
+    title: 'Keep your unboxing video',
+    lines: [
+      'If you need to return an item, request it within 7 days of delivery from My Account → My Orders.',
+      'You will need to upload your complete unboxing video — it is mandatory for every return.',
+    ],
+    checklist: null,
+    footer: null,
+  },
+};
+
+function siteOrigin(context) {
+  try {
+    return new URL(context.orderUrl).origin;
+  } catch {
+    return '';
+  }
+}
+
+function renderUnboxingNotice(context, variant) {
+  const copy = UNBOXING_COPY[variant];
+  if (!copy) return '';
+  const prominent = variant === 'arriving';
+  const policyUrl = `${siteOrigin(context)}/refund-policy`;
+  return `
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${prominent ? '#fbf3e2' : BRAND.bg};border:${prominent ? '2px' : '1px'} solid ${BRAND.gold};border-radius:10px;">
+              <tr>
+                <td style="padding:${prominent ? '20px 22px' : '16px 20px'};font-family:${FONT_STACK};">
+                  <div style="font-size:${prominent ? '16px' : '14px'};font-weight:bold;color:${BRAND.text};margin-bottom:8px;">&#127909;&nbsp; ${escapeHtml(copy.title)}</div>
+                  ${copy.lines.map((l) => `<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:${BRAND.text};">${escapeHtml(l)}</p>`).join('')}
+                  ${
+                    copy.checklist
+                      ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 4px;">${copy.checklist
+                          .map(
+                            (c) =>
+                              `<tr><td valign="top" style="padding:3px 8px 3px 0;font-size:13px;color:${BRAND.gold};font-weight:bold;">&#10003;</td><td style="padding:3px 0;font-size:13px;line-height:1.5;color:${BRAND.text};">${escapeHtml(c)}</td></tr>`,
+                          )
+                          .join('')}</table>`
+                      : ''
+                  }
+                  ${copy.footer ? `<p style="margin:8px 0 0;font-size:13px;line-height:1.6;font-weight:bold;color:${BRAND.text};">${escapeHtml(copy.footer)}</p>` : ''}
+                  <p style="margin:10px 0 0;font-size:12px;"><a href="${escapeHtml(policyUrl)}" target="_blank" style="color:${BRAND.green};font-weight:bold;text-decoration:underline;">Read our Return &amp; Refund Policy</a></p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+}
+
+function renderUnboxingText(context, variant) {
+  const copy = UNBOXING_COPY[variant];
+  if (!copy) return [];
+  return [
+    `** ${copy.title.toUpperCase()} **`,
+    ...copy.lines,
+    ...(copy.checklist ?? []).map((c) => `  - ${c}`),
+    ...(copy.footer ? [copy.footer] : []),
+    `Return & Refund Policy: ${siteOrigin(context)}/refund-policy`,
+    '',
+  ];
+}
+
 function renderHtml(context, config) {
   const currentIndex = PROGRESS_STEPS.findIndex((s) => s.key === config.stepKey);
   const orderDateLabel = formatDate(context.orderDate);
@@ -259,6 +350,8 @@ function renderHtml(context, config) {
             <p style="margin:0;font-family:${FONT_STACK};font-size:14px;line-height:1.6;color:${BRAND.textMuted};max-width:440px;">${escapeHtml(config.subtext(context))}</p>
           </td>
         </tr>
+
+        ${renderUnboxingNotice(context, config.unboxing)}
 
         <!-- Progress tracker -->
         <tr>
@@ -410,6 +503,7 @@ function renderText(context, config) {
     '',
     config.subtext(context),
     '',
+    ...renderUnboxingText(context, config.unboxing),
     `Order ID: ${context.orderNumber}`,
     context.orderDate ? `Order Date: ${formatDate(context.orderDate)}` : null,
     `Status: ${PROGRESS_STEPS.find((s) => s.key === config.stepKey)?.label ?? context.orderStatus}`,

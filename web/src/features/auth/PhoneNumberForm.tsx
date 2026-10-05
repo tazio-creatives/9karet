@@ -118,7 +118,7 @@ export function PhoneNumberForm({ mobile, onMobileChange, onSubmit, isSubmitting
           Terms &amp; Conditions
         </Link>{' '}
         and{' '}
-        <Link to="/privacy" className={styles.termsLink}>
+        <Link to="/privacy-policy" className={styles.termsLink}>
           Privacy Policy
         </Link>
         .

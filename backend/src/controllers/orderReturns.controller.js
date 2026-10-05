@@ -66,6 +66,12 @@ export async function create(req, res, next) {
       throw new AppError(400, 'A return request is already in progress for this order');
     }
 
+    // Return and Refund Policy: a continuous unboxing video is mandatory for
+    // every return request — enforced here, not only in the form.
+    if (!req.file) {
+      throw new AppError(400, 'An unboxing video is required to request a return. Please upload your complete unboxing video.');
+    }
+
     let videoUrl = null;
     if (req.file) {
       const ext = req.file.mimetype === 'video/quicktime' ? 'mov' : req.file.mimetype.split('/')[1];

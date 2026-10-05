@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { GoldColor, OfferBadge, PriceBreakup, ProductDetail } from '../../api/types';
 import { formatPrice } from '../../utils/formatPrice';
@@ -282,6 +283,19 @@ export function ProductInfo({
       </div>
 
       {product.showDeliveryChecker && <DeliveryChecker isBackordered={isOutOfStock} />}
+
+      {/* Return and Refund Policy: an unboxing video is mandatory for any
+          return — said here, before purchase, not only after delivery. */}
+      <p className={styles.unboxingNote}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="6" width="13" height="12" rx="2" />
+          <path d="m16 10.5 5-3v9l-5-3" />
+        </svg>
+        <span>
+          Record a continuous unboxing video when your order arrives — it&rsquo;s required for any return.{' '}
+          <Link to="/refund-policy#unboxing-video">Return policy</Link>
+        </span>
+      </p>
 
       {product.shortDescription && <p className={styles.description}>{product.shortDescription}</p>}
 

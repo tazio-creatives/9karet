@@ -34,6 +34,7 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
   const [reason, setReason] = useState<ReturnReason>('DAMAGED');
   const [note, setNote] = useState('');
   const [video, setVideo] = useState<File | null>(null);
+  const [videoMissing, setVideoMissing] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -120,6 +121,10 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
+            if (!video) {
+              setVideoMissing(true);
+              return;
+            }
             mutation.mutate();
           }}
         >
@@ -143,14 +148,33 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
               placeholder="Tell us more about the issue…"
             />
           </label>
+          <div className={styles.videoNotice}>
+            <p className={styles.videoNoticeTitle}>Unboxing video — required</p>
+            <p className={styles.meta}>Upload one continuous, unedited video that:</p>
+            <ul className={styles.videoChecklist}>
+              <li>Starts before the outer package is opened and shows the shipping label</li>
+              <li>Records the whole opening without pausing or cutting</li>
+              <li>Shows the jewellery box, product, certificate and invoice</li>
+            </ul>
+          </div>
           <label className={styles.field}>
-            Unboxing video (optional)
+            Unboxing video <span className={styles.required}>*</span>
             <input
               type="file"
               accept="video/mp4,video/quicktime,video/webm,video/x-msvideo"
-              onChange={(e) => setVideo(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                setVideo(e.target.files?.[0] ?? null);
+                setVideoMissing(false);
+              }}
+              aria-invalid={videoMissing}
+              required
             />
           </label>
+          {videoMissing && (
+            <p className={styles.error} role="alert">
+              Please upload your unboxing video — it is required for every return.
+            </p>
+          )}
           {mutation.isError && (
             <p className={styles.error}>
               {mutation.error instanceof ApiError ? mutation.error.message : 'Could not submit return request.'}
