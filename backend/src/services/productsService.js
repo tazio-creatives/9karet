@@ -388,11 +388,25 @@ export async function listPublicProducts({
   sort,
   page,
   limit,
+  placement: placementContext,
 }) {
   const categoryIds = await resolveCategoryIds(categorySlug);
   const collectionId = await resolveCollectionId(collectionSlug);
   if (collectionId === null || (categoryIds && categoryIds.length === 0)) {
     return { items: [], total: 0 };
+  }
+
+  // Which admin "First 50" order applies: the homepage collection showcase
+  // asks for it explicitly (placement=homepage) so the /collections page
+  // keeps its own default order; a category page uses the order saved for
+  // that exact category (a subcategory page has its own, independent order
+  // — never its parent's).
+  let placement = null;
+  if (placementContext === 'homepage' && collectionId) {
+    placement = { type: 'homepage_collection', id: collectionId };
+  } else if (categorySlug && categoryIds?.length && !collectionId) {
+    const category = await findCategoryBySlug(categorySlug);
+    if (category) placement = { type: 'category', id: category.id };
   }
 
   return listProductsRow(
@@ -407,7 +421,7 @@ export async function listPublicProducts({
       status: 'PUBLISHED',
       excludeZeroPrice: true,
     },
-    { sort, page, limit },
+    { sort, page, limit, placement },
   );
 }
 

@@ -19,6 +19,7 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
   const [description, setDescription] = useState(initial?.description ?? '');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '');
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
+  const [isNonReturnable, setIsNonReturnable] = useState(initial?.isNonReturnable ?? false);
   const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -104,6 +105,7 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
         description: description || null,
         imageUrl: imageUrl || null,
         isActive,
+        isNonReturnable,
         sortOrder,
         bannerEnabled,
         bannerEyebrow: bannerEyebrow || null,
@@ -156,6 +158,14 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
         <label className={`${sharedStyles.field} ${sharedStyles.checkboxField}`}>
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
           Active
+        </label>
+        <label className={`${sharedStyles.field} ${sharedStyles.checkboxField}`}>
+          <input
+            type="checkbox"
+            checked={isNonReturnable}
+            onChange={(e) => setIsNonReturnable(e.target.checked)}
+          />
+          Non-returnable (e.g. solitaires) — applies to every product in this category and its subcategories
         </label>
       </div>
 

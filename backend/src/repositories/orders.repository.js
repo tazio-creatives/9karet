@@ -233,6 +233,9 @@ function statusFilterClause(status, params) {
     params.push(status === 'PENDING_PAYMENT' ? 'PENDING' : 'FAILED');
     return `payment_status = $${params.length} AND order_status IS NULL`;
   }
+  if (status === 'REFUND_PENDING') {
+    return `order_status IN ('CANCELLED', 'RETURNED') AND payment_status = 'PAID'`;
+  }
   params.push(status);
   return `order_status = $${params.length}`;
 }

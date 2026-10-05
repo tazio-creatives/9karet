@@ -7,6 +7,7 @@ export const createCategorySchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   imageUrl: z.string().trim().max(500).nullable().optional(),
   isActive: z.boolean().optional(),
+  isNonReturnable: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
   bannerEnabled: z.boolean().optional(),
   bannerEyebrow: z.string().trim().max(200).nullable().optional(),

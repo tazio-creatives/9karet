@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchReturnRequest, createReturnRequest, cancelReturnRequest } from '../../api/orders';
 import type { ReturnReason } from '../../api/types';
@@ -20,6 +20,13 @@ const REASON_OPTIONS: { value: ReturnReason; label: string }[] = [
   { value: 'OTHER', label: 'Other' },
 ];
 
+// Mirrors backend orderReturns.controller.js — kept in sync by hand.
+const MIN_PHOTOS = 3;
+const MAX_PHOTOS = 8;
+const MAX_PHOTO_MB = 10;
+// Non-returnable items (solitaire, custom…) can only come back for a problem.
+const PROBLEM_REASONS: ReturnReason[] = ['DAMAGED', 'DEFECTIVE', 'WRONG_ITEM', 'NOT_AS_DESCRIBED'];
+
 const STATUS_LABEL: Record<string, string> = {
   REQUESTED: 'Return requested — under review',
   APPROVED: 'Return approved — pickup will be arranged',
@@ -28,13 +35,39 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: 'Return request cancelled',
 };
 
-export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string; deliveredAt: string | null }) {
+export function ReturnRequestSection({
+  orderId,
+  deliveredAt,
+  nonReturnable = false,
+}: {
+  orderId: string;
+  deliveredAt: string | null;
+  nonReturnable?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [reason, setReason] = useState<ReturnReason>('DAMAGED');
   const [note, setNote] = useState('');
   const [video, setVideo] = useState<File | null>(null);
   const [videoMissing, setVideoMissing] = useState(false);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoPreviews = useMemo(() => photos.map((p) => URL.createObjectURL(p)), [photos]);
+  useEffect(() => () => photoPreviews.forEach((url) => URL.revokeObjectURL(url)), [photoPreviews]);
+  const reasonOptions = nonReturnable ? REASON_OPTIONS.filter((r) => PROBLEM_REASONS.includes(r.value)) : REASON_OPTIONS;
+
+  function addPhotos(files: FileList | null) {
+    if (!files) return;
+    const picked = Array.from(files);
+    const tooBig = picked.find((f) => f.size > MAX_PHOTO_MB * 1024 * 1024);
+    if (tooBig) {
+      setPhotoError(`"${tooBig.name}" is larger than ${MAX_PHOTO_MB} MB. Please choose a smaller photo.`);
+      return;
+    }
+    const next = [...photos, ...picked].slice(0, MAX_PHOTOS);
+    setPhotos(next);
+    setPhotoError(picked.length + photos.length > MAX_PHOTOS ? `You can add up to ${MAX_PHOTOS} photos.` : null);
+  }
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -43,7 +76,7 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
   });
 
   const mutation = useMutation({
-    mutationFn: () => createReturnRequest(orderId, { reason, note: note.trim() || undefined, video: video ?? undefined }),
+    mutationFn: () => createReturnRequest(orderId, { reason, note: note.trim() || undefined, video: video ?? undefined, photos }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['return-request', orderId] });
       // Submitting also moves order_status to RETURN_INITIATED server-side
@@ -78,6 +111,15 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
             Reason: {REASON_OPTIONS.find((r) => r.value === returnRequest.reason)?.label ?? returnRequest.reason}
           </p>
           {returnRequest.note && <p className={styles.meta}>Note: {returnRequest.note}</p>}
+          {returnRequest.photoUrls?.length > 0 && (
+            <div className={styles.photoGrid}>
+              {returnRequest.photoUrls.map((url, i) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer">
+                  <img src={url} alt={`Return photo ${i + 1}`} className={styles.photoThumb} />
+                </a>
+              ))}
+            </div>
+          )}
           {returnRequest.videoUrl && (
             <a href={returnRequest.videoUrl} target="_blank" rel="noreferrer" className={styles.videoLink}>
               View submitted video
@@ -121,23 +163,35 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
+            let invalid = false;
             if (!video) {
               setVideoMissing(true);
-              return;
+              invalid = true;
             }
+            if (photos.length < MIN_PHOTOS) {
+              setPhotoError(`Please add at least ${MIN_PHOTOS} photos.`);
+              invalid = true;
+            }
+            if (invalid) return;
             mutation.mutate();
           }}
         >
           <label className={styles.field}>
             Reason
             <select value={reason} onChange={(e) => setReason(e.target.value as ReturnReason)}>
-              {REASON_OPTIONS.map((r) => (
+              {reasonOptions.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
               ))}
             </select>
           </label>
+          {nonReturnable && (
+            <p className={styles.meta}>
+              This order includes a non-returnable item (such as solitaire or custom jewellery), so it can only be
+              returned if it arrived damaged, defective, incorrect or not as described.
+            </p>
+          )}
           <label className={styles.field}>
             Note (optional)
             <textarea
@@ -173,6 +227,55 @@ export function ReturnRequestSection({ orderId, deliveredAt }: { orderId: string
           {videoMissing && (
             <p className={styles.error} role="alert">
               Please upload your unboxing video — it is required for every return.
+            </p>
+          )}
+          <div className={styles.field}>
+            <span>
+              Photos <span className={styles.required}>*</span>{' '}
+              <span className={styles.photoCount}>
+                ({photos.length}/{MAX_PHOTOS}, at least {MIN_PHOTOS})
+              </span>
+            </span>
+            <p className={styles.meta}>
+              Clear, recent photos of: the jewellery (front, back, clasp/setting), the certificate, the invoice, the
+              packaging and tag, and the issue you&apos;re reporting.
+            </p>
+            {photos.length > 0 && (
+              <div className={styles.photoGrid}>
+                {photos.map((photo, i) => (
+                  <div key={`${photo.name}-${i}`} className={styles.photoItem}>
+                    <img src={photoPreviews[i]} alt={`Photo ${i + 1}`} className={styles.photoThumb} />
+                    <button
+                      type="button"
+                      className={styles.photoRemove}
+                      aria-label={`Remove photo ${i + 1}`}
+                      onClick={() => {
+                        setPhotos(photos.filter((_, j) => j !== i));
+                        setPhotoError(null);
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {photos.length < MAX_PHOTOS && (
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                onChange={(e) => {
+                  addPhotos(e.target.files);
+                  e.target.value = '';
+                }}
+                aria-invalid={!!photoError}
+              />
+            )}
+          </div>
+          {photoError && (
+            <p className={styles.error} role="alert">
+              {photoError}
             </p>
           )}
           {mutation.isError && (

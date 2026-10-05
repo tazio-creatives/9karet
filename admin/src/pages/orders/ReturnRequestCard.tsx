@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { ReturnRequest, ReversePickup } from '../../api/types';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { RefreshIcon } from './OrderHeroIcons';
 import sharedStyles from '../../styles/shared.module.css';
 import contentStyles from './OrderDetailPage.module.css';
@@ -68,6 +70,10 @@ export function ReturnRequestCard({
   onSimulatePickup: (_status: ReversePickup['status']) => void;
   isPickupPending: boolean;
 }) {
+  const [confirmReschedule, setConfirmReschedule] = useState(false);
+  const canReschedule =
+    reversePickup?.status === 'REVERSE_PICKUP_FAILED' || reversePickup?.status === 'REVERSE_PICKUP_CANCELLED';
+
   return (
     <section className={sharedStyles.cardPadded}>
       <div className={styles.headingRow}>
@@ -99,6 +105,18 @@ export function ReturnRequestCard({
           <a href={returnRequest.videoUrl} target="_blank" rel="noreferrer">
             View video
           </a>
+        </div>
+      )}
+      {!!returnRequest.photoUrls?.length && (
+        <div className={styles.detailRow}>
+          <span className={styles.label}>Photos ({returnRequest.photoUrls.length})</span>
+          <span className={styles.photoGrid}>
+            {returnRequest.photoUrls.map((url, i) => (
+              <a key={url} href={url} target="_blank" rel="noreferrer" title={`Open photo ${i + 1}`}>
+                <img src={url} alt={`Return photo ${i + 1}`} className={styles.photoThumb} />
+              </a>
+            ))}
+          </span>
         </div>
       )}
       {returnRequest.resolvedAt && (
@@ -177,6 +195,16 @@ export function ReturnRequestCard({
                       >
                         Mark Received at Warehouse
                       </button>
+                      {reversePickup.status !== 'REVERSE_PICKUP_FAILED' && (
+                        <button
+                          type="button"
+                          className={sharedStyles.button}
+                          disabled={isPickupPending}
+                          onClick={() => onSimulatePickup('REVERSE_PICKUP_FAILED')}
+                        >
+                          Mark Pickup Failed
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button
@@ -190,8 +218,24 @@ export function ReturnRequestCard({
                   )}
                 </div>
               )}
+              {canReschedule && (
+                <div className={styles.actions}>
+                  <button
+                    type="button"
+                    className={sharedStyles.buttonPrimary}
+                    disabled={isPickupPending}
+                    onClick={() => setConfirmReschedule(true)}
+                  >
+                    {isPickupPending ? 'Scheduling…' : 'Schedule New Pickup'}
+                  </button>
+                </div>
+              )}
               <p className={styles.pickupInfoBox}>
-                {reversePickup.provider === 'stub'
+                {canReschedule
+                  ? reversePickup.status === 'REVERSE_PICKUP_FAILED'
+                    ? 'The courier could not collect this return. Schedule a new pickup — the failed one is cancelled with the courier first so two agents are not sent.'
+                    : 'This pickup was cancelled. Schedule a new pickup to collect the return.'
+                  : reversePickup.provider === 'stub'
                   ? 'Stub courier provider — these buttons simulate what a real courier would report.'
                   : 'Tracking syncs automatically every few minutes, or use Refresh Tracking to check now.'}
               </p>
@@ -209,6 +253,23 @@ export function ReturnRequestCard({
             </div>
           )}
         </div>
+      )}
+      {confirmReschedule && reversePickup && (
+        <ConfirmDialog
+          title="Schedule a new pickup?"
+          message={
+            reversePickup.status === 'REVERSE_PICKUP_FAILED'
+              ? `AWB ${reversePickup.trackingNumber ?? ''} will be cancelled with the courier and a new reverse pickup booked from the customer's address.`
+              : "A new reverse pickup will be booked from the customer's address."
+          }
+          confirmLabel="Schedule New Pickup"
+          isPending={isPickupPending}
+          onConfirm={() => {
+            setConfirmReschedule(false);
+            onSchedulePickup();
+          }}
+          onCancel={() => setConfirmReschedule(false)}
+        />
       )}
     </section>
   );

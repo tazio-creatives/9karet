@@ -23,7 +23,7 @@ import {
   hasOrderStatusHistoryEntry,
 } from '../repositories/orders.repository.js';
 import { findReturnRequestById, completeReturnRequestTx } from '../repositories/returnRequests.repository.js';
-import { ORDER_STATUS_TO_LEGACY_STATUS } from '../utils/orderStatus.js';
+import { ORDER_STATUS_TO_LEGACY_STATUS, REFUND_TIMELINE_DAYS } from '../utils/orderStatus.js';
 import { enqueueEmail } from './emailService.js';
 import { restoreStockForOrderTx } from '../repositories/reservations.repository.js';
 
@@ -134,12 +134,16 @@ export async function cancelShipmentForOrder(orderId, actorAdminId) {
   return findShipmentByOrderId(orderId);
 }
 
+const RESCHEDULABLE_REVERSE_STATUSES = ['REVERSE_PICKUP_FAILED', 'REVERSE_PICKUP_CANCELLED'];
+
 // Books a real courier collection from the customer's address — gated on
 // the return request actually being APPROVED (an admin decision), not just
 // REQUESTED: scheduling a pickup before anyone has reviewed the return
 // would send a courier to the customer's door for something that might get
-// rejected. Mirrors createShipmentForOrder's shape (serviceability check,
-// provider call, insert + tracking event) with a REVERSE-direction row.
+// rejected. Also used to rebook after a failed/cancelled pickup (see
+// RESCHEDULABLE_REVERSE_STATUSES). Mirrors createShipmentForOrder's shape
+// (serviceability check, provider call, insert + tracking event) with a
+// REVERSE-direction row.
 export async function createReversePickupForReturnRequest(returnRequestId, actorAdminId) {
   const returnRequest = await findReturnRequestById(returnRequestId);
   if (!returnRequest) throw new NotFoundError('Return request not found');
@@ -147,8 +151,12 @@ export async function createReversePickupForReturnRequest(returnRequestId, actor
     throw new AppError(400, `Reverse pickup can only be scheduled for an approved return request (currently ${returnRequest.status})`);
   }
 
+  // A pickup that failed or was cancelled can be replaced with a new one;
+  // anything still in progress (or already received) can't.
   const existing = await findReversePickupByReturnRequestId(returnRequestId);
-  if (existing) throw new AppError(400, 'A reverse pickup already exists for this return request');
+  if (existing && !RESCHEDULABLE_REVERSE_STATUSES.includes(existing.status)) {
+    throw new AppError(400, 'A reverse pickup already exists for this return request');
+  }
 
   const order = await findOrderById(returnRequest.order_id);
   if (!order) throw new NotFoundError('Order not found');
@@ -163,7 +171,40 @@ export async function createReversePickupForReturnRequest(returnRequestId, actor
     );
   }
 
+  // A FAILED pickup may still be retried by Delhivery — cancel it there first
+  // so two agents don't turn up. A refusal (e.g. already closed on their
+  // side) doesn't block rebooking; it's noted on the old pickup instead.
+  let replacedNote = null;
+  if (existing?.status === 'REVERSE_PICKUP_FAILED' && existing.tracking_number) {
+    const oldProvider = shippingProviders[existing.provider];
+    try {
+      await oldProvider?.cancelShipment?.(existing.tracking_number);
+      replacedNote = `Cancelled with ${oldProvider?.displayName ?? existing.provider} and replaced by a new pickup`;
+    } catch (err) {
+      console.warn(`Could not cancel failed reverse pickup ${existing.tracking_number}:`, err.message);
+      replacedNote = `Replaced by a new pickup (courier cancellation not confirmed: ${err.message})`;
+    }
+  } else if (existing) {
+    replacedNote = 'Replaced by a new pickup';
+  }
+
   const result = await shippingProvider.createReversePickup({ order, returnRequest });
+
+  // Retire the old attempt before inserting the new one — only one
+  // non-cancelled pickup may exist per return request.
+  if (existing) {
+    await withTransaction(async (client) => {
+      if (existing.status !== 'REVERSE_PICKUP_CANCELLED') {
+        await updateShipmentTrackingTx(client, existing.id, 'REVERSE_PICKUP_CANCELLED', existing.raw_webhook_payload);
+      }
+      await insertShipmentTrackingEventTx(client, {
+        shipmentId: existing.id,
+        status: 'REVERSE_PICKUP_CANCELLED',
+        note: replacedNote,
+        source: 'MANUAL',
+      });
+    });
+  }
 
   const shipment = await insertShipment({
     orderId: order.id,
@@ -176,11 +217,12 @@ export async function createReversePickupForReturnRequest(returnRequestId, actor
     returnRequestId,
   });
 
+  const verb = existing ? 'rescheduled' : 'scheduled';
   await withTransaction(async (client) => {
     await insertShipmentTrackingEventTx(client, {
       shipmentId: shipment.id,
       status: 'REVERSE_PICKUP_SCHEDULED',
-      note: `Reverse pickup scheduled via ${shipment.courier_name} — AWB ${shipment.tracking_number}`,
+      note: `Reverse pickup ${verb} via ${shipment.courier_name} — AWB ${shipment.tracking_number}`,
       source: 'MANUAL',
     });
     // Note-only — order_status itself is untouched (reverse pickup doesn't
@@ -189,9 +231,18 @@ export async function createReversePickupForReturnRequest(returnRequestId, actor
       client,
       order.id,
       order.order_status,
-      `Reverse pickup scheduled via ${shipment.courier_name} — AWB ${shipment.tracking_number}`,
+      `Reverse pickup ${verb} via ${shipment.courier_name} — AWB ${shipment.tracking_number}`,
       { actor: actorAdminId, source: 'ADMIN' },
     );
+  });
+
+  await enqueueEmail(order.contact_email, 'RETURN_PICKUP_SCHEDULED', {
+    orderId: order.id,
+    contactName: order.contact_name,
+    orderNumber: order.order_number,
+    courierName: shipment.courier_name,
+    awb: shipment.tracking_number,
+    rescheduled: !!existing,
   });
 
   return shipment;
@@ -361,7 +412,15 @@ const REVERSE_PICKUP_STATUSES = new Set(Object.values(DELHIVERY_REVERSE_STATUS_M
 // Shared by the real tracking sync and the dev-only simulate action below —
 // applies a new reverse-pickup status and, if it's the terminal
 // "item is physically back with us" state, completes the return request.
+// Customer emails for the reverse-pickup stages they care about.
+const RETURN_EMAIL_FOR_REVERSE_STATUS = {
+  REVERSE_PICKED_UP: 'RETURN_PICKED_UP',
+  REVERSE_PICKUP_FAILED: 'RETURN_PICKUP_FAILED',
+  REVERSE_RECEIVED: 'RETURN_RECEIVED',
+};
+
 async function applyReversePickupStatus(shipment, status, { source, note, raw = null }) {
+  const changed = shipment.status !== status;
   await withTransaction(async (client) => {
     await updateShipmentTrackingTx(client, shipment.id, status, raw);
     await insertShipmentTrackingEventTx(client, { shipmentId: shipment.id, status, note, source });
@@ -384,6 +443,17 @@ async function applyReversePickupStatus(shipment, status, { source, note, raw = 
       }
     }
   });
+
+  const template = changed ? RETURN_EMAIL_FOR_REVERSE_STATUS[status] : null;
+  if (template) {
+    const order = await findOrderById(shipment.order_id);
+    await enqueueEmail(order.contact_email, template, {
+      orderId: order.id,
+      contactName: order.contact_name,
+      orderNumber: order.order_number,
+      refundDays: REFUND_TIMELINE_DAYS,
+    });
+  }
 }
 
 // Dev-only — lets an admin walk a stub-provider reverse pickup through its

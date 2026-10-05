@@ -23,6 +23,7 @@ export async function getStats(req, res, next) {
       pendingPaymentCount: stats.pending_payment_count,
       toFulfillCount: stats.to_fulfill_count,
       returnRequestedCount: stats.return_requested_count,
+      refundPendingCount: stats.refund_pending_count,
       ordersThisMonth: stats.orders_this_month,
       revenueThisMonth,
       ordersChangePercent: percentChange(stats.orders_this_month, stats.orders_last_month),

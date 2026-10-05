@@ -128,3 +128,44 @@
 .required {
   color: var(--color-gold);
 }
+
+.photoCount {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.photoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+}
+
+.photoItem {
+  position: relative;
+}
+
+.photoThumb {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.photoRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-text);
+  color: var(--color-white);
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+}

@@ -24,6 +24,7 @@ import {
   REFUND_TIMELINE_DAYS,
 } from '../utils/orderStatus.js';
 import { NotFoundError, AppError } from '../utils/AppError.js';
+import { findNonReturnableProductIds } from '../repositories/products.repository.js';
 
 // Card-shaped list DTO, plus the account "My Orders" card's preview
 // (item count/thumbnail) and progress-stepper timestamps — still no full
@@ -178,6 +179,12 @@ export async function get(req, res, next) {
           : null,
       };
     });
+
+    // Non-returnable items (solitaire, custom…) limit the return form to
+    // problem reasons — see orderReturns.controller.js.
+    const nonReturnableIds = new Set(await findNonReturnableProductIds(items.map((i) => i.product_id).filter(Boolean)));
+    dto.hasNonReturnableItems = nonReturnableIds.size > 0;
+    dto.items = dto.items.map((item, i) => ({ ...item, nonReturnable: nonReturnableIds.has(items[i].product_id) }));
 
     res.json({ order: dto });
   } catch (err) {

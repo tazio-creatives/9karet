@@ -31,12 +31,12 @@ export async function hasActiveReturnRequest(orderId) {
   return rows.length > 0;
 }
 
-export async function insertReturnRequest(orderId, { reason, note, videoUrl }) {
+export async function insertReturnRequest(orderId, { reason, note, videoUrl, photoUrls = [] }) {
   const { rows } = await query(
-    `INSERT INTO return_requests (order_id, reason, note, video_url)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO return_requests (order_id, reason, note, video_url, photo_urls)
+     VALUES ($1, $2, $3, $4, $5::jsonb)
      RETURNING *`,
-    [orderId, reason, note ?? null, videoUrl ?? null],
+    [orderId, reason, note ?? null, videoUrl ?? null, JSON.stringify(photoUrls)],
   );
   return rows[0];
 }

@@ -62,13 +62,18 @@ export function fetchReturnRequest(orderId: string) {
   return apiFetch<{ returnRequest: ReturnRequest | null }>(`/orders/${orderId}/return-request`);
 }
 
-// video is optional — multipart/form-data so client.ts skips the JSON
-// Content-Type header and lets fetch set its own multipart boundary.
-export function createReturnRequest(orderId: string, input: { reason: ReturnReason; note?: string; video?: File }) {
+// multipart/form-data so client.ts skips the JSON Content-Type header and
+// lets fetch set its own multipart boundary. The server requires the video
+// and 3–8 photos.
+export function createReturnRequest(
+  orderId: string,
+  input: { reason: ReturnReason; note?: string; video?: File; photos?: File[] },
+) {
   const body = new FormData();
   body.set('reason', input.reason);
   if (input.note) body.set('note', input.note);
   if (input.video) body.set('video', input.video);
+  for (const photo of input.photos ?? []) body.append('photos', photo);
   return apiFetch<{ returnRequest: ReturnRequest }>(`/orders/${orderId}/return-request`, {
     method: 'POST',
     body,

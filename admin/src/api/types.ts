@@ -115,6 +115,7 @@ export interface ProductDetail {
   isFeatured: boolean;
   isBestSeller: boolean;
   showDeliveryChecker: boolean;
+  isNonReturnable: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   metaKeywords: string | null;
@@ -177,6 +178,7 @@ export interface ProductInput {
   stockQuantity?: number;
   status?: ProductStatus;
   showDeliveryChecker?: boolean;
+  isNonReturnable?: boolean;
   slug?: string;
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -256,6 +258,9 @@ export interface Category {
   description: string | null;
   imageUrl: string | null;
   isActive: boolean;
+  // Products in this category (and subcategories) can't be returned for a
+  // change of mind — Return & Refund Policy exclusions.
+  isNonReturnable: boolean;
   sortOrder: number;
   banner: CategoryBanner;
 }
@@ -270,6 +275,7 @@ export interface CategoryInput {
   description: string | null;
   imageUrl: string | null;
   isActive: boolean;
+  isNonReturnable: boolean;
   sortOrder: number;
   bannerEnabled: boolean;
   bannerEyebrow: string | null;
@@ -579,7 +585,8 @@ export type ShipmentStatus =
 
 // The Orders list filter dropdown spans payment_status and order_status —
 // PENDING_PAYMENT/PAYMENT_FAILED are payment states with no order_status yet.
-export type StatusFilterValue = 'PENDING_PAYMENT' | 'PAYMENT_FAILED' | OrderStatus;
+// REFUND_PENDING: cancelled/returned but still PAID (refund not yet issued).
+export type StatusFilterValue = 'PENDING_PAYMENT' | 'PAYMENT_FAILED' | 'REFUND_PENDING' | OrderStatus;
 
 // Server-computed 8-10 calendar-day window, frozen onto the order at
 // checkout (backend/src/services/deliveryEstimateService.js /
@@ -714,6 +721,8 @@ export interface OrderDetail {
   canPrintInvoice: boolean;
   invoiceNumber: string | null;
   invoicePrintCount: number;
+  // Returned order whose items haven't been put back in stock yet.
+  canRestock?: boolean;
   returnRequest: ReturnRequest | null;
   reversePickup: ReversePickup | null;
 }
@@ -726,6 +735,7 @@ export interface ReturnRequest {
   reason: ReturnReason;
   note: string | null;
   videoUrl: string | null;
+  photoUrls?: string[];
   status: ReturnRequestStatus;
   createdAt: string;
   resolvedAt: string | null;

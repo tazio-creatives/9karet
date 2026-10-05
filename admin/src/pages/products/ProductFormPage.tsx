@@ -88,6 +88,7 @@ const EMPTY_FORM: ProductInput = {
   stockQuantity: 0,
   status: 'DRAFT',
   showDeliveryChecker: true,
+  isNonReturnable: false,
   metaTitle: '',
   metaDescription: '',
   metaKeywords: '',
@@ -264,6 +265,7 @@ export function ProductFormPage() {
         stockQuantity: p.stockQuantity,
         status: p.status,
         showDeliveryChecker: p.showDeliveryChecker,
+        isNonReturnable: p.isNonReturnable ?? false,
         metaTitle: p.metaTitle ?? '',
         metaDescription: p.metaDescription ?? '',
         metaKeywords: p.metaKeywords ?? '',
@@ -777,6 +779,15 @@ export function ProductFormPage() {
               onChange={(e) => set('showDeliveryChecker', e.target.checked)}
             />
             Show "Check Delivery &amp; Availability" pincode widget on the product page
+          </label>
+          <label className={`${sharedStyles.field} ${sharedStyles.checkboxField}`}>
+            <input
+              type="checkbox"
+              checked={form.isNonReturnable ?? false}
+              onChange={(e) => set('isNonReturnable', e.target.checked)}
+            />
+            Non-returnable — no change-of-mind returns (solitaire, custom, engraved). Returns still allowed if damaged,
+            defective or wrong. Also applies automatically if its category is marked non-returnable.
           </label>
         </section>
 

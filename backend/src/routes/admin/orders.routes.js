@@ -7,6 +7,7 @@ import {
   markReadyToShip,
   updateStatus,
   markRefunded,
+  restock,
 } from '../../controllers/adminOrders.controller.js';
 import { get as getWorkOrder, recordPrint as recordWorkOrderPrint } from '../../controllers/adminWorkOrder.controller.js';
 import { get as getInvoice, recordPrint as recordInvoicePrint } from '../../controllers/adminInvoice.controller.js';
@@ -31,6 +32,7 @@ adminOrdersRouter.post('/:id/start-processing', startProcessing);
 adminOrdersRouter.post('/:id/mark-ready-to-ship', markReadyToShip);
 adminOrdersRouter.patch('/:id/status', updateStatus);
 adminOrdersRouter.post('/:id/mark-refunded', markRefunded);
+adminOrdersRouter.post('/:id/restock', restock);
 adminOrdersRouter.get('/:id/work-order', getWorkOrder);
 adminOrdersRouter.post('/:id/work-order/print', recordWorkOrderPrint);
 adminOrdersRouter.get('/:id/invoice', getInvoice);

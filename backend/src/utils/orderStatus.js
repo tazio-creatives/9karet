@@ -21,7 +21,9 @@ export const SHIPMENT_STATUSES = [
 // yet (payment_status PENDING/FAILED, order_status still NULL) — used only
 // by the admin Orders list filter dropdown, never written to order_status
 // itself.
-export const STATUS_FILTER_VALUES = ['PENDING_PAYMENT', 'PAYMENT_FAILED', ...ORDER_STATUSES];
+// REFUND_PENDING is likewise synthetic: a cancelled/returned order whose
+// payment is still PAID, i.e. money the customer is still owed.
+export const STATUS_FILTER_VALUES = ['PENDING_PAYMENT', 'PAYMENT_FAILED', 'REFUND_PENDING', ...ORDER_STATUSES];
 
 export const TERMINAL_ORDER_STATUSES = ['DELIVERED', 'CANCELLED', 'RETURNED'];
 

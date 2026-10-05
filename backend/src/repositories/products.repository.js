@@ -56,7 +56,18 @@ const LIST_COLUMNS = `
   ${AVAILABLE_STOCK_SELECT}
 `;
 
-const DETAIL_COLUMNS = `p.*, ${AVAILABLE_STOCK_SELECT}`;
+// Non-returnable if the product itself, or its category or any parent
+// category, is flagged (Return & Refund Policy exclusions).
+export const EFFECTIVE_NON_RETURNABLE_SQL = `(p.is_non_returnable OR EXISTS (
+  WITH RECURSIVE ancestors AS (
+    SELECT id, parent_id, is_non_returnable FROM categories WHERE id = p.category_id
+    UNION ALL
+    SELECT c.id, c.parent_id, c.is_non_returnable FROM categories c JOIN ancestors a ON c.id = a.parent_id
+  )
+  SELECT 1 FROM ancestors WHERE is_non_returnable
+))`;
+
+const DETAIL_COLUMNS = `p.*, ${AVAILABLE_STOCK_SELECT}, ${EFFECTIVE_NON_RETURNABLE_SQL} AS effective_non_returnable`;
 
 function buildFilters({
   categoryIds,
@@ -156,21 +167,39 @@ const SALES_COUNT_JOIN = `
   ) sales ON true
 `;
 
-export async function listProducts(filters, { sort = 'featured', page = 1, limit = 24 } = {}) {
+// `placement` ({ type, id }) applies an admin-saved "First 50" order, but
+// only under the default (featured) sort — a customer-chosen sort always
+// wins. It's a LEFT JOIN used purely for ORDER BY: saved products that
+// don't pass this listing's own filters (unpublished, ₹0, moved out of the
+// category, filtered out by the shopper…) simply aren't in the result, and
+// a product can never appear twice. p.id is the final tie-breaker on every
+// sort so offset pagination never repeats or skips a product between pages.
+export async function listProducts(filters, { sort = 'featured', page = 1, limit = 24, placement = null } = {}) {
   const { where, params } = buildFilters(filters);
   const isBestSeller = sort === 'bestseller';
-  const orderBy = isBestSeller
+  const usePlacement = !!placement && (sort ?? 'featured') === 'featured';
+  const baseOrder = isBestSeller
     ? 'p.is_best_seller DESC, sales.sold_count DESC, p.created_at DESC'
     : SORT_COLUMNS[sort] ?? SORT_COLUMNS.featured;
   const offset = (page - 1) * limit;
 
-  const listParams = [...params, limit, offset];
+  const listParams = [...params];
+  let placementJoin = '';
+  if (usePlacement) {
+    listParams.push(placement.type, placement.id);
+    placementJoin = `LEFT JOIN product_display_order pdo
+      ON pdo.product_id = p.id AND pdo.placement_type = $${listParams.length - 1} AND pdo.placement_id = $${listParams.length}`;
+  }
+  const orderBy = `${usePlacement ? 'pdo.position ASC NULLS LAST, ' : ''}${baseOrder}, p.id`;
+  listParams.push(limit, offset);
+
   const { rows } = await query(
     `SELECT ${LIST_COLUMNS}${isBestSeller ? ', sales.sold_count AS sold_count' : ''} FROM products p
      ${AVAILABLE_STOCK_JOIN}
      ${PRIMARY_IMAGE_JOIN}
      ${CATEGORY_JOIN}
      ${isBestSeller ? SALES_COUNT_JOIN : ''}
+     ${placementJoin}
      ${where}
      ORDER BY ${orderBy}
      LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
@@ -303,6 +332,7 @@ const INSERT_COLUMNS = [
   'is_featured',
   'is_best_seller',
   'show_delivery_checker',
+  'is_non_returnable',
   'stock_quantity',
   'status',
   'slug',
@@ -443,4 +473,14 @@ export async function updateProductPricingTx(
      WHERE id = $1`,
     [id, goldValue, diamondValue, sellingPrice],
   );
+}
+
+// Which of an order's products are excluded from change-of-mind returns.
+export async function findNonReturnableProductIds(productIds) {
+  if (!productIds.length) return [];
+  const { rows } = await query(
+    `SELECT p.id FROM products p WHERE p.id = ANY($1::uuid[]) AND ${EFFECTIVE_NON_RETURNABLE_SQL}`,
+    [productIds],
+  );
+  return rows.map((r) => r.id);
 }

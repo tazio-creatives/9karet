@@ -6,6 +6,7 @@ import { buildCategoryTree, type CategoryTreeNode } from '../utils/categoryTree'
 import { CategoryForm } from '../features/categories/CategoryForm';
 import { Toast } from '../components/Toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FirstFiftyManager } from '../features/displayOrder/FirstFiftyManager';
 import sharedStyles from '../styles/shared.module.css';
 import styles from './CategoriesPage.module.css';
 
@@ -17,6 +18,7 @@ export function CategoriesPage() {
   const [mode, setMode] = useState<Mode>({ type: 'none' });
   const [errorToast, setErrorToast] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CategoryTreeNode | null>(null);
+  const [orderingCategoryId, setOrderingCategoryId] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
 
@@ -81,6 +83,9 @@ export function CategoriesPage() {
             >
               Edit
             </button>
+            <button type="button" className={sharedStyles.buttonLink} onClick={() => setOrderingCategoryId(node.id)}>
+              Manage First 50 Products
+            </button>
             <button type="button" className={sharedStyles.buttonLink} onClick={() => setPendingDelete(node)}>
               Delete
             </button>
@@ -133,6 +138,14 @@ export function CategoriesPage() {
       </div>
 
       {errorToast && <Toast message={errorToast} variant="error" onDismiss={() => setErrorToast(null)} />}
+
+      {orderingCategoryId && (
+        <FirstFiftyManager
+          placementType="category"
+          placementId={orderingCategoryId}
+          onClose={() => setOrderingCategoryId(null)}
+        />
+      )}
 
       {pendingDelete && (
         <ConfirmDialog

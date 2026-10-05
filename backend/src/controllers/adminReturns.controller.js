@@ -16,6 +16,7 @@ import {
 } from '../services/shippingService.js';
 import { simulateReversePickupSchema } from '../validators/shipping.validators.js';
 import { NotFoundError, AppError } from '../utils/AppError.js';
+import { enqueueEmail } from '../services/emailService.js';
 
 function toReturnRequestDto(row) {
   if (!row) return null;
@@ -24,6 +25,7 @@ function toReturnRequestDto(row) {
     reason: row.reason,
     note: row.note,
     videoUrl: row.video_url,
+    photoUrls: row.photo_urls ?? [],
     status: row.status,
     createdAt: row.created_at,
     resolvedAt: row.resolved_at,
@@ -96,6 +98,11 @@ export async function updateStatus(req, res, next) {
           source: 'ADMIN',
         });
       }
+    });
+    await enqueueEmail(order.contact_email, status === 'REJECTED' ? 'RETURN_REJECTED' : 'RETURN_APPROVED', {
+      orderId: order.id,
+      contactName: order.contact_name,
+      orderNumber: order.order_number,
     });
     const updated = await findReturnRequestByOrderId(order.id);
     res.json({ returnRequest: toReturnRequestDto(updated) });

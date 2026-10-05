@@ -76,6 +76,17 @@ export async function restoreStockForOrderTx(client, orderId) {
   }
 }
 
+// True while a paid order's stock hasn't been put back yet (CONFIRMED
+// variant reservations remain) — drives the admin "Add back to stock" button.
+export async function hasRestorableStock(orderId) {
+  const { rows } = await query(
+    `SELECT 1 FROM stock_reservations
+     WHERE order_id = $1 AND status = 'CONFIRMED' AND product_variant_id IS NOT NULL LIMIT 1`,
+    [orderId],
+  );
+  return rows.length > 0;
+}
+
 export async function findExpiredActiveReservationOrderIds() {
   const { rows } = await query(
     `SELECT DISTINCT order_id FROM stock_reservations

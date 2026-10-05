@@ -37,6 +37,7 @@ function toDto(row) {
 function toAdminDto(row) {
   return {
     ...toDto(row),
+    isNonReturnable: row.is_non_returnable ?? false,
     banner: {
       enabled: row.banner_enabled,
       eyebrow: row.banner_eyebrow,

@@ -202,6 +202,13 @@ export function OrdersListPage() {
         >
           Returns
         </button>
+        <button
+          type="button"
+          className={status === 'REFUND_PENDING' ? styles.tabActive : styles.tab}
+          onClick={() => setStatus('REFUND_PENDING')}
+        >
+          Refunds Pending
+        </button>
       </div>
 
       <div className={styles.filters}>

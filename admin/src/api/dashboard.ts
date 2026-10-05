@@ -33,6 +33,7 @@ export interface DashboardStats {
   pendingPaymentCount: number;
   toFulfillCount: number;
   returnRequestedCount: number;
+  refundPendingCount: number;
   ordersThisMonth: number;
   revenueThisMonth: number;
   ordersChangePercent: number | null;

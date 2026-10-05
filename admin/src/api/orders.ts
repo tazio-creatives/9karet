@@ -73,6 +73,11 @@ export function updateOrderStatus(id: string, status: OrderStatus, note?: string
 
 // Records a refund already issued manually from the Cashfree dashboard —
 // only valid for a cancelled/returned order whose payment is still PAID.
+// Returned order: put its items back in stock after quality check.
+export function restockOrder(id: string) {
+  return apiFetch<{ order: OrderDetail }>(`/admin/orders/${id}/restock`, { method: 'POST' });
+}
+
 export function markOrderRefunded(id: string, reference?: string) {
   return apiFetch<{ order: OrderDetail }>(`/admin/orders/${id}/mark-refunded`, {
     method: 'POST',

@@ -19,7 +19,10 @@ export async function getDashboardStats() {
            COUNT(*) FILTER (WHERE status != ALL($1))::int AS revenue_order_count,
            COUNT(*) FILTER (WHERE status = 'PENDING_PAYMENT')::int AS pending_payment_count,
            COUNT(*) FILTER (WHERE status IN ('CONFIRMED', 'PROCESSING'))::int AS to_fulfill_count,
-           COUNT(*) FILTER (WHERE status = 'RETURN_REQUESTED')::int AS return_requested_count,
+           COUNT(*) FILTER (WHERE order_status = 'RETURN_INITIATED')::int AS return_requested_count,
+           COUNT(*) FILTER (
+             WHERE order_status IN ('CANCELLED', 'RETURNED') AND payment_status = 'PAID'
+           )::int AS refund_pending_count,
            COUNT(*) FILTER (WHERE created_at >= date_trunc('month', now()))::int AS orders_this_month,
            COALESCE(
              SUM(total_amount) FILTER (WHERE status != ALL($1) AND created_at >= date_trunc('month', now())),

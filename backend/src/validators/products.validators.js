@@ -90,6 +90,9 @@ export const listProductsQuerySchema = z.object({
   sort: z.enum(['featured', 'newest', 'price_asc', 'price_desc', 'bestseller']).optional(),
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
+  // The homepage collection showcase's own "First 50" order (see
+  // productsService.listPublicProducts).
+  placement: z.enum(['homepage']).optional(),
 });
 
 export const adminListProductsQuerySchema = listProductsQuerySchema.extend({
@@ -158,6 +161,7 @@ const productObjectSchema = z.object({
   status: z.enum(STATUSES).optional(),
   isFeatured: z.boolean().optional(),
   showDeliveryChecker: z.boolean().optional(),
+  isNonReturnable: z.boolean().optional(),
 
   slug: z.string().trim().min(1).max(300).optional(),
   metaTitle: z.string().trim().max(300).nullable().optional(),

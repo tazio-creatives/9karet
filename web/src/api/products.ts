@@ -21,6 +21,8 @@ export interface ListProductsParams {
   sort?: SortOption;
   page?: number;
   limit?: number;
+  // 'homepage' = use the homepage collection showcase's own admin-set order.
+  placement?: 'homepage';
 }
 
 export function fetchProducts(params: ListProductsParams) {

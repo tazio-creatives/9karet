@@ -269,6 +269,8 @@ export interface ProductDetail {
   isPriceLocked: boolean;
   isFeatured: boolean;
   showDeliveryChecker: boolean;
+  // Excluded from change-of-mind returns (own flag or its category's).
+  nonReturnable?: boolean;
   isNew: boolean;
   deliveryEstimate: DeliveryEstimate | null;
 
@@ -559,6 +561,8 @@ export interface Order {
   items: OrderItem[];
   statusHistory: OrderStatusHistoryEntry[];
   shipment?: Shipment | null;
+  // Contains a non-returnable item — return form limits reasons to problems.
+  hasNonReturnableItems?: boolean;
 }
 
 export type ReturnReason = 'DAMAGED' | 'DEFECTIVE' | 'WRONG_ITEM' | 'NOT_AS_DESCRIBED' | 'CHANGED_MIND' | 'OTHER';
@@ -569,6 +573,7 @@ export interface ReturnRequest {
   reason: ReturnReason;
   note: string | null;
   videoUrl: string | null;
+  photoUrls: string[];
   status: ReturnRequestStatus;
   createdAt: string;
   resolvedAt: string | null;

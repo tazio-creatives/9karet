@@ -233,9 +233,16 @@ export async function getEnabledSectionsWithItems() {
       // batch immediately and only re-fetches client-side as a top-up if it
       // ever arrives smaller than that, so keeping this in lockstep avoids
       // an always-on extra round trip on every homepage load.
+      // Same filters/order as the client top-up fetch (placement=homepage):
+      // admin's "First 50" order for this collection first, ₹0 products never.
       const { items: products } = await listProducts(
-        { collectionId: item.collection_id, status: 'PUBLISHED' },
-        { sort: 'newest', page: 1, limit: 15 },
+        { collectionId: item.collection_id, status: 'PUBLISHED', excludeZeroPrice: true },
+        {
+          sort: 'featured',
+          page: 1,
+          limit: 15,
+          placement: { type: 'homepage_collection', id: item.collection_id },
+        },
       );
       item.products = products;
     }

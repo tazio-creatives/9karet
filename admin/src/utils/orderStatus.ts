@@ -18,7 +18,7 @@ export const ORDER_STATUSES: OrderStatus[] = [
 
 // What the Orders list filter dropdown offers — spans payment_status and
 // order_status (mirrors backend's STATUS_FILTER_VALUES).
-export const STATUS_FILTER_VALUES: StatusFilterValue[] = ['PENDING_PAYMENT', 'PAYMENT_FAILED', ...ORDER_STATUSES];
+export const STATUS_FILTER_VALUES: StatusFilterValue[] = ['PENDING_PAYMENT', 'PAYMENT_FAILED', 'REFUND_PENDING', ...ORDER_STATUSES];
 
 // What the "Change Order Status" manual-override dropdown offers — mirrors
 // backend's ADMIN_MANUAL_TARGETS exactly, so the UI never offers a choice

@@ -36,6 +36,17 @@ export function requireRole(...allowedRoleNames) {
 // "Order Manager" (permissions: ["orders"]) only ever reaches the Orders
 // routes and gets a clean 403 everywhere else. SUPER_ADMIN's '*' still
 // passes everything.
+// Any one of several modules grants access (e.g. "First 50 Products"
+// ordering is open to product or homepage managers).
+export function requireAnyPermission(moduleNames) {
+  return (req, res, next) => {
+    if (!req.admin) return next(new UnauthorizedError('Admin authentication required'));
+    const { permissions } = req.admin.role;
+    if (permissions?.includes('*') || moduleNames.some((m) => permissions?.includes(m))) return next();
+    next(new ForbiddenError('Insufficient permissions'));
+  };
+}
+
 export function requirePermission(moduleName) {
   return (req, res, next) => {
     if (!req.admin) return next(new UnauthorizedError('Admin authentication required'));

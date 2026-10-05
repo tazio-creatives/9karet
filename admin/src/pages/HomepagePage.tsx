@@ -15,6 +15,7 @@ import type { HomepageItem, HomepageItemInput, HomepageSection, HomepageSectionT
 import { HomepageItemForm } from '../features/homepage/HomepageItemForm';
 import { HeroBannerForm } from '../features/homepage/HeroBannerForm';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FirstFiftyManager } from '../features/displayOrder/FirstFiftyManager';
 import sharedStyles from '../styles/shared.module.css';
 import styles from './HomepagePage.module.css';
 
@@ -116,6 +117,7 @@ export function HomepagePage() {
 
   const [addingItemTo, setAddingItemTo] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<HomepageItem | null>(null);
+  const [orderingCollectionId, setOrderingCollectionId] = useState<string | null>(null);
   const [newSectionType, setNewSectionType] = useState<HomepageSectionType>('HERO');
   const [pendingDeleteSection, setPendingDeleteSection] = useState<HomepageSection | null>(null);
 
@@ -376,6 +378,15 @@ export function HomepagePage() {
                         </>
                       )}
                       <div className={styles.itemActions}>
+                        {section.type === 'COLLECTION_SHOWCASE' && item.collectionId && (
+                          <button
+                            type="button"
+                            className={sharedStyles.buttonLink}
+                            onClick={() => setOrderingCollectionId(item.collectionId)}
+                          >
+                            Manage First 50 Products
+                          </button>
+                        )}
                         <button type="button" className={sharedStyles.buttonLink} onClick={() => setEditingItem(item)}>
                           Edit
                         </button>
@@ -418,6 +429,14 @@ export function HomepagePage() {
           </div>
         ))}
       </div>
+
+      {orderingCollectionId && (
+        <FirstFiftyManager
+          placementType="homepage_collection"
+          placementId={orderingCollectionId}
+          onClose={() => setOrderingCollectionId(null)}
+        />
+      )}
 
       {pendingDeleteSection && (
         <ConfirmDialog

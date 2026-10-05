@@ -6,7 +6,7 @@ import {
   cancel as cancelReturnRequest,
 } from '../controllers/orderReturns.controller.js';
 import { requireCustomerAuth } from '../middleware/customerAuth.js';
-import { uploadReturnVideo } from '../middleware/upload.js';
+import { uploadReturnMedia } from '../middleware/upload.js';
 
 // Mounted at /api/v1/orders — "My Orders" (plan §12), always the caller's
 // own orders only (loadOwnedOrder checks user_id, never trusts the id alone).
@@ -19,5 +19,5 @@ ordersRouter.get('/stats', stats);
 ordersRouter.get('/:id', get);
 ordersRouter.post('/:id/cancel', cancel);
 ordersRouter.get('/:id/return-request', getReturnRequest);
-ordersRouter.post('/:id/return-request', uploadReturnVideo.single('video'), createReturnRequest);
+ordersRouter.post('/:id/return-request', uploadReturnMedia, createReturnRequest);
 ordersRouter.post('/:id/return-request/cancel', cancelReturnRequest);

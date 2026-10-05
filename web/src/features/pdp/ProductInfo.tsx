@@ -292,8 +292,18 @@ export function ProductInfo({
           <path d="m16 10.5 5-3v9l-5-3" />
         </svg>
         <span>
-          Record a continuous unboxing video when your order arrives — it&rsquo;s required for any return.{' '}
-          <Link to="/refund-policy#unboxing-video">Return policy</Link>
+          {product.nonReturnable ? (
+            <>
+              Not eligible for change-of-mind returns — returns are accepted only if the item arrives damaged,
+              defective or incorrect. Record a continuous unboxing video when it arrives.{' '}
+              <Link to="/refund-policy#non-returnable">Return policy</Link>
+            </>
+          ) : (
+            <>
+              Record a continuous unboxing video when your order arrives — it&rsquo;s required for any return.{' '}
+              <Link to="/refund-policy#unboxing-video">Return policy</Link>
+            </>
+          )}
         </span>
       </p>
 

@@ -338,6 +338,10 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     isFeatured: row.is_featured,
     isBestSeller: row.is_best_seller,
     showDeliveryChecker: row.show_delivery_checker,
+    // Own flag (admin form) vs. effective (own or via category) — the
+    // storefront only needs the effective one.
+    isNonReturnable: row.is_non_returnable ?? false,
+    nonReturnable: row.effective_non_returnable ?? row.is_non_returnable ?? false,
     isNew: isRecentlyPublished(row.created_at),
     deliveryEstimate,
 
@@ -438,6 +442,7 @@ export async function list(req, res, next) {
       sort: q.sort,
       page: q.page ?? 1,
       limit: q.limit ?? 24,
+      placement: q.placement,
     });
     const deliveryEstimate = calculateDeliveryEstimate();
     res.json({

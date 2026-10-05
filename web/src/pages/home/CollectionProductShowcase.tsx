@@ -27,7 +27,7 @@ export function CollectionProductShowcase({ items }: { items: HomepageItem[] }) 
   const { products, isLoading, error } = useFixedProducts({
     initialProducts: item?.products ?? [],
     fetchPage: async (limit) => {
-      const result = await fetchProducts({ collection: item?.collection?.slug, page: 1, limit });
+      const result = await fetchProducts({ collection: item?.collection?.slug, page: 1, limit, placement: 'homepage' });
       return { products: result.products, total: result.total };
     },
   });

@@ -1,6 +1,6 @@
 import { query } from '../config/db.js';
 
-const ALL_COLUMNS = `id, parent_id, name, slug, description, image_url, is_active, sort_order, created_at, updated_at,
+const ALL_COLUMNS = `id, parent_id, name, slug, description, image_url, is_active, is_non_returnable, sort_order, created_at, updated_at,
   banner_enabled, banner_eyebrow, banner_description, banner_image_url, banner_image_url_mobile,
   banner_alt_text, banner_text_color, banner_text_position, banner_focal_position`;
 
@@ -105,6 +105,7 @@ export async function createCategory({
   description,
   imageUrl,
   isActive,
+  isNonReturnable,
   sortOrder,
   bannerEnabled,
   bannerEyebrow,
@@ -120,9 +121,9 @@ export async function createCategory({
     `INSERT INTO categories (
        parent_id, name, slug, description, image_url, is_active, sort_order,
        banner_enabled, banner_eyebrow, banner_description, banner_image_url, banner_image_url_mobile,
-       banner_alt_text, banner_text_color, banner_text_position, banner_focal_position
+       banner_alt_text, banner_text_color, banner_text_position, banner_focal_position, is_non_returnable
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
      RETURNING ${ALL_COLUMNS}`,
     [
       parentId ?? null,
@@ -141,6 +142,7 @@ export async function createCategory({
       bannerTextColor ?? 'LIGHT',
       bannerTextPosition ?? 'LEFT',
       bannerFocalPosition ?? 'CENTER',
+      isNonReturnable ?? false,
     ],
   );
   return rows[0];
@@ -157,6 +159,7 @@ const CATEGORY_COLUMNS = {
   description: 'description',
   imageUrl: 'image_url',
   isActive: 'is_active',
+  isNonReturnable: 'is_non_returnable',
   sortOrder: 'sort_order',
   bannerEnabled: 'banner_enabled',
   bannerEyebrow: 'banner_eyebrow',

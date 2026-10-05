@@ -54,6 +54,63 @@ const templates = {
   }),
 };
 
+// --- Return flow (customer-facing) --------------------------------------
+// Each is sent once, at the moment the return actually moves to that stage
+// (see orderReturns/adminReturns controllers and shippingService's reverse
+// pickup handling).
+const formatRupees = (amount) =>
+  `₹${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+Object.assign(templates, {
+  // payload: { contactName, orderNumber }
+  RETURN_REQUEST_RECEIVED: ({ contactName, orderNumber }) => ({
+    subject: `We've received your return request for order ${orderNumber}`,
+    body: `Hi ${contactName},\n\nThank you — we've received your return request and unboxing video for order ${orderNumber}. Our team will review it and update you shortly, usually within 1–2 working days.\n\nPlease keep the item, its packaging, certificates and tags safe until the return is complete.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber }
+  RETURN_APPROVED: ({ contactName, orderNumber }) => ({
+    subject: `Your return for order ${orderNumber} is approved`,
+    body: `Hi ${contactName},\n\nGood news — your return request for order ${orderNumber} has been approved. We'll arrange a courier pickup from your delivery address and email you the pickup details shortly.\n\nPlease pack the item securely in its original packaging, along with any certificates and tags.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber }
+  RETURN_REJECTED: ({ contactName, orderNumber }) => ({
+    subject: `Update on your return request for order ${orderNumber}`,
+    body: `Hi ${contactName},\n\nAfter reviewing your return request for order ${orderNumber}, we're unable to accept this return as it doesn't meet our Return & Refund Policy.\n\nIf you have questions or would like us to take another look, just reply to this email and our team will be happy to help.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber, courierName, awb, rescheduled }
+  RETURN_PICKUP_SCHEDULED: ({ contactName, orderNumber, courierName, awb, rescheduled }) => ({
+    subject: `${rescheduled ? 'New pickup scheduled' : 'Pickup scheduled'} for your return — order ${orderNumber}`,
+    body: `Hi ${contactName},\n\n${rescheduled ? 'A new pickup' : 'A pickup'} has been scheduled for your return of order ${orderNumber}.\n\nCourier: ${courierName || '—'}\nTracking (AWB): ${awb || '—'}\n\nThe courier will collect the item from your delivery address, usually within 1–3 working days. Please keep it packed securely in its original packaging and hand it over only to the courier agent.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber }
+  RETURN_PICKUP_FAILED: ({ contactName, orderNumber }) => ({
+    subject: `Pickup attempt for your return — order ${orderNumber}`,
+    body: `Hi ${contactName},\n\nThe courier was unable to collect your return for order ${orderNumber}. Don't worry — we'll arrange another pickup and email you the details. If you'd like to tell us a convenient time, just reply to this email.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber }
+  RETURN_PICKED_UP: ({ contactName, orderNumber }) => ({
+    subject: `Your return for order ${orderNumber} has been picked up`,
+    body: `Hi ${contactName},\n\nThe courier has collected your return for order ${orderNumber} and it's on its way to us. We'll let you know as soon as it reaches our team.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber, refundDays }
+  RETURN_RECEIVED: ({ contactName, orderNumber, refundDays }) => ({
+    subject: `We've received your return for order ${orderNumber}`,
+    body: `Hi ${contactName},\n\nYour returned item for order ${orderNumber} has reached us. Once it passes our quality check, your refund will be processed to your original payment method within ${refundDays ?? 7} days. We'll email you as soon as it's issued.\n\n— BOX DIAMONDS`,
+  }),
+
+  // payload: { contactName, orderNumber, amount, reference, isReturn }
+  REFUND_ISSUED: ({ contactName, orderNumber, amount, reference, isReturn }) => ({
+    subject: `Your refund for order ${orderNumber} has been issued`,
+    body: `Hi ${contactName},\n\nWe've issued a refund of ${formatRupees(amount)} for your ${isReturn ? 'returned' : 'cancelled'} order ${orderNumber} to your original payment method.${reference ? `\nRefund reference: ${reference}` : ''}\n\nDepending on your bank, it can take 5–7 working days to reflect in your account.\n\n— BOX DIAMONDS`,
+  }),
+});
+
 export async function renderEmailTemplate(template, payload) {
   if (ORDER_STATUS_EMAIL_TEMPLATE_NAMES.has(template)) {
     return renderOrderStatusEmail(template, payload ?? {});

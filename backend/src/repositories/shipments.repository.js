@@ -11,8 +11,13 @@ export async function findShipmentByOrderId(orderId) {
   return rows[0] ?? null;
 }
 
+// The current (most recent) pickup — earlier attempts that were replaced via
+// "Schedule New Pickup" remain as REVERSE_PICKUP_CANCELLED history rows.
 export async function findReversePickupByReturnRequestId(returnRequestId) {
-  const { rows } = await query('SELECT * FROM shipments WHERE return_request_id = $1', [returnRequestId]);
+  const { rows } = await query(
+    'SELECT * FROM shipments WHERE return_request_id = $1 ORDER BY created_at DESC LIMIT 1',
+    [returnRequestId],
+  );
   return rows[0] ?? null;
 }
 

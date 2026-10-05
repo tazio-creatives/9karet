@@ -47,6 +47,7 @@ import { adminAuditLogsRouter } from './routes/admin/auditLogs.routes.js';
 import { adminContactMessagesRouter } from './routes/admin/contactMessages.routes.js';
 import { adminBlogRouter } from './routes/admin/blog.routes.js';
 import { adminUsersRouter } from './routes/admin/adminUsers.routes.js';
+import { adminDisplayOrderRouter } from './routes/admin/displayOrder.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { loadAdmin, requireAdminAuth } from './middleware/adminAuth.js';
 import { loadCustomer } from './middleware/customerAuth.js';
@@ -125,6 +126,17 @@ export function createApp() {
     maxAgeHours: env.adminSessionMaxAgeHours,
   });
   app.use('/api/v1/auth/admin', adminSession, loadAdmin, requireCsrfHeader, adminAuthRouter);
+
+  // Before adminCatalogRouter: that router's middleware (incl. the generic
+  // audit log) runs for every /api/v1/admin request that enters it.
+  app.use(
+    '/api/v1/admin/display-order',
+    adminSession,
+    loadAdmin,
+    requireAdminAuth,
+    requireCsrfHeader,
+    adminDisplayOrderRouter,
+  );
 
   const adminCatalogRouter = express.Router();
   adminCatalogRouter.use(adminSession, loadAdmin, requireAdminAuth, requireCsrfHeader, auditLog);

@@ -124,7 +124,11 @@ export function OrderSidebar({ order }: { order: Order }) {
       {deliveredAt && (
         <section className={styles.card}>
           <h2 className={styles.cardHeading}>Return Information</h2>
-          <ReturnRequestSection orderId={order.id} deliveredAt={deliveredAt} />
+          <ReturnRequestSection
+            orderId={order.id}
+            deliveredAt={deliveredAt}
+            nonReturnable={!!order.hasNonReturnableItems}
+          />
         </section>
       )}
     </div>

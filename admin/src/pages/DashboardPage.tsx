@@ -90,6 +90,19 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {!!stats?.refundPendingCount && (
+        <Link to="/orders?status=REFUND_PENDING" className={styles.refundBanner}>
+          <AlertStatIcon />
+          <span>
+            <strong>
+              {stats.refundPendingCount} refund{stats.refundPendingCount === 1 ? '' : 's'} pending
+            </strong>{' '}
+            — cancelled or returned orders still marked paid. Customers were promised their refund within 7 days.
+          </span>
+          <span className={styles.refundBannerCta}>Review →</span>
+        </Link>
+      )}
+
       <div className={styles.statsGrid}>
         <Link to="/orders" className={styles.statCard}>
           <span className={styles.statIcon}>
@@ -118,7 +131,7 @@ export function DashboardPage() {
             <p className={styles.statValue}>{stats?.toFulfillCount ?? '—'}</p>
           </div>
         </Link>
-        <Link to="/orders?status=RETURN_REQUESTED" className={styles.statCard}>
+        <Link to="/orders?status=RETURN_INITIATED" className={styles.statCard}>
           <span className={`${styles.statIcon} ${styles.statIconDanger}`}>
             <ReturnStatIcon />
           </span>

@@ -29,15 +29,17 @@ import {
   assertManualTransitionAllowed,
   ORDER_STATUS_TO_LEGACY_STATUS,
   STOCK_RESTORABLE_ORDER_STATUSES,
+  REFUND_TIMELINE_DAYS,
 } from '../utils/orderStatus.js';
-import { restoreStockForOrderTx } from '../repositories/reservations.repository.js';
+import { restoreStockForOrderTx, hasRestorableStock } from '../repositories/reservations.repository.js';
 import { NotFoundError, AppError } from '../utils/AppError.js';
 import { enqueueEmail } from '../services/emailService.js';
 
 // Only order_status values with a real customer-facing template — a manual
-// override to DELAYED or RETURNED (no template exists, and the spec's own
-// §10 notification list doesn't call for one) is a silent, email-free
-// change. "Do not send multiple notifications for the same status" is
+// override to DELAYED (no template exists, and the spec's own §10
+// notification list doesn't call for one) is a silent, email-free change.
+// RETURNED sends the same "we've received your return" email as a
+// courier-confirmed return. "Do not send multiple notifications for the same status" is
 // enforced by the caller checking hasOrderStatusHistoryEntry BEFORE writing
 // the new history row, not here.
 const NOTIFY_TEMPLATE_FOR_STATUS = {
@@ -46,6 +48,7 @@ const NOTIFY_TEMPLATE_FOR_STATUS = {
   CANCELLED: 'ORDER_CANCELLED',
   DELIVERY_FAILED: 'ORDER_DELIVERY_FAILED',
   RETURN_INITIATED: 'ORDER_RETURN_INITIATED',
+  RETURNED: 'RETURN_RECEIVED',
 };
 
 async function notifyStatusChangeIfNew(order, status, alreadyNotified) {
@@ -55,6 +58,7 @@ async function notifyStatusChangeIfNew(order, status, alreadyNotified) {
     orderId: order.id,
     contactName: order.contact_name,
     orderNumber: order.order_number,
+    refundDays: REFUND_TIMELINE_DAYS,
   });
 }
 
@@ -131,6 +135,9 @@ async function loadOrderDto(orderId) {
       findInvoicePrints(order.id),
       findReturnRequestByOrderId(order.id),
     ]);
+  // Returned items go back on sale only when admin says so (after quality
+  // check) — see restock() below.
+  const canRestock = order.order_status === 'RETURNED' && (await hasRestorableStock(order.id));
   const trackingEvents = shipment ? await findTrackingEventsByShipmentId(shipment.id) : [];
   const reversePickup = returnRequest ? await findReversePickupByReturnRequestId(returnRequest.id) : null;
   return toOrderDto(
@@ -144,12 +151,14 @@ async function loadOrderDto(orderId) {
       canPrintInvoice: order.payment_status === 'PAID',
       invoiceNumber: order.invoice_number,
       invoicePrintCount: invoicePrints.length,
+      canRestock,
       returnRequest: returnRequest
         ? {
             id: returnRequest.id,
             reason: returnRequest.reason,
             note: returnRequest.note,
             videoUrl: returnRequest.video_url,
+            photoUrls: returnRequest.photo_urls ?? [],
             status: returnRequest.status,
             createdAt: returnRequest.created_at,
             resolvedAt: returnRequest.resolved_at,
@@ -286,6 +295,41 @@ export async function markRefunded(req, res, next) {
       );
     });
 
+    await enqueueEmail(existing.contact_email, 'REFUND_ISSUED', {
+      orderId: existing.id,
+      contactName: existing.contact_name,
+      orderNumber: existing.order_number,
+      amount: existing.total_amount,
+      reference: reference ?? null,
+      isReturn: existing.order_status === 'RETURNED',
+    });
+
+    res.json({ order: await loadOrderDto(existing.id) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// "Add back to stock" for a returned order, once the piece has passed
+// quality check. One-time: restoreStockForOrderTx releases the reservations
+// it restocks, so a second call finds nothing to add.
+export async function restock(req, res, next) {
+  try {
+    const existing = await findOrderById(req.params.id);
+    if (!existing) throw new NotFoundError('Order not found');
+    if (existing.order_status !== 'RETURNED') {
+      throw new AppError(400, 'Only a returned order can be added back to stock');
+    }
+    if (!(await hasRestorableStock(existing.id))) {
+      throw new AppError(400, "This order's items have already been added back to stock");
+    }
+    await withTransaction(async (client) => {
+      await restoreStockForOrderTx(client, existing.id);
+      await insertOrderStatusHistoryTx(client, existing.id, existing.order_status, 'Returned items added back to stock', {
+        actor: req.admin.id,
+        source: 'ADMIN',
+      });
+    });
     res.json({ order: await loadOrderDto(existing.id) });
   } catch (err) {
     next(err);
