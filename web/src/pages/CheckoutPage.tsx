@@ -9,6 +9,8 @@ import { submitCheckout } from '../api/checkout';
 import { simulatePayment } from '../api/payments';
 import { launchCashfreeCheckout } from '../features/checkout/cashfree';
 import { applyCoupon } from '../api/coupons';
+import { checkDeliveryPincode } from '../api/delivery';
+import { PINCODE_PATTERN } from '../hooks/usePincodeCheck';
 import { CheckoutAddressCard } from '../features/checkout/CheckoutAddressCard';
 import { CheckoutOrderSummary } from '../features/checkout/CheckoutOrderSummary';
 import { StepIndicator } from '../features/checkout/StepIndicator';
@@ -92,6 +94,24 @@ export function CheckoutPage() {
 
   const addresses = addressesData?.addresses ?? [];
 
+  // Delivery check for the selected address — the backend refuses checkout
+  // for a pincode the courier can't serve, so say so up front and keep
+  // "Proceed to Payment" disabled rather than letting the customer hit that
+  // error. Unknown (courier unreachable) doesn't block.
+  const selectedPincode = addresses.find((a) => a.id === selectedAddressId)?.pincode ?? null;
+  const { data: pincodeCheck } = useQuery({
+    queryKey: ['delivery-pincode', selectedPincode],
+    queryFn: () => checkDeliveryPincode(selectedPincode as string),
+    enabled: !!selectedPincode && PINCODE_PATTERN.test(selectedPincode),
+    staleTime: 10 * 60 * 1000,
+  });
+  const undeliverableMessage =
+    selectedPincode && !PINCODE_PATTERN.test(selectedPincode)
+      ? `This address has an invalid pincode (${selectedPincode}). Please edit the address and enter a valid 6-digit pincode.`
+      : pincodeCheck && pincodeCheck.pincode === selectedPincode && pincodeCheck.serviceable === false
+        ? `Sorry, we don't deliver to pincode ${selectedPincode} yet. Please choose a different delivery address.`
+        : null;
+
   // Seed the selection from the customer's default (or most recent) saved
   // address the first time addresses load — a one-time seed tracked by this
   // ref rather than by `selectedAddressId` being null, since deleting the
@@ -122,6 +142,13 @@ export function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
+
+  // An error from a previous "Proceed to Payment" (e.g. the server refusing
+  // the old address) mustn't stick around once a different address is picked.
+  useEffect(() => {
+    setCheckoutError(null);
+    setStatusMessage('');
+  }, [selectedAddressId]);
 
   // Mobile sticky payment bar must never sit on top of the footer — hide it
   // once the footer scrolls into view (same pattern as CartPage).
@@ -442,7 +469,7 @@ export function CheckoutPage() {
 
   const isPlacingOrder =
     checkoutMutation.isPending || payMutation.isPending || createAddressMutation.isPending || updateAddressMutation.isPending;
-  const canPlaceOrder = selectedAddressId !== null;
+  const canPlaceOrder = selectedAddressId !== null && !undeliverableMessage;
 
   return (
     <div className={styles.page}>
@@ -463,7 +490,7 @@ export function CheckoutPage() {
             onDeleteAddress={(id) => deleteAddressMutation.mutateAsync(id)}
             onSetDefault={(id) => updateAddressMutation.mutate({ id, input: { isDefault: true } })}
             isDeletingAddress={deleteAddressMutation.isPending}
-            addressError={checkoutError}
+            addressError={checkoutError ?? undeliverableMessage}
             contactEmail={contactEmail}
             onContactEmailChange={setContactEmail}
             emailError={emailError}
@@ -495,7 +522,7 @@ export function CheckoutPage() {
               setCouponError(null);
               setStatusMessage('Coupon removed.');
             }}
-            errorMessage={checkoutError}
+            errorMessage={checkoutError ?? undeliverableMessage}
             onPlaceOrder={handlePlaceOrder}
             isPlacingOrder={isPlacingOrder}
             canPlaceOrder={canPlaceOrder}

@@ -8,6 +8,7 @@ import { env } from './config/env.js';
 import { createSessionMiddleware } from './config/session.js';
 import { healthRouter } from './routes/health.routes.js';
 import { contactRouter } from './routes/contact.routes.js';
+import { deliveryRouter } from './routes/delivery.routes.js';
 import { blogRouter } from './routes/blog.routes.js';
 import { adminAuthRouter } from './routes/adminAuth.routes.js';
 import { otpRouter } from './routes/otp.routes.js';
@@ -94,6 +95,7 @@ export function createApp() {
 
   app.use('/api/v1', healthRouter);
   app.use('/api/v1/contact', contactRouter);
+  app.use('/api/v1/delivery', deliveryRouter);
 
   // Public catalog (products/categories/collections/search): deliberately
   // NOT behind the customer session middleware — these are GET-only, and

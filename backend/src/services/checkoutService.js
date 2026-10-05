@@ -16,6 +16,7 @@ import { computeVariantPricing } from './pricingService.js';
 import { loadActiveRuleSet } from './pricingRuleResolver.js';
 import { validateCoupon } from './couponService.js';
 import { calculateDeliveryEstimate } from './deliveryEstimateService.js';
+import { checkDeliveryPincode } from './deliveryCheckService.js';
 
 function round2(n) {
   return Math.round(n * 100) / 100;
@@ -45,6 +46,18 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
   if (!address || address.user_id !== userId) throw new NotFoundError('Address not found');
 
   if (items.length === 0) throw new AppError(400, 'No items to checkout');
+
+  // Refuse before any stock is reserved or payment started if the courier
+  // can't deliver to this pincode (the BD0022 situation). serviceable is
+  // null when the courier couldn't be reached — that doesn't block the order,
+  // so a Delhivery outage never stops checkout.
+  const { serviceable } = await checkDeliveryPincode(address.pincode);
+  if (serviceable === false) {
+    throw new AppError(
+      400,
+      `Sorry, we don't deliver to pincode ${address.pincode} yet. Please choose a different delivery address.`,
+    );
+  }
 
   // Ascending product_id, then variantId lock order (plan §11) — every
   // checkout transaction acquires row locks in the same order, so two

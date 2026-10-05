@@ -2,7 +2,7 @@ import { query } from '../config/db.js';
 
 export async function listAllSections() {
   const { rows } = await query(
-    `SELECT id, type, heading, is_enabled, sort_order FROM homepage_sections ORDER BY sort_order`,
+    `SELECT id, type, heading, is_enabled, sort_order FROM homepage_sections ORDER BY sort_order, created_at`,
   );
   return rows;
 }
@@ -50,16 +50,19 @@ export async function deleteSection(id) {
   await query('DELETE FROM homepage_sections WHERE id = $1', [id]);
 }
 
-export async function updateSectionSortOrder(oldSortOrder, newSortOrder) {
-  await query('UPDATE homepage_sections SET sort_order = $2 WHERE sort_order = $1', [
-    oldSortOrder,
-    newSortOrder,
-  ]);
+// Renumbers sections 0..n-1 in the given id order, in one statement.
+export async function setSectionSortOrders(ids) {
+  await query(
+    `UPDATE homepage_sections s SET sort_order = o.position - 1, updated_at = now()
+     FROM unnest($1::uuid[]) WITH ORDINALITY AS o(id, position)
+     WHERE s.id = o.id`,
+    [ids],
+  );
 }
 
 export async function findItemsBySectionId(sectionId) {
   const { rows } = await query(
-    'SELECT * FROM homepage_items WHERE section_id = $1 ORDER BY sort_order',
+    'SELECT * FROM homepage_items WHERE section_id = $1 ORDER BY sort_order, created_at',
     [sectionId],
   );
   return rows;
@@ -158,9 +161,12 @@ export async function deleteItem(id) {
   await query('DELETE FROM homepage_items WHERE id = $1', [id]);
 }
 
-export async function updateItemSortOrder(sectionId, oldSortOrder, newSortOrder) {
+// Renumbers a section's items 0..n-1 in the given id order.
+export async function setItemSortOrders(sectionId, ids) {
   await query(
-    'UPDATE homepage_items SET sort_order = $3 WHERE section_id = $1 AND sort_order = $2',
-    [sectionId, oldSortOrder, newSortOrder],
+    `UPDATE homepage_items i SET sort_order = o.position - 1
+     FROM unnest($2::uuid[]) WITH ORDINALITY AS o(id, position)
+     WHERE i.section_id = $1 AND i.id = o.id`,
+    [sectionId, ids],
   );
 }

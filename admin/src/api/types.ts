@@ -787,7 +787,8 @@ export type HomepageSectionType =
   | 'TRUST_STRIP'
   | 'CAMPAIGN_BANNERS'
   | 'CATEGORY_PRODUCTS'
-  | 'COLLECTION_SHOWCASE';
+  | 'COLLECTION_SHOWCASE'
+  | 'SHOP_BY_BOND';
 
 export type HeroRedirectType = 'NONE' | 'CATEGORY' | 'COLLECTION' | 'PRODUCT';
 

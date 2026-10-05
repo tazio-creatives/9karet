@@ -62,6 +62,52 @@
   color: var(--color-text);
 }
 
+.pincodeRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pincodeRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pincodeCheck {
+  flex-shrink: 0;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-burgundy);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-burgundy);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pincodeCheck:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pincodeOk,
+.pincodeBad,
+.pincodeNote {
+  margin: calc(var(--space-2) * -1) 0 0;
+  font-size: var(--text-xs);
+}
+
+.pincodeOk {
+  color: #2f6b2f;
+}
+
+.pincodeBad {
+  color: var(--color-burgundy);
+}
+
+.pincodeNote {
+  color: var(--color-text-muted);
+}
+
 .defaultCheckboxRow {
   display: flex;
   align-items: center;

@@ -40,6 +40,7 @@ const SECTION_TYPES: HomepageSectionType[] = [
   'CAMPAIGN_BANNERS',
   'CATEGORY_PRODUCTS',
   'COLLECTION_SHOWCASE',
+  'SHOP_BY_BOND',
 ];
 
 // Friendly names matching the actual storefront headings — the raw type
@@ -61,6 +62,7 @@ const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
   CAMPAIGN_BANNERS: 'Campaign Banners',
   CATEGORY_PRODUCTS: 'Category Products',
   COLLECTION_SHOWCASE: 'Full Width Banner with Products',
+  SHOP_BY_BOND: 'Shop by Bond',
 };
 
 function imageForItem(item: HomepageItem): string | null {
@@ -136,7 +138,7 @@ export function HomepagePage() {
     },
   });
   const reorderSectionsMutation = useMutation({
-    mutationFn: (order: number[]) => reorderSections(order),
+    mutationFn: (order: string[]) => reorderSections(order),
     onSuccess: invalidate,
   });
 
@@ -160,7 +162,7 @@ export function HomepagePage() {
     onSuccess: invalidate,
   });
   const reorderItemsMutation = useMutation({
-    mutationFn: ({ sectionId, order }: { sectionId: string; order: number[] }) => reorderItems(sectionId, order),
+    mutationFn: ({ sectionId, order }: { sectionId: string; order: string[] }) => reorderItems(sectionId, order),
     onSuccess: invalidate,
   });
 
@@ -170,7 +172,7 @@ export function HomepagePage() {
   function moveSection(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= sections.length) return;
-    const order = sections.map((s) => s.sortOrder);
+    const order = sections.map((s) => s.id);
     [order[index], order[target]] = [order[target], order[index]];
     reorderSectionsMutation.mutate(order);
   }
@@ -178,7 +180,7 @@ export function HomepagePage() {
   function moveItem(section: HomepageSection, index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= section.items.length) return;
-    const order = section.items.map((it) => it.sortOrder);
+    const order = section.items.map((it) => it.id);
     [order[index], order[target]] = [order[target], order[index]];
     reorderItemsMutation.mutate({ sectionId: section.id, order });
   }
@@ -304,6 +306,15 @@ export function HomepagePage() {
                     small eyebrow line above the title, Subheading as the description below it, and CTA Label/desktop
                     &amp; mobile images are used as the banner's button text and background. Up to 10 most recently
                     published products in that collection show automatically underneath.
+                  </p>
+                )}
+                {section.type === 'SHOP_BY_BOND' && (
+                  <p className={sharedStyles.empty}>
+                    Add one item per tile (e.g. Mother, Husband, Wife, Sister, Brother, Friends) — six fill one row on
+                    desktop and two rows of three on mobile. Heading is the label under the photo. Upload a portrait
+                    photo (about 3:4, e.g. 600×800) as "Banner image — desktop", and pick where the tile opens with
+                    "Link to Collection" (e.g. a "Gifts for Mother" collection) or Category / CTA URL. The section
+                    heading above (e.g. "Shop by Bond") is shown as the title on the storefront.
                   </p>
                 )}
                 {section.items.map((item, itemIndex) =>

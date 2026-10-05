@@ -1,4 +1,11 @@
-import { findOrderById } from '../repositories/orders.repository.js';
+import { withTransaction } from '../config/db.js';
+import {
+  findOrderById,
+  updateOrderStatusTx,
+  updateOrderStatusFieldsTx,
+  insertOrderStatusHistoryTx,
+} from '../repositories/orders.repository.js';
+import { ORDER_STATUS_TO_LEGACY_STATUS } from '../utils/orderStatus.js';
 import { findReturnRequestByOrderId, updateReturnRequestStatus } from '../repositories/returnRequests.repository.js';
 import { findReversePickupByReturnRequestId } from '../repositories/shipments.repository.js';
 import { updateReturnRequestStatusSchema } from '../validators/orders.validators.js';
@@ -68,7 +75,28 @@ export async function updateStatus(req, res, next) {
     }
 
     const { status } = updateReturnRequestStatusSchema.parse(req.body);
-    await updateReturnRequestStatus(existing.id, status, req.admin.id);
+    await withTransaction(async (client) => {
+      await updateReturnRequestStatus(existing.id, status, req.admin.id);
+      if (status === 'REJECTED') {
+        // A rejected return means the customer keeps the piece — the order
+        // goes back to DELIVERED instead of sitting in RETURN_INITIATED.
+        const revert = order.order_status === 'RETURN_INITIATED';
+        if (revert) {
+          await updateOrderStatusTx(client, order.id, ORDER_STATUS_TO_LEGACY_STATUS.DELIVERED);
+          await updateOrderStatusFieldsTx(client, order.id, { orderStatus: 'DELIVERED' });
+        }
+        const historyStatus = revert ? 'DELIVERED' : order.order_status;
+        await insertOrderStatusHistoryTx(client, order.id, historyStatus, 'Return request rejected by admin', {
+          actor: req.admin.id,
+          source: 'ADMIN',
+        });
+      } else {
+        await insertOrderStatusHistoryTx(client, order.id, order.order_status, 'Return request approved by admin', {
+          actor: req.admin.id,
+          source: 'ADMIN',
+        });
+      }
+    });
     const updated = await findReturnRequestByOrderId(order.id);
     res.json({ returnRequest: toReturnRequestDto(updated) });
   } catch (err) {

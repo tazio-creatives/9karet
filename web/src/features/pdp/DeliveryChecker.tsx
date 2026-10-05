@@ -1,19 +1,19 @@
 import { useState, type FormEvent } from 'react';
+import { usePincodeCheck } from '../../hooks/usePincodeCheck';
 import styles from './DeliveryChecker.module.css';
 
-// India Post PIN codes are 6 digits and never start with 0.
-const PINCODE_PATTERN = /^[1-9][0-9]{5}$/;
-
-type Status = 'idle' | 'invalid' | 'valid';
-
-export function DeliveryChecker({ isBackordered = false }: { isBackordered?: boolean }) {
+// Says only whether we deliver to the pincode — no delivery timeframe, since
+// most pieces are made to order and the timeline varies per order.
+export function DeliveryChecker() {
   const [pincode, setPincode] = useState('');
-  const [status, setStatus] = useState<Status>('idle');
+  const { state, check, reset } = usePincodeCheck();
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus(PINCODE_PATTERN.test(pincode) ? 'valid' : 'invalid');
+    void check(pincode);
   }
+
+  const result = state.status === 'done' ? state.result : null;
 
   return (
     <div className={styles.card}>
@@ -41,22 +41,27 @@ export function DeliveryChecker({ isBackordered = false }: { isBackordered?: boo
             value={pincode}
             onChange={(e) => {
               setPincode(e.target.value.replace(/\D/g, ''));
-              setStatus('idle');
+              reset();
             }}
             aria-label="Pincode"
-            aria-invalid={status === 'invalid'}
+            aria-invalid={state.status === 'invalid'}
           />
         </div>
-        <button type="submit" className={styles.checkButton}>
-          Check
+        <button type="submit" className={styles.checkButton} disabled={state.status === 'checking'}>
+          {state.status === 'checking' ? 'Checking…' : 'Check'}
         </button>
       </form>
-      {status === 'invalid' && <p className={styles.error}>Please enter a valid 6-digit pincode.</p>}
-      {status === 'valid' && (
+      {state.status === 'invalid' && <p className={styles.error}>Please enter a valid 6-digit pincode.</p>}
+      {state.status === 'error' && <p className={styles.error}>{state.message}</p>}
+      {result?.serviceable === true && <p className={styles.success}>Delivery available to {result.pincode}.</p>}
+      {result?.serviceable === false && (
+        <p className={styles.error}>
+          Sorry, we don't deliver to {result.pincode} yet. Please try another pincode or contact us for help.
+        </p>
+      )}
+      {result?.serviceable === null && (
         <p className={styles.success}>
-          {isBackordered
-            ? 'Made to order — estimated delivery in 7–10 working days across India.'
-            : 'Estimated delivery in 3–7 business days across India.'}
+          We couldn't check delivery to {result.pincode} right now. Please try again in a moment.
         </p>
       )}
     </div>

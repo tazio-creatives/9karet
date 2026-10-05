@@ -46,7 +46,7 @@ export function deleteSection(id: string) {
   return apiFetch<void>(`/admin/homepage/sections/${id}`, { method: 'DELETE' });
 }
 
-export function reorderSections(order: number[]) {
+export function reorderSections(order: string[]) {
   return apiFetch<{ sections: HomepageSection[] }>('/admin/homepage/sections/reorder', {
     method: 'PATCH',
     body: JSON.stringify({ order }),
@@ -71,7 +71,7 @@ export function deleteItem(id: string) {
   return apiFetch<void>(`/admin/homepage/items/${id}`, { method: 'DELETE' });
 }
 
-export function reorderItems(sectionId: string, order: number[]) {
+export function reorderItems(sectionId: string, order: string[]) {
   return apiFetch<{ items: HomepageItem[] }>(`/admin/homepage/sections/${sectionId}/items/reorder`, {
     method: 'PATCH',
     body: JSON.stringify({ order }),

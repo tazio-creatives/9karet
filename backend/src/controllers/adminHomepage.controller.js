@@ -12,14 +12,14 @@ import {
   insertSection,
   updateSection as updateSectionRow,
   deleteSection as deleteSectionRow,
-  updateSectionSortOrder,
+  setSectionSortOrders,
   findItemsBySectionId,
   findItemById,
   findMaxItemSortOrder,
   insertItem,
   updateItem as updateItemRow,
   deleteItem as deleteItemRow,
-  updateItemSortOrder,
+  setItemSortOrders,
 } from '../repositories/homepageAdmin.repository.js';
 import { invalidatePageCache } from '../repositories/pageCache.repository.js';
 import { processAndStoreHomepageImage } from '../services/homepageImageService.js';
@@ -157,18 +157,22 @@ export async function deleteSection(req, res, next) {
   }
 }
 
-// Two-phase remap through a temporary offset range — see
-// productImages.controller.js's reorder() for why a naive single-pass
-// remap of an arbitrary permutation can transiently collide two rows.
+// A reorder must list every current row exactly once — a stale admin tab
+// (someone else added/deleted a section meanwhile) gets a clear error
+// instead of a half-applied order.
+function assertSameIds(order, rows, label) {
+  const current = new Set(rows.map((r) => r.id));
+  if (order.length !== current.size || new Set(order).size !== order.length || !order.every((id) => current.has(id))) {
+    throw new AppError(409, `The homepage ${label} changed since this page loaded — refresh and try again.`);
+  }
+}
+
 export async function reorderSections(req, res, next) {
   try {
     const { order } = reorderSchema.parse(req.body);
-    for (let i = 0; i < order.length; i++) {
-      await updateSectionSortOrder(order[i], -1000 - i);
-    }
-    for (let i = 0; i < order.length; i++) {
-      await updateSectionSortOrder(-1000 - i, i);
-    }
+    const existing = await listAllSections();
+    assertSameIds(order, existing, 'sections');
+    await setSectionSortOrders(order);
     await invalidateHome();
     const sections = await listAllSections();
     res.json({ sections: sections.map((s) => toSectionDto(s)) });
@@ -235,12 +239,8 @@ export async function reorderItems(req, res, next) {
     if (!section) throw new NotFoundError('Section not found');
 
     const { order } = reorderSchema.parse(req.body);
-    for (let i = 0; i < order.length; i++) {
-      await updateItemSortOrder(sectionId, order[i], -1000 - i);
-    }
-    for (let i = 0; i < order.length; i++) {
-      await updateItemSortOrder(sectionId, -1000 - i, i);
-    }
+    assertSameIds(order, await findItemsBySectionId(sectionId), 'items');
+    await setItemSortOrders(sectionId, order);
     await invalidateHome();
     const items = await findItemsBySectionId(sectionId);
     res.json({ items: items.map(toItemDto) });

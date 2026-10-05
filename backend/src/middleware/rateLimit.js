@@ -42,6 +42,16 @@ export const contactRateLimiter = rateLimit({
   message: { error: { message: 'Too many messages sent from this network. Please try again later or email us directly.' } },
 });
 
+// Public pincode delivery check — each uncached pincode is a live Delhivery
+// API call, so this caps how fast one network can probe new pincodes.
+export const pincodeCheckRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { message: 'Too many pincode checks, please try again in a few minutes.' } },
+});
+
 export const goldRateSyncRateLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,

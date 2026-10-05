@@ -1,5 +1,6 @@
 import type { HomepageSection as HomepageSectionData } from '../../api/types';
 import { BentoCard } from './BentoCard';
+import { BondGrid } from './BondGrid';
 import { CampaignBanners } from './CampaignBanners';
 import { CategoryProductRow } from './CategoryProductRow';
 import { CategoryShowcase } from './CategoryShowcase';
@@ -142,6 +143,14 @@ export function HomepageSection({ section, alternate }: Props) {
 
     case 'NEW_ARRIVALS':
       return <NewArrivalsSection items={section.items} />;
+
+    case 'SHOP_BY_BOND':
+      return (
+        <section className={`${sectionClass} ${styles.bond}`}>
+          <h2 className={styles.heading}>{section.heading || 'Shop by Bond'}</h2>
+          <BondGrid items={section.items} />
+        </section>
+      );
 
     // BEST_SELLERS
     default:

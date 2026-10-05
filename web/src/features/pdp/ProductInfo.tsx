@@ -282,7 +282,7 @@ export function ProductInfo({
         <DeliveryEstimateDetail estimate={product.deliveryEstimate} inline />
       </div>
 
-      {product.showDeliveryChecker && <DeliveryChecker isBackordered={isOutOfStock} />}
+      {product.showDeliveryChecker && <DeliveryChecker />}
 
       {/* Return and Refund Policy: an unboxing video is mandatory for any
           return — said here, before purchase, not only after delivery. */}

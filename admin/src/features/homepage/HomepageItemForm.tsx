@@ -21,6 +21,7 @@ const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
   COLLECTION_SHOWCASE: 'Heading (shown on the storefront as a small eyebrow line above the banner title)',
   NEW_ARRIVALS: 'Heading (shown on the storefront as the banner title)',
   CATEGORY_PRODUCTS: 'Heading (not used for this section type — see note above)',
+  SHOP_BY_BOND: 'Heading (the label shown under the photo, e.g. "Mother")',
 };
 
 interface HomepageItemFormProps {

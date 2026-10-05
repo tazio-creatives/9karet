@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import type { Address, AddressInput, AddressType } from '../../api/types';
 import { ApiError } from '../../api/client';
+import { PINCODE_PATTERN, usePincodeCheck } from '../../hooks/usePincodeCheck';
 import styles from './AddressForm.module.css';
 
 interface AddressFormProps {
@@ -25,10 +26,45 @@ export function AddressForm({ initial, onSubmit, onCancel, submitLabel = 'Save A
   const [landmark, setLandmark] = useState(initial?.landmark ?? '');
   const [city, setCity] = useState(initial?.city ?? '');
   const [state, setState] = useState(initial?.state ?? '');
-  const [pincode, setPincode] = useState(initial?.pincode ?? '');
+  // Older saved addresses can carry stray characters (e.g. "673019`") —
+  // keep digits only so editing one saves a clean pincode.
+  const [pincode, setPincode] = useState((initial?.pincode ?? '').replace(/\D/g, '').slice(0, 6));
   const [isDefault, setIsDefault] = useState(initial?.isDefault ?? false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pincodeCheck = usePincodeCheck();
+  const pincodeResult = pincodeCheck.state.status === 'done' ? pincodeCheck.state.result : null;
+
+  // Last city/state we prefilled — lets a new pincode replace our own
+  // earlier prefill without ever overwriting what the customer typed.
+  const autofilled = useRef({ city: '', state: '' });
+
+  // Checks delivery (and prefills City/State) as soon as a full pincode is
+  // typed; the Check button re-runs it on demand. Informational only —
+  // saving is never blocked.
+  async function runPincodeCheck(code: string) {
+    const result = await pincodeCheck.check(code);
+    if (!result) return;
+    if (result.city) {
+      const next = result.city;
+      const previous = autofilled.current.city;
+      setCity((current) => (current.trim() === '' || current === previous ? next : current));
+      autofilled.current.city = next;
+    }
+    if (result.state) {
+      const next = result.state;
+      const previous = autofilled.current.state;
+      setState((current) => (current.trim() === '' || current === previous ? next : current));
+      autofilled.current.state = next;
+    }
+  }
+
+  function handlePincodeChange(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 6);
+    setPincode(digits);
+    if (PINCODE_PATTERN.test(digits)) void runPincodeCheck(digits);
+    else pincodeCheck.reset();
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -100,7 +136,22 @@ export function AddressForm({ initial, onSubmit, onCancel, submitLabel = 'Save A
       <div className={styles.grid3}>
         <label className={styles.field}>
           PIN Code
-          <input value={pincode} onChange={(e) => setPincode(e.target.value)} required />
+          <span className={styles.pincodeRow}>
+            <input
+              value={pincode}
+              onChange={(e) => handlePincodeChange(e.target.value)}
+              inputMode="numeric"
+              required
+            />
+            <button
+              type="button"
+              className={styles.pincodeCheck}
+              onClick={() => void runPincodeCheck(pincode)}
+              disabled={pincodeCheck.state.status === 'checking'}
+            >
+              {pincodeCheck.state.status === 'checking' ? 'Checking…' : 'Check'}
+            </button>
+          </span>
         </label>
         <label className={styles.field}>
           City
@@ -111,6 +162,22 @@ export function AddressForm({ initial, onSubmit, onCancel, submitLabel = 'Save A
           <input value={state} onChange={(e) => setState(e.target.value)} required />
         </label>
       </div>
+
+      {pincodeCheck.state.status === 'invalid' && (
+        <p className={styles.pincodeBad}>Please enter a valid 6-digit pincode.</p>
+      )}
+      {pincodeCheck.state.status === 'error' && <p className={styles.pincodeBad}>{pincodeCheck.state.message}</p>}
+      {pincodeResult?.serviceable === true && (
+        <p className={styles.pincodeOk}>✓ We deliver to {pincodeResult.pincode}.</p>
+      )}
+      {pincodeResult?.serviceable === false && (
+        <p className={styles.pincodeBad}>
+          Sorry, we don't deliver to {pincodeResult.pincode} yet. Please use another address or contact us for help.
+        </p>
+      )}
+      {pincodeResult?.serviceable === null && (
+        <p className={styles.pincodeNote}>We couldn't check delivery to {pincodeResult.pincode} right now.</p>
+      )}
 
       <label className={styles.defaultCheckboxRow}>
         <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />

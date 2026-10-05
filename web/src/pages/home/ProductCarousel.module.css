@@ -17,12 +17,12 @@
 
 .newArrivalsTitle {
   margin: 0;
-  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-  font-size: 28px;
-  font-weight: 600;
   line-height: 1;
-  color: #251713;
   text-align: left;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
 }
 
 .viewAllLink {

@@ -55,7 +55,13 @@
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
-.checkButton:hover {
+.checkButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+.checkButton:hover:not(:disabled) {
   background: var(--color-burgundy-dark);
   transform: translateY(-1px);
 }

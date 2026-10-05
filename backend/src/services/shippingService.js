@@ -23,6 +23,7 @@ import {
   hasOrderStatusHistoryEntry,
 } from '../repositories/orders.repository.js';
 import { findReturnRequestById, completeReturnRequestTx } from '../repositories/returnRequests.repository.js';
+import { ORDER_STATUS_TO_LEGACY_STATUS } from '../utils/orderStatus.js';
 import { enqueueEmail } from './emailService.js';
 import { restoreStockForOrderTx } from '../repositories/reservations.repository.js';
 
@@ -367,8 +368,20 @@ async function applyReversePickupStatus(shipment, status, { source, note, raw = 
     // The item is physically back with us — this is what actually
     // completes the return, replacing the old fully-manual "admin sets
     // order_status to RETURNED" path with a courier-confirmed signal.
+    // The order itself moves to RETURNED at the same moment, so the
+    // customer's order page and admin's list both show the return as done.
     if (status === 'REVERSE_RECEIVED') {
       await completeReturnRequestTx(client, shipment.return_request_id);
+      const order = await findOrderById(shipment.order_id);
+      if (order && order.order_status === 'RETURN_INITIATED') {
+        await updateOrderStatusTx(client, order.id, ORDER_STATUS_TO_LEGACY_STATUS.RETURNED);
+        await updateOrderStatusFieldsTx(client, order.id, { orderStatus: 'RETURNED' });
+        // Tracking events use MANUAL for admin-driven updates; order history
+        // calls that ADMIN.
+        await insertOrderStatusHistoryTx(client, order.id, 'RETURNED', 'Returned item received back at the warehouse', {
+          source: source === 'MANUAL' ? 'ADMIN' : source,
+        });
+      }
     }
   });
 }

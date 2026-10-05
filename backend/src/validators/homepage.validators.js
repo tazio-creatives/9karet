@@ -21,6 +21,9 @@ const SECTION_TYPES = [
   // products (two rows of 5 on desktop) — distinct from COLLECTION_CARDS
   // (a 2-3 tile banner grid with no products at all).
   'COLLECTION_SHOWCASE',
+  // Portrait photo tiles with a label underneath (Mother, Wife, Brother…),
+  // each linking to a collection/category — 3 per row on mobile, 6 on desktop.
+  'SHOP_BY_BOND',
 ];
 
 export const createSectionSchema = z.object({
@@ -34,8 +37,11 @@ export const updateSectionSchema = z.object({
   isEnabled: z.boolean().optional(),
 });
 
+// The complete list of section (or item) ids in their new order. Ids, not
+// sort_order values: two rows sharing a sort_order made the old value-based
+// swap move both rows at once and scramble the list.
 export const reorderSchema = z.object({
-  order: z.array(z.number().int()).min(1),
+  order: z.array(z.string().uuid()).min(1),
 });
 
 // Hero Banner-only fields (every other section type's admin form never sends

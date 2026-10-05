@@ -5,7 +5,7 @@ import { listProducts } from './products.repository.js';
 export async function getEnabledSectionsWithItems() {
   const { rows: sections } = await query(
     `SELECT id, type, heading, sort_order FROM homepage_sections
-     WHERE is_enabled = true ORDER BY sort_order`,
+     WHERE is_enabled = true ORDER BY sort_order, created_at`,
   );
   if (sections.length === 0) return [];
 
@@ -39,7 +39,7 @@ export async function getEnabledSectionsWithItems() {
        LIMIT 1
      ) p_image ON true
      WHERE hi.section_id = ANY($1) AND hi.is_enabled = true
-     ORDER BY hi.section_id, hi.sort_order`,
+     ORDER BY hi.section_id, hi.sort_order, hi.created_at`,
     [sectionIds],
   );
 

@@ -6,10 +6,10 @@
 
 .campaignHeading {
   margin: 0 0 12px;
-  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-  font-size: 28px;
-  font-weight: 600;
-  color: #251713;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
 }
 
 .bannerRow {

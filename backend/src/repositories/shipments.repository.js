@@ -60,7 +60,10 @@ export async function insertShipment({
 // added by the 20260920000000 migration (status not yet terminal).
 export async function findShipmentsPendingTracking() {
   const { rows } = await query(
-    `SELECT * FROM shipments WHERE status NOT IN ('DELIVERED', 'RETURNED', 'CANCELLED')
+    // Finished reverse pickups (received back / cancelled) are terminal too —
+    // REVERSE_PICKUP_FAILED is not, since Delhivery reattempts the pickup.
+    `SELECT * FROM shipments
+     WHERE status NOT IN ('DELIVERED', 'RETURNED', 'CANCELLED', 'REVERSE_RECEIVED', 'REVERSE_PICKUP_CANCELLED')
      ORDER BY last_tracked_at ASC NULLS FIRST`,
   );
   return rows;

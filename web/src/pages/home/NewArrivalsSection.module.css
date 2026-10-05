@@ -93,11 +93,11 @@
 
 .heading {
   margin: 0 0 6px;
-  font-family: var(--font-heading);
-  font-size: 32px;
-  font-weight: 500;
   line-height: 1.15;
-  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
 }
 
 .description {
@@ -235,9 +235,6 @@
     font-size: 28px;
   }
 
-  .heading {
-    font-size: 26px;
-  }
 
   .slide {
     flex: 0 0 clamp(200px, 46%, 260px);
@@ -276,7 +273,6 @@
   }
 
   .heading {
-    font-size: 24px;
     margin-bottom: 5px;
   }
 

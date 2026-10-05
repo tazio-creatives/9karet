@@ -46,9 +46,8 @@
   line-height: 1.25;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Wraps rather than truncating — a long title like "100% Certified
+     Diamonds" takes two lines on narrow tiles instead of being cut with "…". */
 }
 
 .description {
@@ -74,10 +73,12 @@
     display: none;
   }
 
+  /* Exactly two whole tiles per view, so neither is cut at the edge. */
   .item {
-    flex: 0 0 58%;
+    flex: 0 0 50%;
     justify-content: flex-start;
-    padding-inline: 14px;
+    gap: 8px;
+    padding-inline: 10px;
     scroll-snap-align: start;
   }
 

@@ -87,7 +87,7 @@ const EMPTY_FORM: ProductInput = {
   sellingPrice: 0,
   stockQuantity: 0,
   status: 'DRAFT',
-  showDeliveryChecker: false,
+  showDeliveryChecker: true,
   metaTitle: '',
   metaDescription: '',
   metaKeywords: '',
@@ -773,7 +773,7 @@ export function ProductFormPage() {
           <label className={`${sharedStyles.field} ${sharedStyles.checkboxField} ${sharedStyles.formSection}`}>
             <input
               type="checkbox"
-              checked={form.showDeliveryChecker ?? false}
+              checked={form.showDeliveryChecker ?? true}
               onChange={(e) => set('showDeliveryChecker', e.target.checked)}
             />
             Show "Check Delivery &amp; Availability" pincode widget on the product page

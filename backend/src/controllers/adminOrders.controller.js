@@ -324,7 +324,9 @@ export async function updateStatus(req, res, next) {
     // endpoint).
     if (status === 'RETURNED') {
       const returnRequest = await findReturnRequestByOrderId(existing.id);
-      if (returnRequest && returnRequest.status !== 'COMPLETED') {
+      // Only an open/approved request completes — a REJECTED or CANCELLED
+      // one stays as decided, even if the order is later marked RETURNED.
+      if (returnRequest && ['REQUESTED', 'APPROVED'].includes(returnRequest.status)) {
         await updateReturnRequestStatus(returnRequest.id, 'COMPLETED', req.admin.id);
       }
     }

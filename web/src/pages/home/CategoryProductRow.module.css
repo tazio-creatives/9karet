@@ -7,9 +7,9 @@
 .sectionHeading {
   margin: 0 0 20px;
   font-family: var(--font-heading);
-  font-size: 28px;
-  font-weight: 600;
-  color: #251713;
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
 }
 
 .categoryBlock {

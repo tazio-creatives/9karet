@@ -126,7 +126,8 @@ export type HomepageSectionType =
   | 'TRUST_STRIP'
   | 'COLLECTION_SHOWCASE'
   | 'CAMPAIGN_BANNERS'
-  | 'CATEGORY_PRODUCTS';
+  | 'CATEGORY_PRODUCTS'
+  | 'SHOP_BY_BOND';
 
 export interface HomepageSection {
   id: string;

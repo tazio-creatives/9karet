@@ -9,6 +9,7 @@ import { placeholderGradient } from '../../utils/placeholderGradient';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
 import { useIsMobile } from '../../utils/useIsMobile';
 import { DeliveryEstimateCompact } from '../../components/DeliveryEstimate';
+import { useTawkChat } from '../../features/support/useTawkChat';
 import styles from './MyOrdersPage.module.css';
 import mstyles from './MyOrdersPage.mobile.module.css';
 
@@ -115,6 +116,7 @@ function ChevronIcon() {
 
 export function MyOrdersPage() {
   useDocumentTitle('My Orders');
+  useTawkChat();
   const isMobile = useIsMobile();
   return isMobile ? <MobileMyOrders /> : <DesktopMyOrders />;
 }

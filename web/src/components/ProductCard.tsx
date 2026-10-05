@@ -25,6 +25,7 @@ export function ProductCard({
   imageHeight,
   imagePadding = true,
   flat = false,
+  showNewBadge = true,
 }: {
   product: ProductCardType;
   index?: number;
@@ -44,6 +45,8 @@ export function ProductCard({
   // Only CategoryProductGrid (Shop by Category) opts into this; every other
   // caller (PLP, NewArrivals, etc.) keeps the normal card chrome everywhere.
   flat?: boolean;
+  // Hides the "New" tag — the homepage Shop by Category grid turns it off.
+  showNewBadge?: boolean;
 }) {
   const isOutOfStock = product.availableStock <= 0;
   const isLowStock = !isOutOfStock && product.availableStock <= LOW_STOCK_THRESHOLD;
@@ -71,7 +74,7 @@ export function ProductCard({
           />
         )}
         <div className={styles.badges}>
-          {product.isNew && <span className={styles.badgeNew}>New</span>}
+          {showNewBadge && product.isNew && <span className={styles.badgeNew}>New</span>}
           {isOutOfStock && <span className={styles.badgeOut}>Out of Stock</span>}
           {isLowStock && <span className={styles.badgeLow}>Only {product.availableStock} left</span>}
         </div>

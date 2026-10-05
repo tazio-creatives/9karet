@@ -4,6 +4,7 @@ import { fetchOrderById } from '../../api/orders';
 import { OrderDetails } from '../../features/orders/OrderDetails';
 import { OrderSidebar } from '../../features/orders/OrderSidebar';
 import { useDocumentTitle } from '../../utils/useDocumentTitle';
+import { useTawkChat } from '../../features/support/useTawkChat';
 import styles from './OrderDetailPage.module.css';
 
 export function OrderDetailPage() {
@@ -15,6 +16,7 @@ export function OrderDetailPage() {
   });
 
   useDocumentTitle(data ? `Order ${data.order.orderNumber}` : 'Order');
+  useTawkChat({ orderNumber: data?.order.orderNumber, orderStatus: data?.order.orderStatus });
 
   if (isLoading) {
     return (

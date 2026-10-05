@@ -8,23 +8,7 @@
   margin-top: 16px;
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 0 0 12px;
-}
 
-.panelTitle {
-  margin: 0;
-  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: #251713;
-}
 
 .grid {
   display: grid;
@@ -156,19 +140,6 @@
 }
 
 @media (max-width: 639px) {
-  .panelHeader {
-    flex-wrap: nowrap;
-    margin: 0 0 10px;
-  }
-
-  .panelTitle {
-    font-size: 15px;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 4px;

@@ -45,9 +45,6 @@ export function CategoryProductGrid({ panelId, categorySlug, categoryName }: Cat
 
   return (
     <div id={panelId} className={styles.panel} role="region" aria-live="polite" aria-label={`${categoryName} products`}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>{categoryName} Collection</h3>
-      </div>
       {isLoading ? (
         <div className={styles.grid}>
           {Array.from({ length: 6 }).map((_, i) => (
@@ -78,7 +75,7 @@ export function CategoryProductGrid({ panelId, categorySlug, categoryName }: Cat
           <div className={styles.grid}>
             {products.map((product, i) => (
               <div key={product.id} className={styles.item}>
-                <ProductCard product={product} index={i} flat />
+                <ProductCard product={product} index={i} flat showNewBadge={false} />
               </div>
             ))}
           </div>
