@@ -62,6 +62,11 @@ async function createServer() {
   // it yet (plan §13) — cut ~270KB off the JS/CSS/HTML payload per Lighthouse.
   app.use(compression());
 
+  // dist/client/index.html is the raw SSR template (no title/description,
+  // empty #root) — the static middleware below would otherwise serve it
+  // as-is at /index.html, a crawlable titleless duplicate of the homepage.
+  app.get('/index.html', (req, res) => res.redirect(301, '/'));
+
   let vite;
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
