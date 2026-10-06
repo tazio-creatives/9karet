@@ -10,9 +10,9 @@ export interface HeadData {
 }
 
 export const defaultHead: HeadData = {
-  title: 'BOX DIAMONDS — Premium Certified Jewellery',
+  title: 'BOX DIAMONDS | Certified Natural Diamond Jewellery Online',
   description:
-    'Certified natural diamond and gold jewellery, live-priced daily and crafted to order — rings, earrings, necklaces and more.',
+    'Shop certified natural diamond rings, earrings, necklaces, bangles and fine jewellery at BOX DIAMONDS. Premium designs, transparent pricing and trusted quality.',
   canonicalPath: '/',
   jsonLd: [organizationJsonLd()],
 };

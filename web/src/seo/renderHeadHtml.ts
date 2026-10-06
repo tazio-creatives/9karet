@@ -9,8 +9,11 @@ export function renderHeadHtml(head: HeadData): string {
 
   const jsonLdScripts = head.jsonLd
     .map(
-      (entry) =>
-        `<script type="application/ld+json">${JSON.stringify(entry).replace(/</g, '\\u003c')}</script>`,
+      // data-jsonld lets head.tsx's applyHeadToDom remove these on the
+      // client before writing its own — otherwise every block appeared twice
+      // once the page hydrated.
+      (entry, i) =>
+        `<script type="application/ld+json" data-jsonld="${i}">${JSON.stringify(entry).replace(/</g, '\\u003c')}</script>`,
     )
     .join('\n    ');
 

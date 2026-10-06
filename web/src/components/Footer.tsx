@@ -129,7 +129,9 @@ export function Footer() {
       </div>
 
       <div className={styles.bottom}>
-        <p className={styles.copy}>© {new Date().getFullYear()} Box Diamonds. All rights reserved.</p>
+        <p className={styles.copy}>
+          © {new Date().getFullYear()} BOX DIAMONDS — Certified Natural Diamond Jewellery. All rights reserved.
+        </p>
         <p className={styles.secure}>100% Secure Payments</p>
       </div>
     </footer>
