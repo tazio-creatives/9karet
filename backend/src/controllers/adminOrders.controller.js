@@ -32,6 +32,7 @@ import {
   REFUND_TIMELINE_DAYS,
 } from '../utils/orderStatus.js';
 import { restoreStockForOrderTx, hasRestorableStock } from '../repositories/reservations.repository.js';
+import { getPaymentDetailsForOrder } from '../services/paymentDetailsService.js';
 import { NotFoundError, AppError } from '../utils/AppError.js';
 import { enqueueEmail } from '../services/emailService.js';
 
@@ -138,6 +139,8 @@ async function loadOrderDto(orderId) {
   // Returned items go back on sale only when admin says so (after quality
   // check) — see restock() below.
   const canRestock = order.order_status === 'RETURNED' && (await hasRestorableStock(order.id));
+  // Cashfree transaction ID etc. — what an admin needs to refund in Cashfree.
+  const paymentDetails = await getPaymentDetailsForOrder(order);
   const trackingEvents = shipment ? await findTrackingEventsByShipmentId(shipment.id) : [];
   const reversePickup = returnRequest ? await findReversePickupByReturnRequestId(returnRequest.id) : null;
   return toOrderDto(
@@ -152,6 +155,7 @@ async function loadOrderDto(orderId) {
       invoiceNumber: order.invoice_number,
       invoicePrintCount: invoicePrints.length,
       canRestock,
+      paymentDetails,
       returnRequest: returnRequest
         ? {
             id: returnRequest.id,

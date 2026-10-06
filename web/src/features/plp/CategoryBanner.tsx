@@ -20,10 +20,10 @@ interface CategoryBannerProps {
   title: string;
 }
 
-// Renders the category's own name as the page's one real H1 — callers must
-// not render a second <h1> below this when a banner is shown (see
-// ProductListing.tsx, which drops its own heading whenever `banner` is
-// passed). No CTA — the customer is already on this category's page.
+// The page's single H1 lives in ProductListing's always-rendered mobile
+// header (Google indexes mobile-first) — the banner image's own artwork is
+// the visual title, and `title` is its alt-text fallback. No CTA — the
+// customer is already on this category's page.
 export function CategoryBanner({ banner, title }: CategoryBannerProps) {
   if (!banner.imageUrl) return null;
 
@@ -36,7 +36,7 @@ export function CategoryBanner({ banner, title }: CategoryBannerProps) {
         {banner.imageUrlMobile && <source media={MOBILE_BREAKPOINT} srcSet={banner.imageUrlMobile} />}
         <img
           src={banner.imageUrl}
-          alt={banner.altText ?? ''}
+          alt={banner.altText || title}
           className={styles.img}
           style={{ objectPosition: focalPosition }}
           width={1920}
@@ -50,7 +50,6 @@ export function CategoryBanner({ banner, title }: CategoryBannerProps) {
 
       <div className={`${styles.copy} ${TEXT_POSITION_CLASS[banner.textPosition]}`}>
         {banner.eyebrow && <p className={styles.eyebrow}>{banner.eyebrow}</p>}
-        <h1 className={styles.title}>{title}</h1>
         {banner.description && <p className={styles.description}>{banner.description}</p>}
       </div>
     </div>

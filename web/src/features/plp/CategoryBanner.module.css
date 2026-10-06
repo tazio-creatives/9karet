@@ -90,17 +90,6 @@
    invisible. Hiding it sidesteps that entirely rather than patching the
    color as well.
    */
-.title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
 
 .description {
   margin: 4px 0 0;

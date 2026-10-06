@@ -15,6 +15,9 @@ function toDto(row) {
     imageUrl: row.image_url,
     isActive: row.is_active,
     sortOrder: row.sort_order,
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    seoHeading: row.seo_heading ?? null,
     banner: row.banner_enabled
       ? {
           eyebrow: row.banner_eyebrow,

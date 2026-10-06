@@ -3,6 +3,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import { ORDER_STATUS_BADGE_CLASS, PAYMENT_STATUS_BADGE_CLASS, SHIPMENT_STATUS_BADGE_CLASS, formatOrderStatus } from '../../utils/orderStatus';
 import sharedStyles from '../../styles/shared.module.css';
 import { DocumentIcon, PersonIcon, PhoneIcon, MailIcon, CalendarIcon, PrinterIcon } from './OrderHeroIcons';
+import { PaymentDetails } from './PaymentDetails';
 import styles from './OrderSummaryCard.module.css';
 
 // Full-page-only Order Summary — the standalone /orders/:id view's wide top
@@ -65,6 +66,7 @@ export function OrderSummaryCard({ order }: { order: OrderDetail }) {
         </div>
         <p className={styles.totalLabel}>Total Amount</p>
         <p className={styles.total}>{formatPrice(order.totalAmount)}</p>
+        <PaymentDetails order={order} />
         <div className={styles.buttonRow}>
           {printWorkOrderButton}
           {printInvoiceButton}

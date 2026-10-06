@@ -21,6 +21,20 @@ const HANDLED_EVENT_TYPES = new Set([
   'PAYMENT_USER_DROPPED_WEBHOOK',
 ]);
 
+// The IDs an admin needs to find and refund a payment in the Cashfree
+// dashboard — cf_payment_id is Cashfree's "Transaction ID".
+function toPaymentDetails(payment) {
+  if (!payment) return null;
+  return {
+    transactionId: payment.cf_payment_id != null ? String(payment.cf_payment_id) : null,
+    bankReference: payment.bank_reference || null,
+    paymentMethod: payment.payment_group || null,
+    paymentStatus: payment.payment_status || null,
+    paymentTime: payment.payment_time || payment.payment_completion_time || null,
+    amount: payment.payment_amount ?? null,
+  };
+}
+
 function baseUrl() {
   const url = BASE_URLS[env.cashfreeEnv];
   if (!url) throw new Error(`Unknown CASHFREE_ENV "${env.cashfreeEnv}"`);
@@ -108,6 +122,30 @@ export const cashfreePaymentProvider = {
 
     const providerRef = payload.data?.order?.order_id;
     const cfStatus = payload.data?.payment?.payment_status;
-    return { providerRef, status: cfStatus === 'SUCCESS' ? 'SUCCEEDED' : 'FAILED' };
+    return {
+      providerRef,
+      status: cfStatus === 'SUCCESS' ? 'SUCCEEDED' : 'FAILED',
+      details: toPaymentDetails(payload.data?.payment),
+    };
+  },
+
+  // GET /pg/orders/{order_id}/payments — for orders paid before the webhook
+  // started keeping these details. Picks the successful attempt (a shopper
+  // can retry a failed method inside the same order).
+  async fetchPaymentDetails(orderId) {
+    const response = await fetch(`${baseUrl()}/pg/orders/${encodeURIComponent(orderId)}/payments`, {
+      headers: {
+        'x-client-id': env.cashfreeAppId,
+        'x-client-secret': env.cashfreeSecretKey,
+        'x-api-version': env.cashfreeApiVersion,
+      },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!response.ok) {
+      throw new Error(`Cashfree payments lookup failed (HTTP ${response.status})`);
+    }
+    const payments = await response.json();
+    const list = Array.isArray(payments) ? payments : [];
+    return toPaymentDetails(list.find((p) => p.payment_status === 'SUCCESS') ?? list[0]);
   },
 };

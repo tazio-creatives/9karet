@@ -11,6 +11,7 @@ import { useVariantSelection } from '../hooks/useVariantSelection';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { useHead, defaultHead } from '../seo/head';
 import { breadcrumbJsonLd, organizationJsonLd, productJsonLd } from '../seo/jsonLd';
+import { jewelleryType, productImageAlt, productSeoDescription, productSeoTitle } from '../seo/productSeo';
 import { ImageGallery } from '../features/pdp/ImageGallery';
 import { ProductInfo } from '../features/pdp/ProductInfo';
 import { ProductTabs } from '../features/pdp/ProductTabs';
@@ -135,13 +136,16 @@ export function PDPPage() {
       : `/${product.slug}`
     : defaultHead.canonicalPath;
 
+  // Jewellery type from the top-level category ("Rings" -> "Ring").
+  const type = jewelleryType(ancestors[0]?.name ?? category?.name);
+
   // Called unconditionally (rules of hooks) — falls back to defaultHead
   // until the product query resolves, then reflects the real product.
   useHead(
     product
       ? {
-          title: product.metaTitle ?? `${product.name} | BOX DIAMONDS`,
-          description: product.metaDescription ?? product.shortDescription ?? product.name,
+          title: product.metaTitle || productSeoTitle(product, type),
+          description: product.metaDescription || product.shortDescription || productSeoDescription(product, type),
           canonicalPath,
           jsonLd: [
             organizationJsonLd(),
@@ -213,6 +217,7 @@ export function PDPPage() {
             <ImageGallery
               images={galleryImages}
               productName={product.name}
+              imageAlt={productImageAlt(product, type)}
               productId={product.id}
               isNew={product.isNew}
             />

@@ -17,6 +17,9 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [parentId, setParentId] = useState<string>(initial?.parentId ?? defaultParentId ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [seoTitle, setSeoTitle] = useState(initial?.seoTitle ?? '');
+  const [seoDescription, setSeoDescription] = useState(initial?.seoDescription ?? '');
+  const [seoHeading, setSeoHeading] = useState(initial?.seoHeading ?? '');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '');
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
   const [isNonReturnable, setIsNonReturnable] = useState(initial?.isNonReturnable ?? false);
@@ -103,6 +106,9 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
         slug: slug || undefined,
         parentId: parentId || null,
         description: description || null,
+        seoTitle: seoTitle.trim() || null,
+        seoDescription: seoDescription.trim() || null,
+        seoHeading: seoHeading.trim() || null,
         imageUrl: imageUrl || null,
         isActive,
         isNonReturnable,
@@ -170,9 +176,25 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
       </div>
 
       <label className={`${sharedStyles.field} ${sharedStyles.formSection}`}>
-        Description
+        Intro text (shown under the page heading)
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
       </label>
+
+      <div className={`${sharedStyles.formSection}`}>
+        <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-base)' }}>Search engine (SEO)</h3>
+        <label className={sharedStyles.field}>
+          Page heading (H1) — e.g. "Natural Diamond Rings". Empty = category name.
+          <input value={seoHeading} onChange={(e) => setSeoHeading(e.target.value)} maxLength={120} />
+        </label>
+        <label className={sharedStyles.field}>
+          SEO title — e.g. "Natural Diamond Rings for Women | BOX DIAMONDS" ({seoTitle.length}/60 recommended)
+          <input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={120} />
+        </label>
+        <label className={sharedStyles.field}>
+          Meta description ({seoDescription.length}/160 recommended)
+          <textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={2} maxLength={320} />
+        </label>
+      </div>
 
       <div className={`${sharedStyles.field} ${sharedStyles.formSection}`}>
         Category image (optional)

@@ -1,3 +1,4 @@
+import { productImageAlt } from '../seo/productSeo';
 import { Link } from 'react-router-dom';
 import type { ProductCard as ProductCardType } from '../api/types';
 import { productUrl } from '../utils/productUrl';
@@ -66,7 +67,7 @@ export function PlpProductCard({ product, index = 0, onAddToCart, isAdding, just
           className={styles.imageWrap}
           style={!product.primaryImageUrl ? { background: placeholderGradient(index) } : undefined}
         >
-          {product.primaryImageUrl && <img src={product.primaryImageUrl} alt={product.name} className={styles.image} />}
+          {product.primaryImageUrl && <img src={product.primaryImageUrl} alt={productImageAlt(product)} className={styles.image} />}
 
           <div className={styles.badges}>
             {product.isNew && <span className={styles.badgeNew}>NEW</span>}

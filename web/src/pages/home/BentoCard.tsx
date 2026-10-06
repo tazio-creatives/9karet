@@ -32,7 +32,15 @@ export function BentoCard({ item, index, size = 'md' }: BentoCardProps) {
   const content = (
     <>
       <div className={styles.image} style={imageUrl ? undefined : { background: gradient }}>
-        {imageUrl && <img src={imageUrl} alt="" className={styles.imageTag} loading="lazy" decoding="async" />}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={item.heading ?? item.category?.name ?? item.product?.name ?? ''}
+            className={styles.imageTag}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
       </div>
       <div className={styles.caption}>
         {item.heading && <p className={styles.heading}>{item.heading}</p>}

@@ -166,6 +166,10 @@ export interface Category {
   isActive: boolean;
   sortOrder: number;
   banner: CategoryBanner | null;
+  // Category-page SEO from admin; null = fall back to the category name.
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoHeading?: string | null;
 }
 
 export interface Collection {

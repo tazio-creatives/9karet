@@ -1,6 +1,7 @@
 import { query } from '../config/db.js';
 
 const ALL_COLUMNS = `id, parent_id, name, slug, description, image_url, is_active, is_non_returnable, sort_order, created_at, updated_at,
+  seo_title, seo_description, seo_heading,
   banner_enabled, banner_eyebrow, banner_description, banner_image_url, banner_image_url_mobile,
   banner_alt_text, banner_text_color, banner_text_position, banner_focal_position`;
 
@@ -107,6 +108,9 @@ export async function createCategory({
   isActive,
   isNonReturnable,
   sortOrder,
+  seoTitle,
+  seoDescription,
+  seoHeading,
   bannerEnabled,
   bannerEyebrow,
   bannerDescription,
@@ -121,9 +125,10 @@ export async function createCategory({
     `INSERT INTO categories (
        parent_id, name, slug, description, image_url, is_active, sort_order,
        banner_enabled, banner_eyebrow, banner_description, banner_image_url, banner_image_url_mobile,
-       banner_alt_text, banner_text_color, banner_text_position, banner_focal_position, is_non_returnable
+       banner_alt_text, banner_text_color, banner_text_position, banner_focal_position, is_non_returnable,
+       seo_title, seo_description, seo_heading
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
      RETURNING ${ALL_COLUMNS}`,
     [
       parentId ?? null,
@@ -143,6 +148,9 @@ export async function createCategory({
       bannerTextPosition ?? 'LEFT',
       bannerFocalPosition ?? 'CENTER',
       isNonReturnable ?? false,
+      seoTitle || null,
+      seoDescription || null,
+      seoHeading || null,
     ],
   );
   return rows[0];
@@ -160,6 +168,9 @@ const CATEGORY_COLUMNS = {
   imageUrl: 'image_url',
   isActive: 'is_active',
   isNonReturnable: 'is_non_returnable',
+  seoTitle: 'seo_title',
+  seoDescription: 'seo_description',
+  seoHeading: 'seo_heading',
   sortOrder: 'sort_order',
   bannerEnabled: 'banner_enabled',
   bannerEyebrow: 'banner_eyebrow',

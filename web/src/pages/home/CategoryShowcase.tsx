@@ -63,7 +63,7 @@ function CategoryCard({
             unused elsewhere in this section. */}
         {item.subheading && <span className={styles.badge}>{item.subheading}</span>}
         {imageUrl ? (
-          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+          <img src={imageUrl} alt={`${name} — BOX DIAMONDS jewellery`} loading="lazy" decoding="async" />
         ) : (
           <span className={styles.imagePlaceholder} aria-hidden="true">
             <PlaceholderIcon />

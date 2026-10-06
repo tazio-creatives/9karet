@@ -40,3 +40,13 @@ export async function findPaymentByOrderId(orderId) {
   );
   return rows[0] ?? null;
 }
+
+// Saves Cashfree's transaction details next to the stored webhook event.
+export async function savePaymentDetails(id, details) {
+  await query(
+    `UPDATE payments SET raw_payload = COALESCE(raw_payload, '{}'::jsonb) || jsonb_build_object('details', $2::jsonb),
+       updated_at = now()
+     WHERE id = $1`,
+    [id, JSON.stringify(details)],
+  );
+}

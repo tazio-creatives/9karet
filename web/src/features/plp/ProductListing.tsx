@@ -22,7 +22,14 @@ import styles from './ProductListing.module.css';
 interface ProductListingProps {
   categorySlug?: string;
   collectionSlug?: string;
+  // Short label (breadcrumbs, filters, "All Rings")…
   heading: string;
+  // …vs. the page's H1 / SEO wording ("Natural Diamond Rings").
+  h1?: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  relatedLinks?: { label: string; href: string }[];
+  // Short visible intro under the heading (category description).
   description?: string | null;
   breadcrumbs: Crumb[];
   canonicalPath: string;
@@ -37,6 +44,10 @@ export function ProductListing({
   categorySlug,
   collectionSlug,
   heading,
+  h1 = heading,
+  seoTitle,
+  seoDescription,
+  relatedLinks,
   description,
   breadcrumbs,
   canonicalPath,
@@ -53,8 +64,8 @@ export function ProductListing({
   const activeFilterCount = [metal, purity, goldColor, priceMin, priceMax].filter((v) => v != null).length;
 
   useHead({
-    title: `${heading} | BOX DIAMONDS`,
-    description: description ?? `Shop ${heading} at BOX DIAMONDS — certified, live-priced jewellery.`,
+    title: seoTitle || `${h1} | BOX DIAMONDS`,
+    description: seoDescription || description || `Shop ${heading} at BOX DIAMONDS — certified, live-priced jewellery.`,
     canonicalPath,
     jsonLd: [
       organizationJsonLd(),
@@ -145,14 +156,13 @@ export function ProductListing({
         <div className={styles.desktopHero}>
           <Breadcrumbs items={breadcrumbs} />
 
-          {showBanner && banner && <CategoryBanner banner={banner} title={heading} />}
+          {showBanner && banner && <CategoryBanner banner={banner} title={h1} />}
 
-          {!showBanner && (
-            <>
-              <h1 className={styles.heading}>{heading}</h1>
-              {description && <p className={styles.description}>{description}</p>}
-            </>
-          )}
+          {/* Visual desktop heading — the page's one real <h1> is the mobile
+              header's below (mobile-first indexing); each is hidden at the
+              other breakpoint. */}
+          {!showBanner && <p className={styles.heading}>{h1}</p>}
+          {description && <p className={styles.description}>{description}</p>}
         </div>
 
         {/* Mobile-only hero — plain full-width banner (no text overlay),
@@ -175,7 +185,8 @@ export function ProductListing({
             <span>{heading}</span>
           </p>
 
-          <h1 className={styles.mobileHeading}>{categorySlug ? `All ${heading}` : heading}</h1>
+          <h1 className={styles.mobileHeading}>{h1}</h1>
+          {description && <p className={styles.mobileDescription}>{description}</p>}
 
           {subcategories && subcategories.length > 0 && (
             <nav className={styles.subcategoryNav} aria-label={`${heading} subcategories`}>
@@ -190,6 +201,18 @@ export function ProductListing({
             </nav>
           )}
         </div>
+
+        {relatedLinks && relatedLinks.length > 0 && (
+          <p className={styles.relatedLinks}>
+            Also explore:{' '}
+            {relatedLinks.map((link, i) => (
+              <span key={link.href}>
+                {i > 0 && ' · '}
+                <Link to={link.href}>{link.label}</Link>
+              </span>
+            ))}
+          </p>
+        )}
 
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>

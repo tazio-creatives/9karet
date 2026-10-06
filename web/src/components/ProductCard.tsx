@@ -1,3 +1,4 @@
+import { productImageAlt } from '../seo/productSeo';
 import { Link } from 'react-router-dom';
 import type { ProductCard as ProductCardType } from '../api/types';
 import { productUrl } from '../utils/productUrl';
@@ -68,7 +69,7 @@ export function ProductCard({
         {product.primaryImageUrl && (
           <img
             src={product.primaryImageUrl}
-            alt={product.name}
+            alt={productImageAlt(product)}
             className={styles.imageTag}
             style={{ objectFit: imageFit }}
           />

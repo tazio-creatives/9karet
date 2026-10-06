@@ -8,6 +8,11 @@ export const createCategorySchema = z.object({
   imageUrl: z.string().trim().max(500).nullable().optional(),
   isActive: z.boolean().optional(),
   isNonReturnable: z.boolean().optional(),
+  // Category-page SEO: <title>, meta description and visible H1 (falls back
+  // to the category name when empty).
+  seoTitle: z.string().trim().max(120).nullable().optional(),
+  seoDescription: z.string().trim().max(320).nullable().optional(),
+  seoHeading: z.string().trim().max(120).nullable().optional(),
   sortOrder: z.number().int().optional(),
   bannerEnabled: z.boolean().optional(),
   bannerEyebrow: z.string().trim().max(200).nullable().optional(),

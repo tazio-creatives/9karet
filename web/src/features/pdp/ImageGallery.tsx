@@ -53,11 +53,14 @@ function groupPhotos(images: ProductImage[]): GalleryPhoto[] {
 export function ImageGallery({
   images,
   productName,
+  imageAlt = productName,
   productId,
   isNew,
 }: {
   images: ProductImage[];
   productName: string;
+  // Descriptive alt for the product photos (falls back to the name).
+  imageAlt?: string;
   productId: string;
   isNew: boolean;
 }) {
@@ -159,7 +162,7 @@ export function ImageGallery({
       >
         <img
           src={activeUrl}
-          alt={productName}
+          alt={isSizeGuide ? `${productName} size guide` : imageAlt}
           className={isSizeGuide ? `${styles.mainImage} ${styles.productSizeImage}` : styles.mainImage}
           style={isSizeGuide ? { objectFit: 'contain' } : undefined}
         />
@@ -275,7 +278,7 @@ export function ImageGallery({
           )}
           <img
             src={activeUrl}
-            alt={productName}
+            alt={isSizeGuide ? `${productName} size guide` : imageAlt}
             className={styles.lightboxImage}
             onClick={(e) => e.stopPropagation()}
           />

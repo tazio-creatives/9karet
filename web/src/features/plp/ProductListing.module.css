@@ -61,10 +61,32 @@
 
 .mobileHeading {
   margin: 4px 0 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   text-align: center;
   font-size: 18px;
   font-weight: 500;
   color: #173c40;
+}
+
+.mobileDescription {
+  margin: var(--space-1) 0 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.relatedLinks {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.relatedLinks a {
+  color: #173c40;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .subcategoryNav {

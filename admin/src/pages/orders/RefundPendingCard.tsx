@@ -5,6 +5,7 @@ import type { OrderDetail } from '../../api/types';
 import { ApiError } from '../../api/client';
 import { formatPrice } from '../../utils/formatPrice';
 import sharedStyles from '../../styles/shared.module.css';
+import { PaymentDetails } from './PaymentDetails';
 
 // A cancelled/returned order whose payment is still PAID owes the customer a
 // refund. Refunds are issued by hand from the Cashfree dashboard; this card
@@ -38,9 +39,10 @@ export function RefundPendingCard({ order }: { order: OrderDetail }) {
       </div>
       <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
         This order is {order.orderStatus === 'CANCELLED' ? 'cancelled' : 'returned'} but the payment hasn&apos;t been
-        refunded yet. Issue the refund from the Cashfree dashboard (customer was promised it within 7 days), then
-        mark it here.
+        refunded yet. In the Cashfree dashboard, search this Transaction ID (or the order ID), issue the refund
+        (customer was promised it within 7 days), then mark it here with the refund reference.
       </p>
+      <PaymentDetails order={order} />
       <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           value={reference}

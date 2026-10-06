@@ -263,6 +263,9 @@ export interface Category {
   isNonReturnable: boolean;
   sortOrder: number;
   banner: CategoryBanner;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoHeading: string | null;
 }
 
 // What create/update actually accept — flat fields (matching
@@ -277,6 +280,9 @@ export interface CategoryInput {
   isActive: boolean;
   isNonReturnable: boolean;
   sortOrder: number;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoHeading: string | null;
   bannerEnabled: boolean;
   bannerEyebrow: string | null;
   bannerDescription: string | null;
@@ -723,6 +729,17 @@ export interface OrderDetail {
   invoicePrintCount: number;
   // Returned order whose items haven't been put back in stock yet.
   canRestock?: boolean;
+  // Cashfree identifiers used to refund from the Cashfree dashboard.
+  paymentDetails?: {
+    provider: string;
+    gatewayOrderId: string | null;
+    transactionId: string | null;
+    bankReference?: string | null;
+    paymentMethod?: string | null;
+    paymentTime?: string | null;
+    amount: number;
+    lookupFailed: boolean;
+  } | null;
   returnRequest: ReturnRequest | null;
   reversePickup: ReversePickup | null;
 }

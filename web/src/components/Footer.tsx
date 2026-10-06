@@ -80,7 +80,10 @@ export function Footer() {
       <div className={styles.top}>
         <div className={styles.brandCol}>
           <img src="/images/logo-white.png" alt="Box Diamonds" className={styles.logo} />
-          <p className={styles.tagline}>Because every precious moment deserves a perfect sparkle.</p>
+          <p className={styles.tagline}>
+            Shop certified natural diamond jewellery online — fine diamond jewellery delivered across India. Because
+            every precious moment deserves a perfect sparkle.
+          </p>
           <div className={styles.social}>
             <SocialIcon label="Instagram">
               <rect x="3" y="3" width="18" height="18" rx="5" />
