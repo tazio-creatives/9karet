@@ -470,3 +470,28 @@ export async function findOrderStatusHistoryForAdmin(orderId) {
   );
   return rows;
 }
+
+// Orders whose payment was confirmed after `since` — drives the admin
+// "new order" alert (bell + ringtone). Uses the gateway's own CONFIRMED
+// history row, so it fires once per paid order, not on later admin edits.
+// `cursor` is an opaque timestamp string issued by the database itself
+// (microsecond precision) — a JS Date would round to milliseconds and make
+// the last order look "new" again on the next poll.
+export async function findOrdersPaidSince(cursor, limit = 20) {
+  const { rows } = await query(
+    `SELECT o.id, o.order_number, o.total_amount, o.contact_name, h.created_at AS confirmed_at,
+            h.created_at::text AS cursor
+     FROM order_status_history h
+     JOIN orders o ON o.id = h.order_id
+     WHERE h.status = 'CONFIRMED' AND h.source = 'PAYMENT_GATEWAY' AND h.created_at > $1::timestamptz
+     ORDER BY h.created_at ASC
+     LIMIT $2`,
+    [cursor, limit],
+  );
+  return rows;
+}
+
+export async function currentDbTimestamp() {
+  const { rows } = await query('SELECT now()::text AS now');
+  return rows[0].now;
+}

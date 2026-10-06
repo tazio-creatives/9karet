@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { logout } from '../api/auth';
 import { useAdmin } from '../features/auth/useAdmin';
 import { hasPermission, isSuperAdmin } from '../utils/permissions';
+import { OrderAlerts } from '../features/orderAlerts/OrderAlerts';
 import { SidebarContext } from './SidebarContext';
 import { NAV_ITEMS } from './navItems';
 import styles from './AdminLayout.module.css';
@@ -112,6 +113,7 @@ export function AdminLayout() {
           </button>
         </div>
       </aside>
+      {hasPermission(admin, 'orders') && <OrderAlerts />}
       <main className={styles.content}>
         <SidebarContext.Provider value={{ isCollapsed, collapseSidebar }}>
           <Outlet />

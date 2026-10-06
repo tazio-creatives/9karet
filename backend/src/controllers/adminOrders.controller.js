@@ -15,6 +15,8 @@ import {
   updateOrderStatusFieldsTx,
   insertOrderStatusHistoryTx,
   hasOrderStatusHistoryEntry,
+  findOrdersPaidSince,
+  currentDbTimestamp,
 } from '../repositories/orders.repository.js';
 import {
   findShipmentByOrderId,
@@ -105,6 +107,32 @@ export async function list(req, res, next) {
 // Sales card shown in the Orders page heading — one lightweight aggregate
 // query, independent of pagination (matches dashboard.repository.js's
 // revenue convention rather than summing whatever page happens to be loaded).
+// Polled by the admin panel every few seconds for the new-order alert.
+// Without `since` it only returns the server's clock, which the client uses
+// as its starting point (so opening admin never rings for old orders, and
+// client/server clock differences don't matter).
+export async function newPaidOrders(req, res, next) {
+  try {
+    const since = typeof req.query.since === 'string' ? req.query.since : '';
+    if (!/^\d{4}-\d{2}-\d{2}[ T][\d:.]+([+-]\d{2}(:?\d{2})?|Z)?$/.test(since)) {
+      return res.json({ serverTime: await currentDbTimestamp(), orders: [] });
+    }
+    const rows = await findOrdersPaidSince(since);
+    res.json({
+      serverTime: rows.length ? rows.at(-1).cursor : await currentDbTimestamp(),
+      orders: rows.map((r) => ({
+        id: r.id,
+        orderNumber: r.order_number,
+        totalAmount: Number(r.total_amount),
+        contactName: r.contact_name,
+        confirmedAt: r.confirmed_at,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function summary(req, res, next) {
   try {
     const q = orderSummaryQuerySchema.parse(req.query);

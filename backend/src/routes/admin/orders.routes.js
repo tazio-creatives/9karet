@@ -3,6 +3,7 @@ import {
   list,
   get,
   summary,
+  newPaidOrders,
   startProcessing,
   markReadyToShip,
   updateStatus,
@@ -27,6 +28,7 @@ adminOrdersRouter.use(requirePermission('orders'));
 adminOrdersRouter.get('/', list);
 // Must come before /:id — otherwise "summary" is parsed as an order id.
 adminOrdersRouter.get('/summary', summary);
+adminOrdersRouter.get('/new-paid', newPaidOrders);
 adminOrdersRouter.get('/:id', get);
 adminOrdersRouter.post('/:id/start-processing', startProcessing);
 adminOrdersRouter.post('/:id/mark-ready-to-ship', markReadyToShip);

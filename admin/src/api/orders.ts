@@ -146,3 +146,18 @@ export function simulateReversePickup(orderId: string, status: ReversePickup['st
     { method: 'POST', body: JSON.stringify({ status }) },
   );
 }
+
+export interface NewPaidOrder {
+  id: string;
+  orderNumber: string;
+  totalAmount: number;
+  contactName: string;
+  confirmedAt: string;
+}
+
+// New-order alert polling — see features/orderAlerts. Omit `since` to just
+// get the server clock as a starting point.
+export function fetchNewPaidOrders(since?: string) {
+  const qs = since ? `?since=${encodeURIComponent(since)}` : '';
+  return apiFetch<{ serverTime: string; orders: NewPaidOrder[] }>(`/admin/orders/new-paid${qs}`);
+}
