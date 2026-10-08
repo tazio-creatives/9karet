@@ -7,6 +7,11 @@
      CollectionProductShowcase/DuoBanner, which render with no sectionClass
      at all). */
   background: var(--color-white);
+  /* Cancels the footer's site-wide top margin on the homepage only, so the
+     gap above the footer is just the last section's own padding plus this
+     (about 48px desktop / 40px phone, was ~128px), all in white. */
+  margin-bottom: calc(-1 * var(--space-12));
+  padding-bottom: var(--space-4);
 }
 
 .skeleton {

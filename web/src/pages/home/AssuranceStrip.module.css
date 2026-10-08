@@ -108,10 +108,8 @@
     display: none;
   }
 
-  /* Natural width (titles stay on one line) — about 1.6 items in view. */
   .item {
     flex: 0 0 auto;
-    min-width: 58%;
     justify-content: flex-start;
     gap: 10px;
     padding-inline: 14px;
@@ -133,8 +131,42 @@
   }
 }
 
+/* Phone: exactly two whole items per view (never one cut in half), icon
+   above centred text, so long titles can wrap instead of being clipped. */
+@media (max-width: 767px) {
+  .item {
+    flex: 0 0 50%;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 6px;
+    padding-inline: 8px;
+    text-align: center;
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .title {
+    font-size: 12.5px;
+    white-space: normal;
+  }
+
+  .description {
+    font-size: 11px;
+  }
+}
+
+/* Tablet: exactly three whole items per view. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .item {
-    min-width: 34%;
+    flex: 0 0 calc(100% / 3);
+    min-width: 0;
   }
 }

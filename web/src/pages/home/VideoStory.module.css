@@ -165,6 +165,24 @@
     padding: 40px var(--space-3);
   }
 
+  /* Text centred above the video, with a short gold line either side of
+     the eyebrow. */
+  .text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .eyebrow {
+    justify-content: center;
+  }
+
+  .eyebrow::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: currentColor;
+  }
+
   .eyebrow {
     gap: 12px;
     margin-bottom: 14px;

@@ -52,7 +52,7 @@ export function AssuranceStrip() {
       if (!itemWidth) return;
       const atEnd = strip.scrollLeft + strip.clientWidth >= strip.scrollWidth - 4;
       strip.scrollTo({ left: atEnd ? 0 : strip.scrollLeft + itemWidth, behavior: 'smooth' });
-    }, 1800);
+    }, 3000);
 
     return () => {
       clearInterval(interval);

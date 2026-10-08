@@ -90,7 +90,9 @@ a.tile:focus-visible {
   text-align: center;
 }
 
-/* Phone: a 2 × 2 grid in item order, every image portrait 4:5. */
+/* Phone: every image keeps its own shape so text in the artwork is never
+   cropped — the two tall images side by side (3:4), then the two wide ones
+   full width (5:3) underneath. */
 @media (max-width: 767px) {
   .section {
     padding: var(--space-5) var(--space-3);
@@ -106,10 +108,14 @@ a.tile:focus-visible {
     display: contents;
   }
 
-  .tall .frame,
-  .short .frame {
+  .tall .frame {
     flex: none;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 3 / 4;
+  }
+
+  .short {
+    grid-column: 1 / -1;
+    order: 1;
   }
 
   .caption {

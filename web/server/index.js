@@ -67,6 +67,19 @@ async function createServer() {
   // as-is at /index.html, a crawlable titleless duplicate of the homepage.
   app.get('/index.html', (req, res) => res.redirect(301, '/'));
 
+  // Category URLs renamed to match their names (Bangle was /nose-pin, Pendant
+  // was /diamond-rings) — old category and product links, already shared or
+  // indexed, move permanently to the new ones, query string kept. Don't
+  // reuse these old slugs for a new category while they're listed here.
+  const RENAMED_CATEGORY_SLUGS = { 'nose-pin': 'bangles', 'diamond-rings': 'pendants' };
+  app.use((req, res, next) => {
+    const match = /^\/([^/]+)(\/.*)?$/.exec(req.path);
+    const renamed = match && RENAMED_CATEGORY_SLUGS[match[1]];
+    if (!renamed) return next();
+    const query = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, `/${renamed}${match[2] ?? ''}${query}`);
+  });
+
   let vite;
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
