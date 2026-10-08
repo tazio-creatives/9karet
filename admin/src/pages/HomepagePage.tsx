@@ -11,11 +11,18 @@ import {
   deleteItem,
   reorderItems,
 } from '../api/homepage';
-import type { HomepageItem, HomepageItemInput, HomepageSection, HomepageSectionType } from '../api/types';
+import type {
+  HomepageItem,
+  HomepageItemInput,
+  HomepageSection,
+  HomepageSectionType,
+  HomepageSectionUpdate,
+} from '../api/types';
 import { HomepageItemForm } from '../features/homepage/HomepageItemForm';
 import { HeroBannerForm } from '../features/homepage/HeroBannerForm';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { FirstFiftyManager } from '../features/displayOrder/FirstFiftyManager';
+import { IMAGE_SIZE_HINTS } from '../features/homepage/imageSizes';
 import sharedStyles from '../styles/shared.module.css';
 import styles from './HomepagePage.module.css';
 
@@ -25,6 +32,8 @@ import styles from './HomepagePage.module.css';
 // that file's special-cased section types.
 const AUTO_SYNCED_TYPES: HomepageSectionType[] = ['BENTO_CATEGORIES', 'FEATURED_PRODUCT'];
 
+// Instagram Feed and Newsletter were removed from the homepage (no longer
+// offered here); the storefront still renders any old rows harmlessly.
 const SECTION_TYPES: HomepageSectionType[] = [
   'HERO',
   'BENTO_CATEGORIES',
@@ -35,35 +44,43 @@ const SECTION_TYPES: HomepageSectionType[] = [
   'BEST_SELLERS',
   'SHOP_BY_PRICE',
   'OCCASION_CARDS',
-  'INSTAGRAM',
-  'NEWSLETTER',
   'TRUST_STRIP',
   'CAMPAIGN_BANNERS',
   'CATEGORY_PRODUCTS',
   'COLLECTION_SHOWCASE',
   'SHOP_BY_BOND',
+  'BANNER_TRIO',
+  'COLLECTION_CAROUSEL',
+  'IMAGE_MOSAIC',
+  'VIDEO_STORY',
+  'PRICE_SHOWCASE',
 ];
 
 // Friendly names matching the actual storefront headings — the raw type
 // name (e.g. "OCCASION CARDS") doesn't read as "Shop by Occasion", which
 // made the option hard to find by eye in the Add Section dropdown.
 const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
-  HERO: 'Hero Banner',
-  BENTO_CATEGORIES: 'Shop by Category',
-  NEW_ARRIVALS: 'New Arrivals',
-  COLLECTION_CARDS: 'Curated Collections',
-  SHOP_BY_MATERIAL: 'Shop by Material',
-  FEATURED_PRODUCT: 'Featured Products',
-  BEST_SELLERS: 'Best Sellers',
-  SHOP_BY_PRICE: 'Shop by Price',
-  OCCASION_CARDS: 'Shop by Occasion',
-  INSTAGRAM: 'Instagram Feed',
-  NEWSLETTER: 'Newsletter',
-  TRUST_STRIP: 'Trust Strip',
-  CAMPAIGN_BANNERS: 'Campaign Banners',
-  CATEGORY_PRODUCTS: 'Category Products',
-  COLLECTION_SHOWCASE: 'Full Width Banner with Products',
-  SHOP_BY_BOND: 'Shop by Bond',
+  HERO: 'Hero Banner (full-width sliding banner at the top)',
+  BENTO_CATEGORIES: 'Shop by Category (category tiles + products of the chosen category)',
+  NEW_ARRIVALS: 'New Arrivals (one banner + 10 newest products)',
+  COLLECTION_CARDS: 'Curated Collections (2–3 large image tiles)',
+  SHOP_BY_MATERIAL: 'Shop by Material (grid of small image tiles)',
+  FEATURED_PRODUCT: 'Featured Products (product slider, 4 per view)',
+  BEST_SELLERS: 'Best Sellers (scrolling row of image tiles)',
+  SHOP_BY_PRICE: 'Shop by Price (row of price-range cards)',
+  OCCASION_CARDS: 'Shop by Occasion (2–3 large image tiles)',
+  INSTAGRAM: 'Instagram Feed (scrolling row of small photos)',
+  NEWSLETTER: 'Newsletter (heading + email signup box)',
+  TRUST_STRIP: 'Trust Strip (row of trust badges with icons)',
+  CAMPAIGN_BANNERS: 'Campaign Banners (row of promotional banners)',
+  CATEGORY_PRODUCTS: 'Category Products (5 newest products per category)',
+  COLLECTION_SHOWCASE: 'Full Width Banner with Products (collection banner + up to 15 products)',
+  SHOP_BY_BOND: 'Shop by Bond (portrait photo tiles — 6 per row desktop, 3 on mobile)',
+  BANNER_TRIO: 'Banner Trio (1 large square banner + 2 wide banners stacked, image only)',
+  COLLECTION_CAROUSEL: 'Collections Carousel (square images sliding, 3 visible — centre one larger, with View All button)',
+  IMAGE_MOSAIC: 'Jewellery Mosaic (tall image · 2 stacked images with captions · tall image)',
+  PRICE_SHOWCASE: 'Shop by Price — Photo Cards (pastel cards with photo, price and Shop Now — 5 across)',
+  VIDEO_STORY: 'Video Story (large title + text + button beside a video with play button)',
 };
 
 function imageForItem(item: HomepageItem): string | null {
@@ -87,12 +104,9 @@ function heroRedirectSummary(item: HomepageItem): string {
   }
 }
 
-// This is the only per-section label that's admin-only — every other
-// "Heading"/"Subheading" field further down (inside Edit Item / Add Item)
-// is real storefront content. An unlabeled input with just a placeholder
-// wasn't distinct enough from those to make that clear, so it gets an
-// explicit caption rather than relying on the placeholder alone (which
-// disappears once something's typed).
+// The section-level heading — most section types render it as the
+// section's title on the storefront (Hero/banner types don't). Captioned
+// explicitly so it isn't confused with the per-item Heading fields.
 function SectionHeadingInput({ value, onCommit }: { value: string; onCommit: (value: string) => void }) {
   const [draft, setDraft] = useState(value);
   return (
@@ -100,13 +114,73 @@ function SectionHeadingInput({ value, onCommit }: { value: string; onCommit: (va
       <input
         className={styles.headingInput}
         value={draft}
-        placeholder="Admin label"
+        placeholder="Section heading"
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => {
           if (draft !== value) onCommit(draft);
         }}
       />
-      <span className={styles.headingHint}>Admin-only — not shown on the storefront</span>
+      <span className={styles.headingHint}>
+        Shown as the section title on the storefront for most section types (leave empty for no title)
+      </span>
+    </div>
+  );
+}
+
+// Section subtitle (+ optional "View All" button) — Collections Carousel
+// and Jewellery Mosaic.
+function CarouselSettings({
+  section,
+  onSave,
+  showButton = true,
+}: {
+  section: HomepageSection;
+  onSave: (_input: HomepageSectionUpdate) => void;
+  showButton?: boolean;
+}) {
+  const [subheading, setSubheading] = useState(section.subheading ?? '');
+  const [ctaLabel, setCtaLabel] = useState(section.ctaLabel ?? '');
+  const [ctaUrl, setCtaUrl] = useState(section.ctaUrl ?? '');
+  const dirty =
+    subheading !== (section.subheading ?? '') || ctaLabel !== (section.ctaLabel ?? '') || ctaUrl !== (section.ctaUrl ?? '');
+  return (
+    <div className={`${sharedStyles.formGrid} ${sharedStyles.cardPadded}`} style={{ marginBottom: 'var(--space-3)' }}>
+      <label className={sharedStyles.field}>
+        Subtitle — small grey line under the title (put the main title in "Section heading" above)
+        <input
+          value={subheading}
+          onChange={(e) => setSubheading(e.target.value)}
+          placeholder="Find your style. Explore our diverse collections!"
+        />
+      </label>
+      {showButton && (
+        <>
+          <label className={sharedStyles.field}>
+            Button text (empty = no button)
+            <input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} placeholder="View All Collections" />
+          </label>
+          <label className={sharedStyles.field}>
+            Button link
+            <input
+              value={ctaUrl}
+              onChange={(e) => setCtaUrl(e.target.value)}
+              placeholder="/collections/signature-collection"
+            />
+          </label>
+        </>
+      )}
+      <div style={{ alignSelf: 'end' }}>
+        <button
+          type="button"
+          className={sharedStyles.buttonPrimary}
+          disabled={!dirty}
+          onClick={() =>
+            onSave({ subheading: subheading.trim() || null, ctaLabel: ctaLabel.trim() || null, ctaUrl: ctaUrl.trim() || null })
+          }
+        >
+          Save settings
+        </button>
+      </div>
     </div>
   );
 }
@@ -128,7 +202,7 @@ export function HomepagePage() {
     onSuccess: invalidate,
   });
   const updateSectionMutation = useMutation({
-    mutationFn: ({ id, input }: { id: string; input: { heading?: string | null; isEnabled?: boolean } }) =>
+    mutationFn: ({ id, input }: { id: string; input: HomepageSectionUpdate }) =>
       updateSection(id, input),
     onSuccess: invalidate,
   });
@@ -225,6 +299,9 @@ export function HomepagePage() {
 
               <div className={styles.sectionInfo}>
                 <p className={styles.sectionType}>{SECTION_TYPE_LABELS[section.type]}</p>
+                {IMAGE_SIZE_HINTS[section.type] && (
+                  <p className={styles.sizeHint}>📐 Image size: {IMAGE_SIZE_HINTS[section.type].summary}</p>
+                )}
                 <SectionHeadingInput
                   value={section.heading ?? ''}
                   onCommit={(heading) => updateSectionMutation.mutate({ id: section.id, input: { heading } })}
@@ -308,6 +385,71 @@ export function HomepagePage() {
                     small eyebrow line above the title, Subheading as the description below it, and CTA Label/desktop
                     &amp; mobile images are used as the banner's button text and background. Up to 10 most recently
                     published products in that collection show automatically underneath.
+                  </p>
+                )}
+                {section.type === 'COLLECTION_CAROUSEL' && (
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Add 3 or more items — one per collection. Upload a square image (about 1000×1000) as "Banner image
+                      — desktop"; put the collection name inside the artwork (nothing is written over it). Pick where
+                      it opens with Link to Collection (or Category / CTA URL). Heading is only the image description
+                      for Google and screen readers. The section heading above is the title (e.g. "Collections").
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
+                )}
+                {section.type === 'IMAGE_MOSAIC' && (
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Add exactly 4 items, in this order: 1 = tall image on the left, 2 = middle top, 3 = middle
+                      bottom, 4 = tall image on the right. Each item&apos;s Heading is shown as the caption under its
+                      image (e.g. &quot;Gold Jewellery&quot;) — leave it empty for no caption. Pick where each image
+                      opens with Link to Category / Collection / Product or CTA URL. The section heading above is the
+                      title; add the line under it below.
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      showButton={false}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
+                )}
+                {section.type === 'PRICE_SHOWCASE' && (
+                  <p className={sharedStyles.empty}>
+                    Add one item per price band, in order (5 fill one row on desktop; phones swipe). Heading is the
+                    price shown on the card — type it like &quot;Under ₹5,000&quot;, &quot;₹5,000 – ₹10,000&quot; or
+                    &quot;Above ₹30,000&quot; and the card automatically opens all jewellery in that price range. Upload a
+                    product photo (about 800×700) as &quot;Banner image — desktop&quot;. The section heading above is the
+                    title; words after a comma show in gold (e.g. &quot;Beautiful Choices, Thoughtfully Priced&quot;).
+                    CTA Label changes &quot;Shop Now&quot;; CTA URL or a Link overrides the price link.
+                  </p>
+                )}
+                {section.type === 'VIDEO_STORY' && (
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Add 1 item and upload the video in it (MP4, landscape 16:9, under 50 MB — keep it short, 15–60
+                      seconds is ideal, longer is fine). Visitors see the cover image with a play button and the video
+                      plays with sound when clicked. Upload a cover image (a nice frame from the video). The item&apos;s
+                      Subheading is the small gold line above the title (e.g. &quot;Our Manufacturing Process&quot;). The section heading above is the title (e.g.
+                      &quot;Crafted in Our Studio&quot;); add the text and an optional button below.
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
+                )}
+                {section.type === 'BANNER_TRIO' && (
+                  <p className={sharedStyles.empty}>
+                    Add exactly 3 items. Item 1 is the large square banner on the left (upload about 1200×1200); items 2
+                    and 3 are the wide banners stacked on the right (about 1250×590 each). Put any text inside the
+                    artwork itself — nothing is written over the images. Optionally add a separate "mobile" image for
+                    phones. Heading is used only as the image description for Google and screen readers (e.g. "Shaya
+                    silver collection"). Choose where each banner opens with Link to Category / Collection / Product or
+                    CTA URL.
                   </p>
                 )}
                 {section.type === 'SHOP_BY_BOND' && (

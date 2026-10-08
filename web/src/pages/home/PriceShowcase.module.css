@@ -1,0 +1,166 @@
+.band {
+  background: linear-gradient(100deg, #e6ebe1 0%, #eef0e6 45%, #f8f1e4 100%);
+}
+
+.inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 64px var(--space-4) 72px;
+}
+
+/* Same title style as Shop by Bond and the other homepage sections. */
+.heading {
+  margin: 0 0 32px;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+  text-align: center;
+}
+
+.accent {
+  color: #a07a3b;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* Each card: the photo in a rounded inner frame, price and link below. */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 3px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(23, 56, 60, 0.07);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+a.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(23, 56, 60, 0.12);
+}
+
+a.card:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+.tint0 { background: #fbf3e8; }
+.tint1 { background: #f8e3dc; }
+.tint2 { background: #f9e5d3; }
+.tint3 { background: #e3eadf; }
+.tint4 { background: #f8eedf; }
+
+.frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 8 / 7;
+  overflow: hidden;
+  border-radius: 11px 11px 8px 8px;
+}
+
+.frame img,
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+a.card:hover img {
+  transform: scale(1.04);
+}
+
+.price {
+  margin-top: 22px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.6vw, 1.6rem);
+  line-height: 1.2;
+  color: #0f3a3d;
+  text-align: center;
+}
+
+.shop {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: var(--text-base);
+  color: #8a6a35;
+}
+
+.shop svg {
+  transition: transform 0.2s ease;
+}
+
+a.card:hover .shop svg {
+  transform: translateX(4px);
+}
+
+/* Tablet: cards a little tighter. */
+@media (max-width: 1023px) {
+  .row {
+    gap: 12px;
+  }
+
+  .card {
+    padding-bottom: 16px;
+  }
+
+  .price {
+    margin-top: 14px;
+  }
+
+  .shop {
+    gap: 8px;
+    font-size: var(--text-sm);
+  }
+}
+
+/* Phone: a swipeable row, about 2½ cards visible. */
+@media (max-width: 767px) {
+  .inner {
+    padding: 40px 0 44px;
+  }
+
+  .heading {
+    margin-bottom: 20px;
+    padding: 0 var(--space-4);
+  }
+
+  .row {
+    display: flex;
+    gap: 12px;
+    padding: 4px var(--space-4) 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card {
+    flex: 0 0 46%;
+    scroll-snap-align: start;
+    scroll-margin-left: var(--space-4);
+  }
+
+  .price {
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+}

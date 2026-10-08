@@ -71,6 +71,7 @@ function toItemDto(row, deliveryEstimate) {
     id: row.id,
     imageUrl: row.image_url,
     imageUrlMobile: row.image_url_mobile,
+    videoUrl: row.video_url ?? null,
     heading: row.heading,
     subheading: row.subheading,
     ctaLabel: row.cta_label,
@@ -98,6 +99,9 @@ export async function get(req, res, next) {
         id: s.id,
         type: s.type,
         heading: s.heading,
+        subheading: s.subheading ?? null,
+        ctaLabel: s.cta_label ?? null,
+        ctaUrl: s.cta_url ?? null,
         items: s.items.map((item) => toItemDto(item, deliveryEstimate)),
       })),
     });

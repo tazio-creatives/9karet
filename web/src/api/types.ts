@@ -69,6 +69,8 @@ export interface HomepageItem {
   id: string;
   imageUrl: string | null;
   imageUrlMobile: string | null;
+  // Video Story section only — the uploaded MP4/WebM.
+  videoUrl?: string | null;
   heading: string | null;
   subheading: string | null;
   ctaLabel: string | null;
@@ -127,12 +129,21 @@ export type HomepageSectionType =
   | 'COLLECTION_SHOWCASE'
   | 'CAMPAIGN_BANNERS'
   | 'CATEGORY_PRODUCTS'
-  | 'SHOP_BY_BOND';
+  | 'SHOP_BY_BOND'
+  | 'BANNER_TRIO'
+  | 'COLLECTION_CAROUSEL'
+  | 'IMAGE_MOSAIC'
+  | 'VIDEO_STORY'
+  | 'PRICE_SHOWCASE';
 
 export interface HomepageSection {
   id: string;
   type: HomepageSectionType;
   heading: string | null;
+  // Optional section subtitle + button (Collections Carousel).
+  subheading?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
   items: HomepageItem[];
 }
 

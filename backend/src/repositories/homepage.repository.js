@@ -4,7 +4,7 @@ import { listProducts } from './products.repository.js';
 
 export async function getEnabledSectionsWithItems() {
   const { rows: sections } = await query(
-    `SELECT id, type, heading, sort_order FROM homepage_sections
+    `SELECT id, type, heading, subheading, cta_label, cta_url, sort_order FROM homepage_sections
      WHERE is_enabled = true ORDER BY sort_order, created_at`,
   );
   if (sections.length === 0) return [];
@@ -12,7 +12,7 @@ export async function getEnabledSectionsWithItems() {
   const sectionIds = sections.map((s) => s.id);
   const { rows: items } = await query(
     `SELECT
-       hi.id, hi.section_id, hi.image_url, hi.image_url_mobile, hi.heading, hi.subheading, hi.cta_label, hi.cta_url, hi.sort_order,
+       hi.id, hi.section_id, hi.image_url, hi.image_url_mobile, hi.video_url, hi.heading, hi.subheading, hi.cta_label, hi.cta_url, hi.sort_order,
        hi.name, hi.redirect_type, hi.open_in_new_tab,
        c.id AS category_id, c.name AS category_name, c.slug AS category_slug, c.image_url AS category_image_url,
        c.is_active AS category_is_active,

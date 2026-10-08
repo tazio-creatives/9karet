@@ -77,18 +77,6 @@
   color: var(--color-text-muted);
 }
 
-.relatedLinks {
-  margin: var(--space-2) 0 0;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.relatedLinks a {
-  color: #173c40;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .subcategoryNav {
   display: flex;
   gap: 8px;

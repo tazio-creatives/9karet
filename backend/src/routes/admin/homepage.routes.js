@@ -10,8 +10,9 @@ import {
   deleteItem,
   reorderItems,
   uploadImage,
+  uploadVideo,
 } from '../../controllers/adminHomepage.controller.js';
-import { upload } from '../../middleware/upload.js';
+import { upload, uploadHomepageVideo } from '../../middleware/upload.js';
 import { requirePermission } from '../../middleware/adminAuth.js';
 
 // Mounted at /api/v1/admin/homepage (plan §5/§16).
@@ -20,6 +21,7 @@ export const adminHomepageRouter = Router();
 adminHomepageRouter.use(requirePermission('homepage'));
 adminHomepageRouter.get('/', list);
 adminHomepageRouter.post('/upload-image', upload.single('image'), uploadImage);
+adminHomepageRouter.post('/upload-video', uploadHomepageVideo, uploadVideo);
 adminHomepageRouter.post('/sections', createSection);
 adminHomepageRouter.patch('/sections/reorder', reorderSections);
 adminHomepageRouter.patch('/sections/:id', updateSection);

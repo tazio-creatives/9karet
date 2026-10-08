@@ -1,0 +1,156 @@
+.section {
+  --card: min(30vw, 400px);
+  --gap: 24px;
+  --side-scale: 0.86;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  overflow: hidden;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+  text-align: center;
+}
+
+.subheading {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Every slide sits at the stage centre and is shifted by its offset from
+   the active one, so moving the active index animates all of them. */
+.stage {
+  position: relative;
+  height: var(--card);
+  margin-top: var(--space-6);
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--card);
+  height: var(--card);
+  margin-left: calc(var(--card) / -2);
+  /* centre-to-centre distance = half the big card + gap + half a side card */
+  transform: translateX(calc(var(--offset) * (var(--card) * (1 + var(--side-scale)) / 2 + var(--gap))))
+    scale(var(--side-scale));
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.55s ease;
+  z-index: 1;
+}
+
+.slide[aria-hidden='true'] {
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slideActive {
+  transform: translateX(0) scale(1);
+  z-index: 2;
+}
+
+.card {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--color-bg-alt);
+  box-shadow: 0 10px 30px rgba(23, 56, 60, 0.12);
+}
+
+.card img,
+.placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+a.card:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 3px;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-text);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.arrow:hover {
+  background: var(--color-white);
+}
+
+.prev {
+  left: 0;
+}
+
+.next {
+  right: 0;
+}
+
+.ctaRow {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-6);
+}
+
+.cta {
+  padding: 10px 24px;
+  border: 1px solid var(--color-burgundy);
+  border-radius: 6px;
+  color: var(--color-burgundy);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cta:hover {
+  background: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+/* Phone: one card in the middle with the neighbours peeking in. */
+@media (max-width: 767px) {
+  .section {
+    --card: 68vw;
+    --gap: 12px;
+    --side-scale: 0.84;
+    padding: var(--space-5) var(--space-3);
+  }
+
+  .stage {
+    margin-top: var(--space-4);
+  }
+
+  .card {
+    border-radius: 14px;
+  }
+
+  .arrow {
+    width: 36px;
+    height: 36px;
+  }
+}

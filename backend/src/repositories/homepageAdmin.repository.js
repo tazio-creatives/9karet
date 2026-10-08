@@ -2,7 +2,8 @@ import { query } from '../config/db.js';
 
 export async function listAllSections() {
   const { rows } = await query(
-    `SELECT id, type, heading, is_enabled, sort_order FROM homepage_sections ORDER BY sort_order, created_at`,
+    `SELECT id, type, heading, subheading, cta_label, cta_url, is_enabled, sort_order
+     FROM homepage_sections ORDER BY sort_order, created_at`,
   );
   return rows;
 }
@@ -26,7 +27,14 @@ export async function insertSection({ type, heading, isEnabled, sortOrder }) {
   return rows[0];
 }
 
-const SECTION_FIELD_MAP = { heading: 'heading', isEnabled: 'is_enabled', sortOrder: 'sort_order' };
+const SECTION_FIELD_MAP = {
+  heading: 'heading',
+  subheading: 'subheading',
+  ctaLabel: 'cta_label',
+  ctaUrl: 'cta_url',
+  isEnabled: 'is_enabled',
+  sortOrder: 'sort_order',
+};
 
 export async function updateSection(id, fields) {
   const values = [id];
@@ -85,6 +93,7 @@ export async function insertItem({
   sectionId,
   imageUrl,
   imageUrlMobile,
+  videoUrl,
   heading,
   subheading,
   ctaLabel,
@@ -100,12 +109,13 @@ export async function insertItem({
 }) {
   const { rows } = await query(
     `INSERT INTO homepage_items
-       (section_id, image_url, image_url_mobile, heading, subheading, cta_label, cta_url, category_id, collection_id, product_id, name, redirect_type, open_in_new_tab, is_enabled, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+       (section_id, image_url, image_url_mobile, video_url, heading, subheading, cta_label, cta_url, category_id, collection_id, product_id, name, redirect_type, open_in_new_tab, is_enabled, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
     [
       sectionId,
       imageUrl ?? null,
       imageUrlMobile ?? null,
+      videoUrl ?? null,
       heading ?? null,
       subheading ?? null,
       ctaLabel ?? null,
@@ -126,6 +136,7 @@ export async function insertItem({
 const ITEM_FIELD_MAP = {
   imageUrl: 'image_url',
   imageUrlMobile: 'image_url_mobile',
+  videoUrl: 'video_url',
   heading: 'heading',
   subheading: 'subheading',
   ctaLabel: 'cta_label',

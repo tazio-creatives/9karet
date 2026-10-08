@@ -1,5 +1,5 @@
 import { apiFetch, ApiError } from './client';
-import type { HomepageItem, HomepageItemInput, HomepageSection, HomepageSectionType } from './types';
+import type { HomepageItem, HomepageItemInput, HomepageSection, HomepageSectionType, HomepageSectionUpdate } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
@@ -28,6 +28,26 @@ export async function uploadHomepageImage(file: File) {
   return response.json() as Promise<{ url: string }>;
 }
 
+// Video Story section — same multipart upload as images, MP4/WebM only
+// (the server rejects anything else and anything over 50 MB).
+export async function uploadHomepageVideo(file: File) {
+  const formData = new FormData();
+  formData.append('video', file);
+
+  const response = await fetch(`${API_BASE_URL}/admin/homepage/upload-video`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-Requested-With': 'box-diamonds' },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, body.error?.message ?? response.statusText, body.error?.fields);
+  }
+  return response.json() as Promise<{ url: string }>;
+}
+
 export function createSection(type: HomepageSectionType, heading?: string) {
   return apiFetch<{ section: HomepageSection }>('/admin/homepage/sections', {
     method: 'POST',
@@ -35,7 +55,7 @@ export function createSection(type: HomepageSectionType, heading?: string) {
   });
 }
 
-export function updateSection(id: string, input: { heading?: string | null; isEnabled?: boolean }) {
+export function updateSection(id: string, input: HomepageSectionUpdate) {
   return apiFetch<{ section: HomepageSection }>(`/admin/homepage/sections/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(input),

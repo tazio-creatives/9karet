@@ -66,3 +66,19 @@ export const uploadReturnMedia = multer({
   { name: 'photos', maxCount: 8 },
 ]);
 
+
+// Homepage "Video Story" video — stored as uploaded (no transcoding), so only
+// formats every browser plays inline: MP4 and WebM (no MOV/AVI).
+const HOMEPAGE_VIDEO_MIME_TYPES = new Set(['video/mp4', 'video/webm']);
+export const HOMEPAGE_VIDEO_MAX_MB = 50;
+
+export const uploadHomepageVideo = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: HOMEPAGE_VIDEO_MAX_MB * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!HOMEPAGE_VIDEO_MIME_TYPES.has(file.mimetype)) {
+      return cb(new AppError(400, 'Only MP4 or WebM videos are allowed'));
+    }
+    cb(null, true);
+  },
+}).single('video');

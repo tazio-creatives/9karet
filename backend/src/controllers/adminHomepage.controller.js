@@ -26,6 +26,8 @@ import { processAndStoreHomepageImage } from '../services/homepageImageService.j
 import { findCategoryById } from '../repositories/categories.repository.js';
 import { findCollectionById } from '../repositories/collections.repository.js';
 import { findProductById } from '../repositories/products.repository.js';
+import crypto from 'node:crypto';
+import { storageProvider } from '../providers/storage/index.js';
 import { AppError, NotFoundError } from '../utils/AppError.js';
 
 const invalidateHome = () => invalidatePageCache(['/']);
@@ -35,6 +37,9 @@ function toSectionDto(section, items = []) {
     id: section.id,
     type: section.type,
     heading: section.heading,
+    subheading: section.subheading ?? null,
+    ctaLabel: section.cta_label ?? null,
+    ctaUrl: section.cta_url ?? null,
     isEnabled: section.is_enabled,
     sortOrder: section.sort_order,
     items: items.map(toItemDto),
@@ -46,6 +51,7 @@ function toItemDto(item) {
     id: item.id,
     imageUrl: item.image_url,
     imageUrlMobile: item.image_url_mobile,
+    videoUrl: item.video_url ?? null,
     heading: item.heading,
     subheading: item.subheading,
     ctaLabel: item.cta_label,
@@ -185,6 +191,19 @@ export async function uploadImage(req, res, next) {
   try {
     if (!req.file) throw new AppError(400, 'No image file provided');
     const { url } = await processAndStoreHomepageImage(req.file.buffer);
+    res.status(201).json({ url });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Video Story section: saved as uploaded (MP4/WebM, checked by the upload
+// middleware) — no transcoding, so admins should upload a web-ready file.
+export async function uploadVideo(req, res, next) {
+  try {
+    if (!req.file) throw new AppError(400, 'No video file provided');
+    const ext = req.file.mimetype === 'video/webm' ? 'webm' : 'mp4';
+    const { url } = await storageProvider.save(`homepage/videos/${crypto.randomUUID()}.${ext}`, req.file.buffer);
     res.status(201).json({ url });
   } catch (err) {
     next(err);

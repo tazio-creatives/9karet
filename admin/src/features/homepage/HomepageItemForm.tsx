@@ -3,10 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAdminCategories } from '../../api/categories';
 import { fetchAdminCollections } from '../../api/collections';
 import { fetchAdminProducts } from '../../api/products';
-import { uploadHomepageImage } from '../../api/homepage';
+import { uploadHomepageImage, uploadHomepageVideo } from '../../api/homepage';
 import type { HomepageItem, HomepageItemInput, HomepageSectionType } from '../../api/types';
 import { ApiError } from '../../api/client';
 import sharedStyles from '../../styles/shared.module.css';
+import { IMAGE_SIZE_HINTS } from './imageSizes';
 
 // This one shared form's "Heading" field means something different per
 // section type — from the actual storefront banner title (NEW_ARRIVALS) to
@@ -18,10 +19,24 @@ import sharedStyles from '../../styles/shared.module.css';
 // the storefront for any type. Spelling out "(shown on the storefront...)"
 // here makes that distinction visible right where the confusion happens.
 const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
-  COLLECTION_SHOWCASE: 'Heading (shown on the storefront as a small eyebrow line above the banner title)',
+  COLLECTION_SHOWCASE:
+    'Heading (shown on the storefront as a small eyebrow line above the banner title)',
   NEW_ARRIVALS: 'Heading (shown on the storefront as the banner title)',
   CATEGORY_PRODUCTS: 'Heading (not used for this section type — see note above)',
   SHOP_BY_BOND: 'Heading (the label shown under the photo, e.g. "Mother")',
+  BANNER_TRIO:
+    'Heading (not shown — used as the image description, e.g. "Bridal diamond earrings")',
+  COLLECTION_CAROUSEL:
+    'Heading (not shown — used as the image description, e.g. "Bella collection")',
+  IMAGE_MOSAIC: 'Heading (caption shown under the image, e.g. "Gold Jewellery")',
+  PRICE_SHOWCASE: 'Heading (the price on the card, e.g. "Under ₹5,000" or "₹5,000 – ₹10,000")',
+  VIDEO_STORY:
+    'Heading (not shown — used as the video description, e.g. "Jewellery manufacturing process")',
+};
+
+const SUBHEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
+  PRICE_SHOWCASE: 'Subheading (not shown — image description, e.g. "Diamond flower stud earrings")',
+  VIDEO_STORY: 'Subheading (small gold line above the title, e.g. "Our Manufacturing Process")',
 };
 
 interface HomepageItemFormProps {
@@ -31,9 +46,20 @@ interface HomepageItemFormProps {
   onCancel: () => void;
 }
 
-export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: HomepageItemFormProps) {
-  const { data: categoriesData } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
-  const { data: collectionsData } = useQuery({ queryKey: ['admin-collections'], queryFn: fetchAdminCollections });
+export function HomepageItemForm({
+  sectionType,
+  initial,
+  onSubmit,
+  onCancel,
+}: HomepageItemFormProps) {
+  const { data: categoriesData } = useQuery({
+    queryKey: ['admin-categories'],
+    queryFn: fetchAdminCategories,
+  });
+  const { data: collectionsData } = useQuery({
+    queryKey: ['admin-collections'],
+    queryFn: fetchAdminCollections,
+  });
   const { data: productsData } = useQuery({
     queryKey: ['admin-products', 'for-homepage'],
     queryFn: () => fetchAdminProducts({ limit: 100 }),
@@ -45,15 +71,19 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
   const [ctaUrl, setCtaUrl] = useState(initial?.ctaUrl ?? '');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '');
   const [imageUrlMobile, setImageUrlMobile] = useState(initial?.imageUrlMobile ?? '');
+  const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? '');
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [collectionId, setCollectionId] = useState(initial?.collectionId ?? '');
   const [productId, setProductId] = useState(initial?.productId ?? '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUploadingMobile, setIsUploadingMobile] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const isVideo = sectionType === 'VIDEO_STORY';
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mobileFileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -87,6 +117,22 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
     }
   }
 
+  async function handleVideoFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setIsUploadingVideo(true);
+    try {
+      const { url } = await uploadHomepageVideo(file);
+      setVideoUrl(url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not upload video.');
+    } finally {
+      setIsUploadingVideo(false);
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -99,6 +145,7 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
         ctaUrl: ctaUrl || null,
         imageUrl: imageUrl || null,
         imageUrlMobile: imageUrlMobile || null,
+        ...(isVideo ? { videoUrl: videoUrl || null } : {}),
         categoryId: categoryId || null,
         collectionId: collectionId || null,
         productId: productId || null,
@@ -118,7 +165,7 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
           <input value={heading} onChange={(e) => setHeading(e.target.value)} />
         </label>
         <label className={sharedStyles.field}>
-          Subheading (short description, e.g. hero banners)
+          {SUBHEADING_LABEL[sectionType] ?? 'Subheading (short description, e.g. hero banners)'}
           <input value={subheading} onChange={(e) => setSubheading(e.target.value)} />
         </label>
         <label className={sharedStyles.field}>
@@ -169,12 +216,21 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
 
       <div className={`${sharedStyles.formGrid} ${sharedStyles.formSection}`}>
         <div className={sharedStyles.field}>
-          Banner image — desktop
+          {isVideo ? 'Cover image' : 'Banner image — desktop'}
+          {IMAGE_SIZE_HINTS[sectionType]?.desktop
+            ? ` (${IMAGE_SIZE_HINTS[sectionType].desktop})`
+            : ''}
           {imageUrl && (
             <img
               src={imageUrl}
               alt=""
-              style={{ maxWidth: 320, maxHeight: 160, objectFit: 'cover', display: 'block', margin: '4px 0 8px' }}
+              style={{
+                maxWidth: 320,
+                maxHeight: 160,
+                objectFit: 'cover',
+                display: 'block',
+                margin: '4px 0 8px',
+              }}
             />
           )}
           <input
@@ -193,36 +249,77 @@ export function HomepageItemForm({ sectionType, initial, onSubmit, onCancel }: H
           />
         </div>
 
-        <div className={sharedStyles.field}>
-          Banner image — mobile (recommended, 4:5 portrait crop)
-          {imageUrlMobile && (
-            <img
-              src={imageUrlMobile}
-              alt=""
-              style={{ maxWidth: 160, maxHeight: 200, objectFit: 'cover', display: 'block', margin: '4px 0 8px' }}
+        {isVideo ? (
+          <div className={sharedStyles.field}>
+            Video (MP4 or WebM, landscape 16:9, under 50 MB)
+            {videoUrl && (
+              <video
+                src={videoUrl}
+                muted
+                controls
+                style={{ maxWidth: 320, maxHeight: 180, display: 'block', margin: '4px 0 8px' }}
+              />
+            )}
+            <input
+              ref={videoFileInputRef}
+              type="file"
+              accept="video/mp4,video/webm"
+              onChange={handleVideoFileChange}
+              disabled={isUploadingVideo}
             />
-          )}
-          <input
-            ref={mobileFileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleMobileFileChange}
-            disabled={isUploadingMobile}
-          />
-          {isUploadingMobile && <p>Uploading…</p>}
-          <input
-            value={imageUrlMobile}
-            onChange={(e) => setImageUrlMobile(e.target.value)}
-            placeholder="…or paste an image URL directly (falls back to desktop image if empty)"
-            style={{ marginTop: 6 }}
-          />
-        </div>
+            {isUploadingVideo && <p>Uploading video… this can take a minute.</p>}
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="…or paste a video URL (.mp4) directly"
+              style={{ marginTop: 6 }}
+            />
+          </div>
+        ) : (
+          <div className={sharedStyles.field}>
+            Banner image — mobile
+            {IMAGE_SIZE_HINTS[sectionType]?.mobile
+              ? ` (${IMAGE_SIZE_HINTS[sectionType].mobile})`
+              : ''}
+            {imageUrlMobile && (
+              <img
+                src={imageUrlMobile}
+                alt=""
+                style={{
+                  maxWidth: 160,
+                  maxHeight: 200,
+                  objectFit: 'cover',
+                  display: 'block',
+                  margin: '4px 0 8px',
+                }}
+              />
+            )}
+            <input
+              ref={mobileFileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleMobileFileChange}
+              disabled={isUploadingMobile}
+            />
+            {isUploadingMobile && <p>Uploading…</p>}
+            <input
+              value={imageUrlMobile}
+              onChange={(e) => setImageUrlMobile(e.target.value)}
+              placeholder="…or paste an image URL directly (falls back to desktop image if empty)"
+              style={{ marginTop: 6 }}
+            />
+          </div>
+        )}
       </div>
 
       {error && <p className={sharedStyles.error}>{error}</p>}
 
       <div className={sharedStyles.formActions}>
-        <button type="submit" className={sharedStyles.buttonPrimary} disabled={isSubmitting}>
+        <button
+          type="submit"
+          className={sharedStyles.buttonPrimary}
+          disabled={isSubmitting || isUploading || isUploadingMobile || isUploadingVideo}
+        >
           {isSubmitting ? 'Saving…' : 'Save Item'}
         </button>
         <button type="button" className={sharedStyles.button} onClick={onCancel}>

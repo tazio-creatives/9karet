@@ -9,11 +9,11 @@ import {
 import styles from './AssuranceStrip.module.css';
 
 const ASSURANCES = [
-  { Icon: DiamondIcon, title: '100% Certified Diamonds', description: '100% Genuine' },
-  { Icon: HallmarkIcon, title: 'BIS Hallmark Gold', description: 'Trust You Can Wear' },
-  { Icon: BuybackIcon, title: 'Buyback Guarantee', description: 'Best Value, Always' },
-  { Icon: ExchangeIcon, title: 'Exchange Support', description: 'Easy & Hassle Free' },
-  { Icon: ShieldCheckIcon, title: 'Secure Payment', description: 'Safe & Reliable' },
+  { Icon: DiamondIcon, title: '100% Certified Diamonds', description: 'IGI / GIA Certified' },
+  { Icon: HallmarkIcon, title: 'BIS Hallmarked Gold', description: 'Trusted Purity' },
+  { Icon: BuybackIcon, title: 'Buyback Guarantee', description: 'Better Value, Always' },
+  { Icon: ExchangeIcon, title: 'Exchange Support', description: 'Easy & Flexible' },
+  { Icon: ShieldCheckIcon, title: 'Secure Payments', description: 'Safe & Reliable' },
 ] as const;
 
 // Static, non-CMS content (plan: "Do not add an admin configuration
@@ -23,14 +23,14 @@ const ASSURANCES = [
 export function AssuranceStrip() {
   const stripRef = useRef<HTMLElement>(null);
 
-  // Mobile only — desktop shows all 5 items at once, nothing to slide.
+  // Phones and tablets only — desktop shows all 5 items at once, nothing to slide.
   // Pauses while the user is touching/dragging the strip themselves so
   // auto-advance never fights a manual swipe, then resumes a few seconds
   // after they let go.
   useEffect(() => {
     const strip = stripRef.current;
     if (!strip) return;
-    if (!window.matchMedia('(max-width: 767px)').matches) return;
+    if (!window.matchMedia('(max-width: 1023px)').matches) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let paused = false;
@@ -66,7 +66,9 @@ export function AssuranceStrip() {
     <section className={styles.strip} aria-label="Shopping assurances" ref={stripRef}>
       {ASSURANCES.map(({ Icon, title, description }) => (
         <div className={styles.item} key={title}>
-          <Icon />
+          <span className={styles.icon}>
+            <Icon />
+          </span>
           <div className={styles.text}>
             <p className={styles.title}>{title}</p>
             <p className={styles.description}>{description}</p>

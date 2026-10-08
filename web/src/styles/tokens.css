@@ -41,6 +41,8 @@
      same family). */
   --font-heading: 'Plus Jakarta Sans', Arial, sans-serif;
   --font-body: 'Plus Jakarta Sans', Arial, sans-serif;
+  /* Large display titles only (e.g. the homepage Video Story). */
+  --font-display: 'DM Serif Display', Georgia, serif;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;

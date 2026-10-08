@@ -137,3 +137,9 @@
   gap: var(--space-3);
   white-space: nowrap;
 }
+
+.sizeHint {
+  margin: 2px 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

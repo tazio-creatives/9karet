@@ -815,7 +815,12 @@ export type HomepageSectionType =
   | 'CAMPAIGN_BANNERS'
   | 'CATEGORY_PRODUCTS'
   | 'COLLECTION_SHOWCASE'
-  | 'SHOP_BY_BOND';
+  | 'SHOP_BY_BOND'
+  | 'BANNER_TRIO'
+  | 'COLLECTION_CAROUSEL'
+  | 'IMAGE_MOSAIC'
+  | 'VIDEO_STORY'
+  | 'PRICE_SHOWCASE';
 
 export type HeroRedirectType = 'NONE' | 'CATEGORY' | 'COLLECTION' | 'PRODUCT';
 
@@ -823,6 +828,8 @@ export interface HomepageItem {
   id: string;
   imageUrl: string | null;
   imageUrlMobile: string | null;
+  // Video Story section only — the uploaded MP4/WebM.
+  videoUrl: string | null;
   heading: string | null;
   subheading: string | null;
   ctaLabel: string | null;
@@ -843,14 +850,26 @@ export interface HomepageSection {
   id: string;
   type: HomepageSectionType;
   heading: string | null;
+  subheading?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
   isEnabled: boolean;
   sortOrder: number;
   items: HomepageItem[];
 }
 
+export interface HomepageSectionUpdate {
+  heading?: string | null;
+  subheading?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  isEnabled?: boolean;
+}
+
 export interface HomepageItemInput {
   imageUrl?: string | null;
   imageUrlMobile?: string | null;
+  videoUrl?: string | null;
   heading?: string | null;
   subheading?: string | null;
   ctaLabel?: string | null;

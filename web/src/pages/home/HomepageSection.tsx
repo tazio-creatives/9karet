@@ -1,6 +1,11 @@
 import type { HomepageSection as HomepageSectionData } from '../../api/types';
 import { BentoCard } from './BentoCard';
 import { BondGrid } from './BondGrid';
+import { BannerTrio } from './BannerTrio';
+import { CollectionCarousel } from './CollectionCarousel';
+import { ImageMosaic } from './ImageMosaic';
+import { VideoStory } from './VideoStory';
+import { PriceShowcase } from './PriceShowcase';
 import { CampaignBanners } from './CampaignBanners';
 import { CategoryProductRow } from './CategoryProductRow';
 import { CategoryShowcase } from './CategoryShowcase';
@@ -112,6 +117,7 @@ export function HomepageSection({ section, alternate }: Props) {
       if (section.items.length === 3) {
         return (
           <section>
+            {section.heading && <h2 className={`${styles.heading} ${styles.tileHeading}`}>{section.heading}</h2>}
             <CollectionShowcase items={section.items} />
           </section>
         );
@@ -119,6 +125,7 @@ export function HomepageSection({ section, alternate }: Props) {
       if (section.items.length === 2) {
         return (
           <section>
+            {section.heading && <h2 className={`${styles.heading} ${styles.tileHeading}`}>{section.heading}</h2>}
             <DuoBanner items={section.items} />
           </section>
         );
@@ -143,6 +150,37 @@ export function HomepageSection({ section, alternate }: Props) {
 
     case 'NEW_ARRIVALS':
       return <NewArrivalsSection items={section.items} />;
+
+    case 'COLLECTION_CAROUSEL':
+      return (
+        <CollectionCarousel
+          items={section.items}
+          heading={section.heading}
+          subheading={section.subheading}
+          ctaLabel={section.ctaLabel}
+          ctaUrl={section.ctaUrl}
+        />
+      );
+
+    case 'IMAGE_MOSAIC':
+      return <ImageMosaic items={section.items} heading={section.heading} subheading={section.subheading} />;
+
+    case 'PRICE_SHOWCASE':
+      return <PriceShowcase items={section.items} heading={section.heading} />;
+
+    case 'VIDEO_STORY':
+      return (
+        <VideoStory
+          item={section.items[0]}
+          heading={section.heading}
+          subheading={section.subheading}
+          ctaLabel={section.ctaLabel}
+          ctaUrl={section.ctaUrl}
+        />
+      );
+
+    case 'BANNER_TRIO':
+      return <BannerTrio items={section.items} heading={section.heading} />;
 
     case 'SHOP_BY_BOND':
       return (

@@ -36,6 +36,13 @@
   }
 }
 
+.tileHeading {
+  /* The 2/3-tile layouts bring their own outer spacing — just give the
+     heading room above the tiles. */
+  margin: var(--space-6) 0 0;
+  padding: 0 var(--space-4);
+}
+
 .bond {
   padding-top: var(--space-5);
   padding-bottom: var(--space-5);

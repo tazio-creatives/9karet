@@ -1,16 +1,17 @@
-/* Same left/right inset as the hero banner directly above it (hero's own
-   box is `--space-3` = 12px in from each edge, via HomepageSection.module
-   .css's `.hero { padding: var(--space-3) }`) — no outer max-width token,
-   so the two boxes' edges line up at every width without being guessed. */
+/* Light ivory card with a hairline border, aligned to the same content width
+   as the homepage sections below (1280px container less its 16px padding). */
 .strip {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
-  min-height: 86px;
-  margin: 0 var(--space-3) 20px;
-  padding: 16px 24px;
-  border-radius: 10px;
-  background: var(--color-burgundy-dark, #00363c);
+  width: calc(100% - 2 * var(--space-4));
+  max-width: calc(var(--container-max) - 2 * var(--space-4));
+  min-height: 76px;
+  margin: 4px auto 24px;
+  padding: 10px 8px;
+  border: 1px solid #e8dfcf;
+  border-radius: 12px;
+  background: #f8f5ee;
   box-sizing: border-box;
 }
 
@@ -20,18 +21,28 @@
   justify-content: center;
   gap: 10px;
   min-width: 0;
-  padding-inline: 14px;
+  padding-inline: 12px;
 }
 
+/* Soft neutral separators — no gold. */
 .item + .item {
-  border-left: 1px solid rgba(201, 165, 76, 0.3);
+  border-left: 1px solid #e8dfcf;
 }
 
-.item svg {
-  width: 28px;
-  height: 28px;
+.icon {
+  display: grid;
+  place-items: center;
   flex: 0 0 auto;
-  color: #d4b56a;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(14, 74, 80, 0.06);
+  color: #0e4a50;
+}
+
+.icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .text {
@@ -40,30 +51,54 @@
 
 .title {
   margin: 0;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  /* Wraps rather than truncating — a long title like "100% Certified
-     Diamonds" takes two lines on narrow tiles instead of being cut with "…". */
+  color: #0e4a50;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .description {
-  margin: 3px 0 0;
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 11px;
-  font-weight: 400;
+  margin: 2px 0 0;
+  color: #7d7a72;
+  font-size: 12px;
   line-height: 1.3;
 }
 
-@media (max-width: 767px) {
+/* Small laptops: tighter, so all five still fit on one row. */
+@media (max-width: 1100px) {
+  .item {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .title {
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .description {
+    font-size: 11px;
+  }
+}
+
+/* Tablet and phone: a swipeable row, scrollbar hidden. */
+@media (max-width: 1023px) {
   .strip {
     display: flex;
-    min-height: 76px;
-    margin: 10px var(--space-3) 10px;
-    padding: 14px 8px;
+    min-height: 72px;
+    margin: 4px auto 16px;
+    padding: 12px 0;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -73,25 +108,33 @@
     display: none;
   }
 
-  /* Exactly two whole tiles per view, so neither is cut at the edge. */
+  /* Natural width (titles stay on one line) — about 1.6 items in view. */
   .item {
-    flex: 0 0 50%;
+    flex: 0 0 auto;
+    min-width: 58%;
     justify-content: flex-start;
-    gap: 8px;
-    padding-inline: 10px;
+    gap: 10px;
+    padding-inline: 14px;
     scroll-snap-align: start;
   }
 
-  .item svg {
-    width: 25px;
-    height: 25px;
+  .icon {
+    width: 36px;
+    height: 36px;
   }
 
   .title {
-    font-size: 11px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .description {
-    font-size: 10px;
+    font-size: 11.5px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .item {
+    min-width: 34%;
   }
 }

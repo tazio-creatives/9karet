@@ -1,0 +1,118 @@
+.section {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+  text-align: center;
+}
+
+.subheading {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Three equal columns. The middle column's two 5:3 tiles + captions set the
+   row height; the tall tiles stretch to match it exactly. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.middle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--color-bg-alt);
+}
+
+.short .frame {
+  aspect-ratio: 5 / 3;
+}
+
+/* Tall tiles fill the column height; the image is laid over the frame so
+   it never pushes the row taller. */
+.tall .frame {
+  flex: 1;
+  min-height: 0;
+}
+
+.frame img,
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+a.tile:hover img {
+  transform: scale(1.03);
+}
+
+a.tile:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.caption {
+  padding-top: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Phone: a 2 × 2 grid in item order, every image portrait 4:5. */
+@media (max-width: 767px) {
+  .section {
+    padding: var(--space-5) var(--space-3);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+
+  .middle {
+    display: contents;
+  }
+
+  .tall .frame,
+  .short .frame {
+    flex: none;
+    aspect-ratio: 4 / 5;
+  }
+
+  .caption {
+    font-size: var(--text-sm);
+  }
+}

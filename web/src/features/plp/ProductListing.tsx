@@ -28,7 +28,6 @@ interface ProductListingProps {
   h1?: string;
   seoTitle?: string | null;
   seoDescription?: string | null;
-  relatedLinks?: { label: string; href: string }[];
   // Short visible intro under the heading (category description).
   description?: string | null;
   breadcrumbs: Crumb[];
@@ -47,7 +46,6 @@ export function ProductListing({
   h1 = heading,
   seoTitle,
   seoDescription,
-  relatedLinks,
   description,
   breadcrumbs,
   canonicalPath,
@@ -201,18 +199,6 @@ export function ProductListing({
             </nav>
           )}
         </div>
-
-        {relatedLinks && relatedLinks.length > 0 && (
-          <p className={styles.relatedLinks}>
-            Also explore:{' '}
-            {relatedLinks.map((link, i) => (
-              <span key={link.href}>
-                {i > 0 && ' · '}
-                <Link to={link.href}>{link.label}</Link>
-              </span>
-            ))}
-          </p>
-        )}
 
         <div className={styles.headerRow}>
           <div className={styles.headerLeft}>

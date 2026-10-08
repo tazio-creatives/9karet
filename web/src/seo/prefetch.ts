@@ -61,7 +61,7 @@ export async function prefetchForRoute(
     return { notFound };
   }
 
-  if (pathname === '/new-arrivals') {
+  if (pathname === '/new-arrivals' || pathname === '/jewellery') {
     const filters = parsePlpFilters(searchParams);
     await safePrefetchProducts(queryClient, filters);
     return { notFound: false };
