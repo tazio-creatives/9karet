@@ -53,7 +53,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: 'Blog', to: '/blog' },
       { label: 'Sustainability', to: '/sustainability' },
       { label: 'Become a Partner', to: '/retail-partner' },
-      { label: 'Franchise', to: '/franchise' },
+      { label: 'Franchise Opportunity', to: '/franchise' },
     ],
   },
   {
