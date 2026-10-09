@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import type { ProductSize } from '../../api/types';
+import { SizeGuide, type SizeGuideType } from './SizeGuide';
 import styles from './SizeSelector.module.css';
-
-// Generic, universal reference chart — not per-product data, just a common
-// international ring-size lookup so "Size Guide" isn't a dead link.
-const SIZE_GUIDE_ROWS: [string, string][] = [
-  ['5', '49.3 mm'],
-  ['6', '51.9 mm'],
-  ['7', '54.4 mm'],
-  ['8', '57.0 mm'],
-  ['9', '59.5 mm'],
-  ['10', '62.1 mm'],
-];
 
 interface SizeSelectorProps {
   sizes: ProductSize[];
@@ -19,16 +9,16 @@ interface SizeSelectorProps {
   onSelect: (_sizeId: string) => void;
   // Overrides the "Size" wording (e.g. "Length" for a chain/necklace) — a
   // product using this axis for something other than a ring size sets this
-  // via the admin form. Defaults to "Size", today's behavior. The ring
-  // circumference guide below is specific to actual ring sizing, so it only
-  // shows for the default label — a length-labeled product just gets no
-  // guide rather than a wrong one.
+  // via the admin form. Defaults to "Size", today's behavior.
   label?: string;
+  // Which size guide fits this product (from its category) — rings get the
+  // Indian ring chart, bangles the anna chart, anything else no guide
+  // rather than a wrong one.
+  guideType?: SizeGuideType | null;
 }
 
-export function SizeSelector({ sizes, selectedSizeId, onSelect, label = 'Size' }: SizeSelectorProps) {
+export function SizeSelector({ sizes, selectedSizeId, onSelect, label = 'Size', guideType = null }: SizeSelectorProps) {
   const [showGuide, setShowGuide] = useState(false);
-  const isRingSize = label === 'Size';
 
   if (sizes.length === 0) return null;
 
@@ -38,8 +28,8 @@ export function SizeSelector({ sizes, selectedSizeId, onSelect, label = 'Size' }
     <div className={styles.wrap}>
       <div className={styles.row}>
         <span className={styles.label}>Select {label}</span>
-        {isRingSize && (
-          <button type="button" className={styles.guideLink} onClick={() => setShowGuide((v) => !v)}>
+        {guideType && (
+          <button type="button" className={styles.guideLink} onClick={() => setShowGuide(true)}>
             Size Guide
           </button>
         )}
@@ -69,34 +59,8 @@ export function SizeSelector({ sizes, selectedSizeId, onSelect, label = 'Size' }
         </p>
       )}
 
-      {isRingSize && showGuide && (
-        <div className={styles.guidePopover} role="dialog" aria-label="Size guide">
-          <div className={styles.guideHeader}>
-            <span>Ring Size Guide</span>
-            <button type="button" className={styles.guideClose} onClick={() => setShowGuide(false)} aria-label="Close">
-              ×
-            </button>
-          </div>
-          <table className={styles.guideTable}>
-            <thead>
-              <tr>
-                <th>Size</th>
-                <th>Inner circumference</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SIZE_GUIDE_ROWS.map(([size, circumference]) => (
-                <tr key={size}>
-                  <td>{size}</td>
-                  <td>{circumference}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className={styles.guideNote}>
-            Not sure of your size? Wrap a strip of paper around your finger and measure against a ruler.
-          </p>
-        </div>
+      {guideType && showGuide && (
+        <SizeGuide type={guideType} sizeLabels={sizes.map((sz) => sz.label)} onClose={() => setShowGuide(false)} />
       )}
     </div>
   );

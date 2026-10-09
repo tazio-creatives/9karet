@@ -6,6 +6,7 @@ import { DeliveryEstimateDetail } from '../../components/DeliveryEstimate';
 import { ProductAssuranceGrid } from '../../components/ProductAssuranceGrid';
 import { DeliveryChecker } from './DeliveryChecker';
 import { SizeSelector } from './SizeSelector';
+import type { SizeGuideType } from './SizeGuide';
 import { ColorSelector } from './ColorSelector';
 import { COLOR_SWATCH } from './goldColorSwatch';
 import { PillSelector } from './PillSelector';
@@ -64,6 +65,8 @@ function DiamondChipIcon() {
 
 interface ProductInfoProps {
   product: ProductDetail;
+  // Ring / bangle size guide for this product (from its category).
+  sizeGuideType?: SizeGuideType | null;
   isOutOfStock: boolean;
   isLowStock: boolean;
   justAdded: boolean;
@@ -94,6 +97,7 @@ interface ProductInfoProps {
 
 export function ProductInfo({
   product,
+  sizeGuideType = null,
   isOutOfStock,
   isLowStock,
   justAdded,
@@ -384,6 +388,7 @@ export function ProductInfo({
                 selectedSizeId={selectedSizeId}
                 onSelect={onSelectSize}
                 label={sizeFieldLabel}
+                guideType={sizeGuideType}
               />
               {showValidation && sizeRequired && (
                 <p className={styles.fieldError}>Please select a {sizeFieldLabel.toLowerCase()}</p>

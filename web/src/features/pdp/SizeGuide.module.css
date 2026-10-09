@@ -1,0 +1,309 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 30, 32, 0.55);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 760px;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  border-radius: 16px;
+  background: #fbf8f1;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: #00363c;
+  color: #fbf8f1;
+}
+
+.header h2 {
+  margin: 0;
+  color: #fbf8f1; /* the global h1–h6 rule sets a dark colour, so set it here */
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid #d9bd84;
+  outline-offset: 2px;
+}
+
+.body {
+  overflow-y: auto;
+  padding: 20px 24px 26px;
+  color: #17383c;
+}
+
+.sub {
+  margin: 0 0 16px;
+  font-size: 14.5px;
+  color: #4e5a5a;
+}
+
+.card {
+  margin-bottom: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.art {
+  flex: 0 0 auto;
+  width: 96px;
+}
+
+.instructions {
+  margin: 0;
+  padding: 0 0 0 18px;
+  font-size: 14.5px;
+  line-height: 1.75;
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 16px;
+}
+
+.strip svg {
+  flex: 1 1 auto;
+  max-width: 380px;
+}
+
+.example {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.example strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* tables */
+
+.tables {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 6px;
+  align-items: start;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: #fff;
+}
+
+.table th {
+  padding: 10px 12px;
+  background: #00363c;
+  color: #fbf8f1;
+  font-weight: 500;
+  text-align: left;
+}
+
+.table td {
+  padding: 7px 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #f1ebdf;
+}
+
+.table tbody tr.hl {
+  background: #ead7ad;
+  font-weight: 600;
+}
+
+.notes {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.strong {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.fine {
+  font-size: 12.5px;
+  color: #6f7979;
+}
+
+.legend {
+  display: inline-block;
+  margin: 14px 0 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #ead7ad;
+  font-size: 12.5px;
+}
+
+/* bangle */
+
+.anna {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: #00363c;
+  color: #fbf8f1;
+}
+
+.anna p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.anna span {
+  margin: 0 12px;
+  opacity: 0.6;
+}
+
+.annaBig {
+  font-size: 1.25rem !important;
+  font-weight: 600;
+}
+
+.annaSmall {
+  font-size: 13px !important;
+  opacity: 0.85;
+}
+
+.circles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.circle {
+  margin: 0;
+  text-align: center;
+}
+
+.circle figcaption {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.circle svg {
+  width: 100%;
+  max-width: 190px;
+}
+
+.centerNote {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.chartTitle {
+  margin: 20px 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* phone: full-height sheet, single-column tables */
+@media (max-width: 600px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .header {
+    padding: 14px 16px;
+  }
+
+  .body {
+    padding: 16px 16px 24px;
+  }
+
+  .step {
+    gap: 14px;
+  }
+
+  .art {
+    width: 70px;
+  }
+
+  .instructions {
+    font-size: 13.5px;
+  }
+
+  .strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .tables {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .tables .table + .table thead {
+    display: none;
+  }
+
+  .table {
+    font-size: 13.5px;
+  }
+}

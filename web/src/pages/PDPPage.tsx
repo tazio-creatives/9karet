@@ -7,6 +7,7 @@ import { fetchCategories } from '../api/categories';
 import { addCartItem } from '../api/cart';
 import type { Cart, ProductImage } from '../api/types';
 import { getAncestorChain } from '../utils/categoryTree';
+import type { SizeGuideType } from '../features/pdp/SizeGuide';
 import { useVariantSelection } from '../hooks/useVariantSelection';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { useHead, defaultHead } from '../seo/head';
@@ -139,6 +140,20 @@ export function PDPPage() {
   // Jewellery type from the top-level category ("Rings" -> "Ring").
   const type = jewelleryType(ancestors[0]?.name ?? category?.name);
 
+  // Size guide by jewellery type: category first ("Bangle", "Rings" and
+  // their subcategories), then the size labels themselves as a fallback —
+  // anna sizes look like "2.4" / "2-4", ring sizes are whole numbers.
+  const sizeGuideType: SizeGuideType | null = (() => {
+    if (!product || product.sizes.length === 0) return null;
+    const names = [...ancestors.map((c) => c.name), category?.name ?? ''].join(' ');
+    if (/bangle|kada/i.test(names)) return 'bangle';
+    if (/\bring/i.test(names)) return 'ring';
+    const labels = product.sizes.map((s) => s.label.trim());
+    if (labels.every((l) => /^\d[.-]\d{1,2}$/.test(l))) return 'bangle';
+    if (labels.every((l) => /^\d{1,2}$/.test(l))) return 'ring';
+    return null;
+  })();
+
   // Called unconditionally (rules of hooks) — falls back to defaultHead
   // until the product query resolves, then reflects the real product.
   useHead(
@@ -224,6 +239,7 @@ export function PDPPage() {
 
             <ProductInfo
               product={product}
+              sizeGuideType={sizeGuideType}
               isOutOfStock={isOutOfStock}
               isLowStock={isLowStock}
               justAdded={justAdded}
