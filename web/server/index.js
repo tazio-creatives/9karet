@@ -58,6 +58,18 @@ function classifyRoute(pathname) {
 async function createServer() {
   const app = express();
 
+  // Standard browser protections (the API already sends these via helmet).
+  // No Content-Security-Policy here: GTM, Tawk.to and Cashfree load scripts
+  // and frames from their own domains and would need a hand-tuned allowlist.
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // no framing by other sites (clickjacking)
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    if (isProd) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+  });
+
   // Brotli/gzip at this process since there's no reverse proxy in front of
   // it yet (plan §13) — cut ~270KB off the JS/CSS/HTML payload per Lighthouse.
   app.use(compression());

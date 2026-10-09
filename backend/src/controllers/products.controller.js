@@ -201,6 +201,29 @@ export function rowOffer(row) {
 // (no real sales/analytics data to back those honestly), so only this one
 // is auto-computed, from the timestamp that already exists on every product.
 const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+// Public responses never reveal real inventory (a competitor could read it
+// straight from the API). Capping is enough: the storefront only cares
+// whether stock is 0, 1–3 ("Only N left") or more — see web
+// utils/stockStatus.ts — so every badge and size/variant gate behaves the
+// same. Admin responses (adminGet) keep the true figures.
+const PUBLIC_STOCK_CAP = 10;
+function publicStock(n) {
+  return n == null ? n : Math.min(Number(n), PUBLIC_STOCK_CAP);
+}
+
+function capPublicStock(dto) {
+  const capItem = (item) => ({
+    ...item,
+    ...('stockQuantity' in item ? { stockQuantity: publicStock(item.stockQuantity) } : {}),
+    ...('availableStock' in item ? { availableStock: publicStock(item.availableStock) } : {}),
+  });
+  return {
+    ...capItem(dto),
+    variants: (dto.variants ?? []).map(capItem),
+    sizes: (dto.sizes ?? []).map(capItem),
+  };
+}
+
 function isRecentlyPublished(createdAt) {
   return createdAt != null && Date.now() - new Date(createdAt).getTime() < NEW_WINDOW_MS;
 }
@@ -240,7 +263,9 @@ export function toListDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent, row.diamond_type),
     appliedRules: appliedRules(row),
     primaryImageUrl: row.primary_image_url,
-    availableStock: row.available_stock,
+    // toListDto only feeds public endpoints (listings, search, homepage,
+    // wishlist), so it caps directly.
+    availableStock: publicStock(row.available_stock),
     ratingAvg: Number(row.rating_avg),
     ratingCount: row.rating_count,
     isFeatured: row.is_featured,
@@ -460,7 +485,7 @@ export async function list(req, res, next) {
 export async function getBySlug(req, res, next) {
   try {
     const product = await productsService.getPublicProductBySlug(req.params.slug);
-    res.json({ product: toDetailDto(product, calculateDeliveryEstimate()) });
+    res.json({ product: capPublicStock(toDetailDto(product, calculateDeliveryEstimate())) });
   } catch (err) {
     next(err);
   }
