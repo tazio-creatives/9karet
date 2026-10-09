@@ -52,7 +52,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
       { label: 'Why Box Diamonds', to: '/why-box-diamonds' },
       { label: 'Blog', to: '/blog' },
       { label: 'Sustainability', to: '/sustainability' },
-      { label: 'Retail Partnership', to: '/retail-partner' },
+      { label: 'Become a Partner', to: '/retail-partner' },
       { label: 'Franchise Opportunity', to: '/franchise' },
     ],
   },
