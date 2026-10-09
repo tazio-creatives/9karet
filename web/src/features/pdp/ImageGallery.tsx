@@ -1,4 +1,5 @@
-import { useRef, useState, type MouseEvent, type TouchEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type TouchEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { ProductImage } from '../../api/types';
 import { placeholderGradient } from '../../utils/placeholderGradient';
 import { WishlistButton } from '../../components/WishlistButton';
@@ -69,6 +70,21 @@ export function ImageGallery({
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // While zoomed: Esc closes it and the page behind doesn't scroll.
+  useEffect(() => {
+    if (!lightboxOpen) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightboxOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [lightboxOpen]);
   const mainRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -129,7 +145,9 @@ export function ImageGallery({
             role="img"
             aria-label={productName}
           />
-          <div className={styles.overlayBadges}>{isNew && <span className={styles.badgeNew}>New</span>}</div>
+          <div className={styles.overlayBadges}>
+            {isNew && <span className={styles.badgeNew}>New</span>}
+          </div>
           <WishlistButton productId={productId} className={styles.overlayWishlist} />
         </div>
       </div>
@@ -163,7 +181,9 @@ export function ImageGallery({
         <img
           src={activeUrl}
           alt={isSizeGuide ? `${productName} size guide` : imageAlt}
-          className={isSizeGuide ? `${styles.mainImage} ${styles.productSizeImage}` : styles.mainImage}
+          className={
+            isSizeGuide ? `${styles.mainImage} ${styles.productSizeImage}` : styles.mainImage
+          }
           style={isSizeGuide ? { objectFit: 'contain' } : undefined}
         />
         {/* The follow-mouse 200% magnify pane makes sense for a regular photo
@@ -175,10 +195,15 @@ export function ImageGallery({
         {isZooming && !isSizeGuide && (
           <div
             className={styles.zoomPane}
-            style={{ backgroundImage: `url(${activeUrl})`, backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%` }}
+            style={{
+              backgroundImage: `url(${activeUrl})`,
+              backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+            }}
           />
         )}
-        <div className={styles.overlayBadges}>{isNew && <span className={styles.badgeNew}>New</span>}</div>
+        <div className={styles.overlayBadges}>
+          {isNew && <span className={styles.badgeNew}>New</span>}
+        </div>
         <WishlistButton productId={productId} className={styles.overlayWishlist} />
         <button
           type="button"
@@ -189,7 +214,14 @@ export function ImageGallery({
             setLightboxOpen(true);
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.35-4.35" />
             <path d="M11 8v6M8 11h6" />
@@ -204,7 +236,11 @@ export function ImageGallery({
               <button
                 key={img.id}
                 type="button"
-                className={i === activeIndex ? `${styles.carouselPaginationDot} ${styles.active}` : styles.carouselPaginationDot}
+                className={
+                  i === activeIndex
+                    ? `${styles.carouselPaginationDot} ${styles.active}`
+                    : styles.carouselPaginationDot
+                }
                 role="tab"
                 aria-selected={i === activeIndex}
                 aria-label={`Go to image ${i + 1}`}
@@ -219,8 +255,20 @@ export function ImageGallery({
       </div>
       {displayImages.length > 1 && (
         <div className={styles.thumbRow}>
-          <button type="button" className={styles.navButton} onClick={goPrev} aria-label="Previous image">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            className={styles.navButton}
+            onClick={goPrev}
+            aria-label="Previous image"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
@@ -238,67 +286,108 @@ export function ImageGallery({
                   alt=""
                   className={img.type === 'PRODUCT_SIZE' ? styles.sizeGuideThumbImg : undefined}
                 />
-                {img.type === 'PRODUCT_SIZE' && <span className={styles.sizeGuideLabel}>Size Guide</span>}
+                {img.type === 'PRODUCT_SIZE' && (
+                  <span className={styles.sizeGuideLabel}>Size Guide</span>
+                )}
               </button>
             ))}
           </div>
-          <button type="button" className={styles.navButton} onClick={goNext} aria-label="Next image">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            type="button"
+            className={styles.navButton}
+            onClick={goNext}
+            aria-label="Next image"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
         </div>
       )}
-      {lightboxOpen && (
-        <div className={styles.lightboxOverlay} onClick={() => setLightboxOpen(false)}>
-          <button
-            type="button"
-            className={styles.lightboxClose}
-            aria-label="Close"
-            onClick={() => setLightboxOpen(false)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-          {displayImages.length > 1 && (
+      {/* Portalled to <body>: the gallery column is position: sticky, which
+          always forms its own stacking context, so an overlay rendered inside
+          it sat underneath the product info (pincode box, price breakup) and
+          the header no matter how high its z-index. */}
+      {lightboxOpen &&
+        createPortal(
+          <div className={styles.lightboxOverlay} onClick={() => setLightboxOpen(false)}>
             <button
               type="button"
-              className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`}
-              aria-label="Previous image"
-              onClick={(e) => {
-                e.stopPropagation();
-                goPrev();
-              }}
+              className={styles.lightboxClose}
+              aria-label="Close"
+              onClick={() => setLightboxOpen(false)}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6" />
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-          )}
-          <img
-            src={activeUrl}
-            alt={isSizeGuide ? `${productName} size guide` : imageAlt}
-            className={styles.lightboxImage}
-            onClick={(e) => e.stopPropagation()}
-          />
-          {displayImages.length > 1 && (
-            <button
-              type="button"
-              className={`${styles.lightboxNav} ${styles.lightboxNavNext}`}
-              aria-label="Next image"
-              onClick={(e) => {
-                e.stopPropagation();
-                goNext();
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          )}
-        </div>
-      )}
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`}
+                aria-label="Previous image"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goPrev();
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+            )}
+            <img
+              src={activeUrl}
+              alt={isSizeGuide ? `${productName} size guide` : imageAlt}
+              className={styles.lightboxImage}
+              onClick={(e) => e.stopPropagation()}
+            />
+            {displayImages.length > 1 && (
+              <button
+                type="button"
+                className={`${styles.lightboxNav} ${styles.lightboxNavNext}`}
+                aria-label="Next image"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goNext();
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
