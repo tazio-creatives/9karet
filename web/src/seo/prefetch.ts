@@ -67,6 +67,10 @@ export async function prefetchForRoute(
     return { notFound: false };
   }
 
+  // Static landing pages that share the one-segment URL shape with
+  // categories — server-rendered, nothing to prefetch, never a 404.
+  if (pathname === '/retail-partner') return { notFound: false };
+
   const pdpMatch = matchPath('/:categorySlug/:productSlug', pathname);
   if (pdpMatch) {
     const productSlug = pdpMatch.params.productSlug as string;
