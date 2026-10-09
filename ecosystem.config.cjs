@@ -3,7 +3,8 @@
 //   pm2 delete boxdiamonds-backend boxdiamonds-web; pm2 start ecosystem.config.cjs; pm2 save
 //
 // Cluster mode runs several copies of each server so every CPU core is used
-// (size BACKEND_INSTANCES / WEB_INSTANCES to the machine: 3 + 2 on 4 vCPUs).
+// (size BACKEND_INSTANCES / WEB_INSTANCES to the machine: 3 + 3 on 4 vCPUs —
+// page rendering is the CPU-heavy part; the backend copies sit mostly idle).
 // Safe to cluster: sessions, carts and OTPs live in Postgres and pg-boss runs
 // each scheduled job once across all copies. A copy that grows past its
 // memory cap is restarted on its own, without dropping the others.
@@ -48,7 +49,7 @@ module.exports = {
       cwd: path.join(__dirname, 'web/server'),
       script: 'index.js',
       exec_mode: execMode,
-      instances: Number(process.env.WEB_INSTANCES ?? 2),
+      instances: Number(process.env.WEB_INSTANCES ?? 3),
       max_memory_restart: '600M',
       kill_timeout: 8000,
       env: {
