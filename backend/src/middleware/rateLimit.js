@@ -1,11 +1,24 @@
 import rateLimit from 'express-rate-limit';
 import { env } from '../config/env.js';
 
+// The storefront's own server-side rendering calls the API over loopback
+// (SSR_API_BASE_URL) with no proxy headers, so req.ip is 127.0.0.1 — every
+// page render would otherwise count against one shared "visitor" and hit
+// the limit within minutes of real traffic. Public requests always arrive
+// through nginx, which appends the real client IP to X-Forwarded-For (with
+// 'trust proxy' 1 that's what req.ip reads), so they can never look like
+// loopback.
+const LOOPBACK_IPS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+export function isInternalRequest(req) {
+  return LOOPBACK_IPS.has(req.ip);
+}
+
 export const apiRateLimiter = rateLimit({
   windowMs: env.rateLimitWindowMinutes * 60 * 1000,
   max: env.rateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: isInternalRequest,
 });
 
 // Stricter limiter for the admin login endpoint specifically — brute-force

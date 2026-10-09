@@ -1,4 +1,15 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+const PUBLIC_API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+
+// Server-side rendering calls the backend directly on the same machine
+// (SSR_API_BASE_URL, e.g. http://127.0.0.1:6000/api/v1) instead of going out
+// through Cloudflare and back — faster, and the backend's rate limiter then
+// sees it as internal traffic rather than one "visitor" making every SSR
+// request. import.meta.env.SSR is false in the browser build, so this
+// branch is dropped from the client bundle.
+const API_BASE_URL =
+  (import.meta.env.SSR && (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+    ?.SSR_API_BASE_URL) ||
+  PUBLIC_API_BASE_URL;
 
 export class ApiError extends Error {
   status: number;
