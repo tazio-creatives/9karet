@@ -24,6 +24,10 @@ function readEnv(file, key) {
   }
 }
 
+// PM2_EXEC_MODE=fork (with *_INSTANCES=1) is the fallback to the old
+// one-process setup if cluster mode ever misbehaves.
+const execMode = process.env.PM2_EXEC_MODE ?? 'cluster';
+
 const backendEnvFile = path.join(__dirname, 'backend/.env');
 const backendPort = readEnv(backendEnvFile, 'PORT') ?? '6000';
 
@@ -33,7 +37,7 @@ module.exports = {
       name: 'boxdiamonds-backend',
       cwd: path.join(__dirname, 'backend'),
       script: 'src/server.js',
-      exec_mode: 'cluster',
+      exec_mode: execMode,
       instances: Number(process.env.BACKEND_INSTANCES ?? 3),
       max_memory_restart: '1G',
       kill_timeout: 8000,
@@ -43,7 +47,7 @@ module.exports = {
       name: 'boxdiamonds-web',
       cwd: path.join(__dirname, 'web/server'),
       script: 'index.js',
-      exec_mode: 'cluster',
+      exec_mode: execMode,
       instances: Number(process.env.WEB_INSTANCES ?? 2),
       max_memory_restart: '600M',
       kill_timeout: 8000,
