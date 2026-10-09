@@ -11,6 +11,7 @@ import { PLPPage } from './pages/PLPPage';
 import { NewArrivalsPage } from './pages/NewArrivalsPage';
 import { AllJewelleryPage } from './pages/AllJewelleryPage';
 import { RetailPartnerPage } from './pages/RetailPartnerPage';
+import { FranchisePage } from './pages/FranchisePage';
 import { CollectionPage } from './pages/CollectionPage';
 import { PDPPage } from './pages/PDPPage';
 
@@ -97,6 +98,7 @@ export function App() {
           <Route path="/new-arrivals" element={<NewArrivalsPage />} />
           <Route path="/jewellery" element={<AllJewelleryPage />} />
           <Route path="/retail-partner" element={<RetailPartnerPage />} />
+          <Route path="/franchise" element={<FranchisePage />} />
           <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           {/* Same combined Return and Refund Policy page under its other name. */}
