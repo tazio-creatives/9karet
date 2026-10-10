@@ -1,5 +1,5 @@
 import type { ProductDetail } from '../api/types';
-import { SITE_URL } from '../config';
+import { SITE_URL, SOCIAL_LINKS } from '../config';
 
 // JSON-LD builders (plan §1a/§13): Organization sitewide, BreadcrumbList
 // everywhere, Product on PDP — rendered server-side into <head> so it's
@@ -15,8 +15,8 @@ const BRAND_ALTERNATE_NAMES = ['Box Diamonds', 'BoxDiamonds', 'boxdiamonds.com']
 
 // OnlineStore is schema.org's Organization subtype for an online shop — tells
 // search engines BOX DIAMONDS is a jewellery brand/store, not a "diamond box"
-// product. No sameAs: the footer's social icons have no real profile URLs
-// yet; add them here once they exist (never invented ones).
+// product. sameAs lists the brand's real social profiles (config.ts) so
+// Google links them to this site.
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
@@ -27,6 +27,7 @@ export function organizationJsonLd() {
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/images/logo.png`,
     email: 'info@boxdiamonds.com',
+    sameAs: Object.values(SOCIAL_LINKS),
     description: 'Certified Natural Diamond Jewellery',
   };
 }

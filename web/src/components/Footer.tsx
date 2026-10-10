@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './Footer.module.css';
+import { SOCIAL_LINKS } from '../config';
 
 // Desktop never renders this (Footer.module.css hides it above 767px) — the
 // mobile accordion spec calls for a plus/minus glyph specifically, not a
@@ -87,21 +88,13 @@ export function Footer() {
             every precious moment deserves a perfect sparkle.
           </p>
           <div className={styles.social}>
-            <SocialIcon label="Instagram">
+            <SocialIcon label="Instagram" href={SOCIAL_LINKS.instagram}>
               <rect x="3" y="3" width="18" height="18" rx="5" />
               <circle cx="12" cy="12" r="4" />
               <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
             </SocialIcon>
-            <SocialIcon label="Facebook">
+            <SocialIcon label="Facebook" href={SOCIAL_LINKS.facebook}>
               <path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z" />
-            </SocialIcon>
-            <SocialIcon label="Pinterest">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M9.5 17c1-3 1.5-5 1.5-6.5a2 2 0 1 1 4 .3c0 1.2-.8 3.2-1.2 4.2-.4 1 .2 1.8 1.2 1.8 1.5 0 2.6-1.9 2.6-4.4 0-2.3-1.7-4-4.3-4-3 0-4.7 2.1-4.7 4.4 0 .8.3 1.6.6 2" />
-            </SocialIcon>
-            <SocialIcon label="YouTube">
-              <rect x="3" y="6" width="18" height="12" rx="3" />
-              <path d="M11 10l4 2-4 2v-4z" fill="currentColor" stroke="none" />
             </SocialIcon>
           </div>
         </div>
@@ -143,9 +136,10 @@ export function Footer() {
   );
 }
 
-function SocialIcon({ label, children }: { label: string; children: ReactNode }) {
+// Opens the profile in a new tab so shoppers keep their place on the site.
+function SocialIcon({ label, href, children }: { label: string; href: string; children: ReactNode }) {
   return (
-    <a href="#" className={styles.socialIcon} aria-label={label} onClick={(e) => e.preventDefault()}>
+    <a href={href} className={styles.socialIcon} aria-label={`Box Diamonds on ${label}`} target="_blank" rel="noopener noreferrer">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         {children}
       </svg>
