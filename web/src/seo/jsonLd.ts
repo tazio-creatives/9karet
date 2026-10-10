@@ -60,12 +60,48 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
+// Offer-level shipping and returns, matching what's configured in Google
+// Merchant Center and the site's Shipping and Return & Refund policies: free
+// shipping across India; 4-5 days to make/pack (made to order) + 3-4 days in
+// transit; 7-day free return by courier pickup — unless the product (or its
+// category) is non-returnable, e.g. solitaires.
+const SHIPPING_DETAILS = {
+  '@type': 'OfferShippingDetails',
+  shippingRate: { '@type': 'MonetaryAmount', value: 0, currency: 'INR' },
+  shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IN' },
+  deliveryTime: {
+    '@type': 'ShippingDeliveryTime',
+    handlingTime: { '@type': 'QuantitativeValue', minValue: 4, maxValue: 5, unitCode: 'DAY' },
+    transitTime: { '@type': 'QuantitativeValue', minValue: 3, maxValue: 4, unitCode: 'DAY' },
+  },
+};
+
+function returnPolicy(nonReturnable: boolean) {
+  return nonReturnable
+    ? {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+      }
+    : {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'IN',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 7,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn',
+      };
+}
+
 export function productJsonLd(product: ProductDetail, canonicalPath: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
     sku: product.sku,
+    // Handmade jewellery has no GTIN barcode; the brand is the identifier
+    // Google accepts instead.
+    brand: { '@type': 'Brand', name: 'BOX DIAMONDS' },
     description: product.shortDescription ?? product.name,
     image: product.images.filter((img) => img.variant === 'large').map((img) => img.url),
     offers: {
@@ -78,6 +114,8 @@ export function productJsonLd(product: ProductDetail, canonicalPath: string) {
       // the handling time set in Merchant Center, not by a back-order date.
       availability: 'https://schema.org/InStock',
       url: `${SITE_URL}${canonicalPath}`,
+      shippingDetails: SHIPPING_DETAILS,
+      hasMerchantReturnPolicy: returnPolicy(!!product.nonReturnable),
     },
     ...(product.ratingCount > 0
       ? {
