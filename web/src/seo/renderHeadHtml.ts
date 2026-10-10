@@ -25,6 +25,8 @@ export function renderHeadHtml(head: HeadData): string {
     `<meta property="og:description" content="${escapeHtml(head.description)}" />`,
     `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
     `<meta property="og:type" content="website" />`,
+    // Site name for Google's "site name" and link previews (WhatsApp, Facebook).
+    `<meta property="og:site_name" content="BOX DIAMONDS" />`,
     jsonLdScripts,
   ].join('\n    ');
 }
