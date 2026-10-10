@@ -72,8 +72,11 @@ export function productJsonLd(product: ProductDetail, canonicalPath: string) {
       '@type': 'Offer',
       priceCurrency: 'INR',
       price: product.sellingPrice,
-      availability:
-        product.availableStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      // Zero-stock pieces are still sold as Make to Order (cart/checkout
+      // accept them), so they're orderable — Google's "in stock" means
+      // "accepting orders and can fulfil them". The making time is covered by
+      // the handling time set in Merchant Center, not by a back-order date.
+      availability: 'https://schema.org/InStock',
       url: `${SITE_URL}${canonicalPath}`,
     },
     ...(product.ratingCount > 0
