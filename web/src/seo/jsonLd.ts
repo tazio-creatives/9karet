@@ -8,6 +8,11 @@ import { SITE_URL } from '../config';
 
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 
+// Other ways people write the brand — Google uses alternateName (on both
+// Organization and WebSite) to connect these spellings to this site's
+// "site name" in results.
+const BRAND_ALTERNATE_NAMES = ['Box Diamonds', 'BoxDiamonds', 'boxdiamonds.com'];
+
 // OnlineStore is schema.org's Organization subtype for an online shop — tells
 // search engines BOX DIAMONDS is a jewellery brand/store, not a "diamond box"
 // product. No sameAs: the footer's social icons have no real profile URLs
@@ -18,6 +23,7 @@ export function organizationJsonLd() {
     '@type': 'OnlineStore',
     '@id': ORGANIZATION_ID,
     name: 'BOX DIAMONDS',
+    alternateName: BRAND_ALTERNATE_NAMES,
     url: `${SITE_URL}/`,
     logo: `${SITE_URL}/images/logo.png`,
     email: 'info@boxdiamonds.com',
@@ -33,6 +39,7 @@ export function websiteJsonLd() {
     '@type': 'WebSite',
     '@id': `${SITE_URL}/#website`,
     name: 'BOX DIAMONDS',
+    alternateName: BRAND_ALTERNATE_NAMES,
     url: `${SITE_URL}/`,
     description: 'Certified Natural Diamond Jewellery',
     publisher: { '@id': ORGANIZATION_ID },
