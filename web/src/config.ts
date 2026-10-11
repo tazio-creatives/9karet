@@ -8,5 +8,5 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'http://localhost:5173'
 // this one list.
 export const SOCIAL_LINKS = {
   instagram: 'https://www.instagram.com/boxdiamonds01/',
-  facebook: 'https://www.facebook.com/profile.php?id=61594769828283',
+  facebook: 'https://www.facebook.com/profile.php?id=61594060908005',
 };
