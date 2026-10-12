@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { fetchAdminProducts, deleteProduct, setFeatured, setBestSeller } from '../../api/products';
+import { fetchAdminProducts, deleteProduct, setFeatured, setBestSeller, bulkSetCollection } from '../../api/products';
+import { fetchAdminCollections } from '../../api/collections';
 import { fetchAdminCategories } from '../../api/categories';
 import type { ProductStatus } from '../../api/types';
 import { formatPrice } from '../../utils/formatPrice';
@@ -72,6 +73,11 @@ export function ProductsListPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<ProductStatus | ''>('');
   const [category, setCategory] = useState('');
+  const [collectionFilter, setCollectionFilter] = useState('');
+  // Bulk selection — kept across pages, filters and searches so products can
+  // be gathered from anywhere before one "Add to collection".
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkCollectionId, setBulkCollectionId] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
@@ -89,11 +95,12 @@ export function ProductsListPage() {
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-products', { status, category, search, page }],
+    queryKey: ['admin-products', { status, category, collectionFilter, search, page }],
     queryFn: () =>
       fetchAdminProducts({
         status: status || undefined,
         category: category || undefined,
+        collectionId: collectionFilter || undefined,
         search: search || undefined,
         page,
         limit: 20,
@@ -102,6 +109,42 @@ export function ProductsListPage() {
 
   const { data: categoriesData } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
   const categoryOptions = flattenTree(buildCategoryTree(categoriesData?.categories ?? []));
+  const { data: collectionsData } = useQuery({ queryKey: ['admin-collections'], queryFn: fetchAdminCollections });
+  const collections = collectionsData?.collections ?? [];
+  const collectionName = (id: string | null | undefined) => (id ? (collections.find((c) => c.id === id)?.name ?? '—') : '—');
+
+  const pageIds = data?.products.map((p) => p.id) ?? [];
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const togglePage = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+
+  const bulkCollectionMutation = useMutation({
+    mutationFn: ({ collectionId }: { collectionId: string | null }) => bulkSetCollection([...selected], collectionId),
+    onSuccess: (result, { collectionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      const name = collectionId ? collectionName(collectionId) : null;
+      setFlashMessage(
+        name
+          ? `${result.updated} product${result.updated === 1 ? '' : 's'} added to “${name}”.`
+          : `${result.updated} product${result.updated === 1 ? '' : 's'} removed from their collection.`,
+      );
+      setSelected(new Set());
+      setBulkCollectionId('');
+    },
+    onError: (err) => window.alert(err instanceof Error ? err.message : 'Could not update collection.'),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteProduct(id),
@@ -175,7 +218,55 @@ export function ProductsListPage() {
             </option>
           ))}
         </select>
+        <select
+          value={collectionFilter}
+          onChange={(e) => {
+            setCollectionFilter(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All collections</option>
+          {collections.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {selected.size > 0 && (
+        <div className={styles.bulkBar} role="region" aria-label="Bulk actions">
+          <strong>{selected.size} selected</strong>
+          <select value={bulkCollectionId} onChange={(e) => setBulkCollectionId(e.target.value)} aria-label="Collection">
+            <option value="">Choose collection…</option>
+            {collections.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {c.isActive === false ? ' (inactive)' : ''}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={sharedStyles.buttonPrimary}
+            disabled={!bulkCollectionId || bulkCollectionMutation.isPending}
+            onClick={() => bulkCollectionMutation.mutate({ collectionId: bulkCollectionId })}
+          >
+            {bulkCollectionMutation.isPending ? 'Saving…' : 'Add to collection'}
+          </button>
+          <button
+            type="button"
+            className={sharedStyles.button}
+            disabled={bulkCollectionMutation.isPending}
+            onClick={() => bulkCollectionMutation.mutate({ collectionId: null })}
+          >
+            Remove from collection
+          </button>
+          <button type="button" className={styles.clearLink} onClick={() => setSelected(new Set())}>
+            Clear selection
+          </button>
+        </div>
+      )}
 
       <div className={sharedStyles.card}>
         {isLoading && <p className={sharedStyles.empty}>Loading…</p>}
@@ -186,10 +277,19 @@ export function ProductsListPage() {
           <table className={`${sharedStyles.table} ${styles.table}`}>
             <thead>
               <tr>
+                <th className={styles.checkCell}>
+                  <input
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={togglePage}
+                    aria-label="Select all products on this page"
+                  />
+                </th>
                 <th colSpan={2}>Name</th>
                 <th>Metal</th>
                 <th>Price</th>
                 <th>Stock</th>
+                <th>Collection</th>
                 <th>Status</th>
                 <th>Featured</th>
                 <th>Best Seller</th>
@@ -198,7 +298,15 @@ export function ProductsListPage() {
             </thead>
             <tbody>
               {data.products.map((product) => (
-                <tr key={product.id}>
+                <tr key={product.id} className={selected.has(product.id) ? styles.rowSelected : undefined}>
+                  <td className={styles.checkCell}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(product.id)}
+                      onChange={() => toggleOne(product.id)}
+                      aria-label={`Select ${product.name}`}
+                    />
+                  </td>
                   <td className={styles.thumbCell}>
                     {product.primaryImageUrl ? (
                       <img src={product.primaryImageUrl} alt="" className={styles.thumb} />
@@ -217,6 +325,7 @@ export function ProductsListPage() {
                   </td>
                   <td>{formatPrice(product.sellingPrice)}</td>
                   <td>{product.availableStock}</td>
+                  <td>{collectionName(product.collectionId)}</td>
                   <td>
                     <span className={sharedStyles[STATUS_CLASS[product.status ?? 'DRAFT'] ?? 'badgeNeutral']}>
                       {(product.status ?? 'DRAFT').replace(/_/g, ' ')}

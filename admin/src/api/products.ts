@@ -65,6 +65,15 @@ export function setFeatured(id: string, featured: boolean) {
   });
 }
 
+// Put many products into one collection at once (null removes them from
+// their collection). A product is in at most one collection.
+export function bulkSetCollection(productIds: string[], collectionId: string | null) {
+  return apiFetch<{ updated: number; notFound: number }>('/admin/products/bulk-collection', {
+    method: 'POST',
+    body: JSON.stringify({ productIds, collectionId }),
+  });
+}
+
 export function setBestSeller(id: string, bestSeller: boolean) {
   return apiFetch<{ id: string; isBestSeller: boolean }>(`/admin/products/${id}/best-seller`, {
     method: 'PATCH',

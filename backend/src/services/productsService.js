@@ -1,4 +1,4 @@
-import { withTransaction } from '../config/db.js';
+import { withTransaction, query } from '../config/db.js';
 import { slugify } from '../utils/slug.js';
 import { NotFoundError, AppError } from '../utils/AppError.js';
 import {
@@ -45,12 +45,12 @@ import {
   findCategoryBySlug,
   getCategoryAndDescendantIds,
 } from '../repositories/categories.repository.js';
-import { findCollectionBySlug } from '../repositories/collections.repository.js';
+import { findCollectionBySlug, findCollectionById } from '../repositories/collections.repository.js';
 import { findDiamondConfigById } from '../repositories/diamondConfigs.repository.js';
 import { findDiamondTypeById } from '../repositories/diamondTypes.repository.js';
 import { computeVariantPricing, resolvePurityPricingFields } from './pricingService.js';
 import { loadActiveRuleSet } from './pricingRuleResolver.js';
-import { invalidateProductPages } from './pageCacheInvalidation.js';
+import { invalidateProductPages, invalidateProductsPagesBatch, invalidateCollectionPages } from './pageCacheInvalidation.js';
 
 // Weight-rule and variant edits must invalidate the SSR page cache after
 // their transaction commits — never before, so a concurrent request can
@@ -570,6 +570,34 @@ export async function adminCreateProduct(input) {
   const attributes = await findProductAttributeCatalogue(product.id);
   const variants = await findVariantsByProductId(product.id);
   return { ...product, attributes, variants };
+}
+
+// Bulk "Add to collection" / "Remove from collection" from the admin product
+// list. A product belongs to at most one collection, so adding moves it out
+// of any previous one. Refreshes the cached shop pages of every affected
+// collection and product.
+export async function bulkSetProductCollection(productIds, collectionId) {
+  const collection = collectionId ? await findCollectionById(collectionId) : null;
+  if (collectionId && !collection) throw new NotFoundError('Collection not found');
+
+  const { rows } = await query(
+    `WITH previous AS (SELECT id, collection_id FROM products WHERE id = ANY($1::uuid[]))
+     UPDATE products p SET collection_id = $2, updated_at = now()
+       FROM previous
+      WHERE p.id = previous.id
+     RETURNING p.id, p.slug, p.category_id, previous.collection_id AS previous_collection_id`,
+    [productIds, collectionId],
+  );
+
+  const touchedCollectionIds = new Set(rows.map((r) => r.previous_collection_id).filter(Boolean));
+  if (collectionId) touchedCollectionIds.add(collectionId);
+  for (const id of touchedCollectionIds) {
+    const c = id === collectionId ? collection : await findCollectionById(id);
+    if (c) await invalidateCollectionPages(c);
+  }
+  await invalidateProductsPagesBatch(rows);
+
+  return { updated: rows.length, notFound: productIds.length - rows.length };
 }
 
 export async function adminUpdateProduct(id, input) {

@@ -284,6 +284,13 @@ export const bestSellerSchema = z.object({
   bestSeller: z.boolean(),
 });
 
+// Product list bulk action: put many products into one collection at once
+// (collectionId null = remove them from any collection).
+export const bulkCollectionSchema = z.object({
+  productIds: z.array(z.string().uuid()).min(1).max(500),
+  collectionId: z.string().uuid().nullable(),
+});
+
 export const variantPricePreviewQuerySchema = z.object({
   variantId: z.string().uuid().optional(),
 });

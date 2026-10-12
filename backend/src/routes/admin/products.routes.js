@@ -6,6 +6,7 @@ import {
   adminUpdate,
   adminDelete,
   setFeatured,
+  bulkSetCollection,
   setBestSeller,
   listVariants,
   updateVariant,
@@ -60,6 +61,8 @@ adminProductsRouter.get('/', adminList);
 adminProductsRouter.post('/', adminCreate);
 // Registered before "/:id" — Express would otherwise treat "images" as an id.
 adminProductsRouter.get('/images/library', listAllImages);
+// Before the '/:id' routes so 'bulk-collection' isn't read as a product id.
+adminProductsRouter.post('/bulk-collection', bulkSetCollection);
 adminProductsRouter.get('/:id', adminGet);
 adminProductsRouter.patch('/:id', adminUpdate);
 adminProductsRouter.delete('/:id', adminDelete);

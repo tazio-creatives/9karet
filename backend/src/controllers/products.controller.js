@@ -5,6 +5,7 @@ import {
   updateProductSchema,
   featuredSchema,
   bestSellerSchema,
+  bulkCollectionSchema,
   variantPricePreviewQuerySchema,
   updateVariantSchema,
   bulkUpdateVariantSchema,
@@ -570,7 +571,8 @@ export async function adminList(req, res, next) {
       { sort: q.sort, page: q.page ?? 1, limit: q.limit ?? 24 },
     );
     res.json({
-      products: items.map(toListDto),
+      // Admin list also shows which collection each product is in.
+      products: items.map((row) => ({ ...toListDto(row), collectionId: row.collection_id ?? null })),
       page: q.page ?? 1,
       limit: q.limit ?? 24,
       total,
@@ -622,6 +624,15 @@ export async function adminDelete(req, res, next) {
   try {
     await productsService.adminDeleteProduct(req.params.id);
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function bulkSetCollection(req, res, next) {
+  try {
+    const { productIds, collectionId } = bulkCollectionSchema.parse(req.body);
+    res.json(await productsService.bulkSetProductCollection(productIds, collectionId));
   } catch (err) {
     next(err);
   }

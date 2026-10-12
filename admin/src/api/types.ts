@@ -28,6 +28,8 @@ export interface ProductListItem {
   isFeatured: boolean;
   isBestSeller: boolean;
   status?: ProductStatus;
+  // Admin list only — the collection this product is in, if any.
+  collectionId?: string | null;
 }
 
 export interface ProductImage {
