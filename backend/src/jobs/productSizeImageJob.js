@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { withTransaction, query } from '../config/db.js';
 import { runProductSizeGeneration } from '../services/productSizeImageService.js';
 import { processAndStoreImage } from '../services/imageProcessingService.js';
@@ -75,6 +75,6 @@ async function generateHandler(jobs) {
 }
 
 export async function registerProductSizeImageWorker() {
-  await boss.createQueue(JOB_PRODUCT_SIZE_IMAGE_GENERATE, { expireInMinutes: 20 });
+  await createQueueSafe(JOB_PRODUCT_SIZE_IMAGE_GENERATE, { expireInMinutes: 20 });
   await boss.work(JOB_PRODUCT_SIZE_IMAGE_GENERATE, generateHandler);
 }

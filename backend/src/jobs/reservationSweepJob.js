@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { withTransaction } from '../config/db.js';
 import {
   findExpiredActiveReservationOrderIds,
@@ -25,6 +25,6 @@ async function reservationSweepHandler() {
 }
 
 export async function registerReservationSweepWorker() {
-  await boss.createQueue(JOB_RESERVATION_SWEEP);
+  await createQueueSafe(JOB_RESERVATION_SWEEP);
   await boss.work(JOB_RESERVATION_SWEEP, reservationSweepHandler);
 }

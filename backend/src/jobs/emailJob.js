@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { env } from '../config/env.js';
 import { emailProvider } from '../providers/email/index.js';
 import { renderEmailTemplate } from '../services/emailTemplates.js';
@@ -48,7 +48,7 @@ async function emailSendHandler(jobs) {
 }
 
 export async function registerEmailWorker() {
-  await boss.createQueue(JOB_EMAIL_SEND, {
+  await createQueueSafe(JOB_EMAIL_SEND, {
     retryLimit: env.emailJobRetryLimit,
     retryDelay: env.emailJobRetryDelaySeconds,
     retryBackoff: true,

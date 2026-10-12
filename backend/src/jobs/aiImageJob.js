@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import sharp from 'sharp';
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { aiImageProvider } from '../providers/aiImage/index.js';
 import { storageProvider } from '../providers/storage/index.js';
 import { updateAiImageJobStatus, insertGeneratedImage } from '../repositories/aiImages.repository.js';
@@ -68,6 +68,6 @@ async function aiImageGenerateHandler(jobs) {
 }
 
 export async function registerAiImageWorker() {
-  await boss.createQueue(JOB_AI_IMAGE_GENERATE);
+  await createQueueSafe(JOB_AI_IMAGE_GENERATE);
   await boss.work(JOB_AI_IMAGE_GENERATE, aiImageGenerateHandler);
 }

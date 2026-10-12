@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { withTransaction } from '../config/db.js';
 import { runGoldRateSync } from '../services/goldRateService.js';
 import { findDiamondConfigById } from '../repositories/diamondConfigs.repository.js';
@@ -120,7 +120,7 @@ export async function registerPricingWorkers() {
   // pg-boss v10 requires queues to be created explicitly before scheduling/
   // sending/working them — createQueue() is idempotent, safe on every boot.
   for (const name of [JOB_GOLD_RATE_SYNC, JOB_RECALCULATE_GOLD, JOB_RECALCULATE_DIAMOND]) {
-    await boss.createQueue(name);
+    await createQueueSafe(name);
   }
 
   await boss.work(JOB_GOLD_RATE_SYNC, goldRateSyncHandler);

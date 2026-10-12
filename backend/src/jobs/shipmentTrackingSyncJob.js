@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { syncAllShipmentTracking } from '../services/shippingService.js';
 
 export const JOB_SHIPMENT_TRACKING_SYNC = 'shipment-tracking-sync';
@@ -13,6 +13,6 @@ async function shipmentTrackingSyncHandler() {
 }
 
 export async function registerShipmentTrackingSyncWorker() {
-  await boss.createQueue(JOB_SHIPMENT_TRACKING_SYNC);
+  await createQueueSafe(JOB_SHIPMENT_TRACKING_SYNC);
   await boss.work(JOB_SHIPMENT_TRACKING_SYNC, shipmentTrackingSyncHandler);
 }

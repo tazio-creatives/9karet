@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { sendPurchaseEvent, isMetaCapiEnabled } from '../services/metaCapiService.js';
 
 export const JOB_META_CAPI_PURCHASE = 'meta-capi-purchase';
@@ -15,7 +15,7 @@ async function metaCapiPurchaseHandler(jobs) {
 }
 
 export async function registerMetaCapiWorker() {
-  await boss.createQueue(JOB_META_CAPI_PURCHASE, { retryLimit: 5, retryDelay: 60, retryBackoff: true });
+  await createQueueSafe(JOB_META_CAPI_PURCHASE, { retryLimit: 5, retryDelay: 60, retryBackoff: true });
   await boss.work(JOB_META_CAPI_PURCHASE, metaCapiPurchaseHandler);
 }
 

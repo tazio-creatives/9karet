@@ -1,4 +1,4 @@
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { withTransaction } from '../config/db.js';
 import { AppError } from '../utils/AppError.js';
 import { findProductsForRepricing } from '../repositories/products.repository.js';
@@ -179,8 +179,8 @@ async function statusSweepHandler() {
 }
 
 export async function registerPricingRuleWorkers() {
-  await boss.createQueue(JOB_PRICING_RULE_REPRICE, { retryLimit: 0 }); // a half-done reprice must never be silently restarted
-  await boss.createQueue(JOB_PRICING_RULE_STATUS_SWEEP);
+  await createQueueSafe(JOB_PRICING_RULE_REPRICE, { retryLimit: 0 }); // a half-done reprice must never be silently restarted
+  await createQueueSafe(JOB_PRICING_RULE_STATUS_SWEEP);
   await boss.work(JOB_PRICING_RULE_REPRICE, repriceHandler);
   await boss.work(JOB_PRICING_RULE_STATUS_SWEEP, statusSweepHandler);
 }

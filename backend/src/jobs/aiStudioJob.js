@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { boss } from './queue.js';
+import { boss, createQueueSafe } from './queue.js';
 import { env } from '../config/env.js';
 import { storageProvider } from '../providers/storage/index.js';
 import {
@@ -310,13 +310,13 @@ async function generateHandler(jobs) {
 }
 
 export async function registerAiStudioWorker() {
-  await boss.createQueue(JOB_AI_STUDIO_ANALYSE);
+  await createQueueSafe(JOB_AI_STUDIO_ANALYSE);
   // Default pg-boss job expiry is 15 minutes — too tight here. A single
   // generateShot() call has been measured up to ~490s, and with one retry
   // (see aiStudioService.js) plus up to 4 shots each independently able to
   // hit that worst case, 30 minutes gives real headroom before pg-boss would
   // mark the job expired and risk a duplicate concurrent run.
-  await boss.createQueue(JOB_AI_STUDIO_GENERATE, { expireInMinutes: 30 });
+  await createQueueSafe(JOB_AI_STUDIO_GENERATE, { expireInMinutes: 30 });
   await boss.work(JOB_AI_STUDIO_ANALYSE, analyseHandler);
   await boss.work(JOB_AI_STUDIO_GENERATE, generateHandler);
 }
