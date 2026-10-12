@@ -25,6 +25,7 @@ import { findProductsByIds } from '../repositories/products.repository.js';
 import { invalidateProductsPagesBatch } from './pageCacheInvalidation.js';
 import { enqueueEmail } from './emailService.js';
 import { insertCouponUsageTx } from '../repositories/coupons.repository.js';
+import { enqueueMetaPurchase } from '../jobs/metaCapiJob.js';
 
 // Called right after checkoutService.createOrder() commits (plan §11) — a
 // separate step because talking to a payment gateway is I/O that doesn't
@@ -130,6 +131,7 @@ export async function confirmPayment(rawBody, headers) {
     const order = await findOrderById(result.orderId);
     if (status === 'SUCCEEDED') {
       await invalidateOrderProductPages(result.orderId);
+      await enqueueMetaPurchase(result.orderId);
       await enqueueEmail(order.contact_email, 'ORDER_CONFIRMED', {
         orderId: order.id,
         contactName: order.contact_name,

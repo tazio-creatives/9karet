@@ -204,6 +204,11 @@ export async function expireOrderIfPendingTx(client, orderId) {
   return rows[0] ?? null;
 }
 
+// Meta Conversions API identifiers captured at checkout (see metaCapiService).
+export async function saveOrderMetaAttribution(orderId, attribution) {
+  await query('UPDATE orders SET meta_attribution = $2::jsonb WHERE id = $1', [orderId, JSON.stringify(attribution)]);
+}
+
 export async function findOrderById(id) {
   const { rows } = await query('SELECT * FROM orders WHERE id = $1', [id]);
   return rows[0] ?? null;

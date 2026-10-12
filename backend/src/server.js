@@ -8,6 +8,7 @@ import { registerAiImageWorker } from './jobs/aiImageJob.js';
 import { registerAiStudioWorker } from './jobs/aiStudioJob.js';
 import { registerProductSizeImageWorker } from './jobs/productSizeImageJob.js';
 import { registerEmailWorker } from './jobs/emailJob.js';
+import { registerMetaCapiWorker } from './jobs/metaCapiJob.js';
 import { registerShipmentTrackingSyncWorker, JOB_SHIPMENT_TRACKING_SYNC } from './jobs/shipmentTrackingSyncJob.js';
 
 const app = createApp();
@@ -32,6 +33,7 @@ async function main() {
   await registerAiStudioWorker();
   await registerProductSizeImageWorker();
   await registerEmailWorker();
+  await registerMetaCapiWorker();
   await registerShipmentTrackingSyncWorker();
   // schedule() is idempotent by job name — safe to call on every boot.
   await boss.schedule(JOB_GOLD_RATE_SYNC, env.goldRateSyncCron);

@@ -204,6 +204,12 @@ export const env = {
   // Email (plan §12)
   emailProvider: process.env.EMAIL_PROVIDER ?? 'stub',
   emailJobRetryLimit: Number(process.env.EMAIL_JOB_RETRY_LIMIT ?? 5),
+  // Meta Conversions API (server-side Purchase events). Disabled unless both
+  // are set; META_CAPI_TEST_CODE routes events to Events Manager → Test
+  // events only (leave unset in normal operation).
+  metaPixelId: process.env.META_PIXEL_ID ?? '',
+  metaCapiAccessToken: process.env.META_CAPI_ACCESS_TOKEN ?? '',
+  metaCapiTestCode: process.env.META_CAPI_TEST_CODE ?? '',
   emailJobRetryDelaySeconds: Number(process.env.EMAIL_JOB_RETRY_DELAY_SECONDS ?? 30),
 
   // AWS SES — real email provider. Only read when EMAIL_PROVIDER=ses.
