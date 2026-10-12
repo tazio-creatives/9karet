@@ -18,6 +18,7 @@ import { ProductAssuranceGrid } from '../components/ProductAssuranceGrid';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import type { AddressInput, BuyNowItem, CheckoutResponse } from '../api/types';
 import { formatPrice } from '../utils/formatPrice';
+import { cartCheckoutLines, trackBeginCheckout } from '../analytics/ecommerce';
 import { effectiveMrp } from '../utils/effectiveMrp';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { ApiError } from '../api/client';
@@ -81,6 +82,22 @@ export function CheckoutPage() {
     queryFn: fetchCart,
     enabled: !buyNow && isLoggedIn,
   });
+
+  // GA4 begin_checkout + Meta Pixel InitiateCheckout — once per visit to
+  // this page, as soon as there's something to buy.
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current) return;
+    if (buyNow) {
+      checkoutTracked.current = true;
+      trackBeginCheckout([
+        { id: buyNow.productId, name: buyNow.name, price: buyNow.sellingPrice, quantity: buyNow.quantity },
+      ]);
+    } else if (cartData && cartData.items.length > 0) {
+      checkoutTracked.current = true;
+      trackBeginCheckout(cartCheckoutLines(cartData));
+    }
+  }, [buyNow, cartData]);
 
   const { data: addressesData, isLoading: isAddressesLoading } = useQuery({
     queryKey: ['addresses'],

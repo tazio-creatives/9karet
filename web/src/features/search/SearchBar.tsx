@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { pixelSearch } from '../../analytics/metaPixel';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { search } from '../../api/search';
@@ -11,6 +12,12 @@ export function SearchBar() {
   const [term, setTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const debouncedTerm = useDebouncedValue(term.trim(), 300);
+  // Results update live while typing; the Search event waits for the term to
+  // settle so "r", "ri", "rin" aren't each counted as searches.
+  const settledTerm = useDebouncedValue(term.trim(), 1200);
+  useEffect(() => {
+    if (settledTerm.length >= 3) pixelSearch(settledTerm);
+  }, [settledTerm]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { data, isFetching } = useQuery({

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { trackAddToCart } from '../analytics/ecommerce';
+import { pixelViewContent } from '../analytics/metaPixel';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { fetchProductBySlug, fetchRelatedProducts, fetchMostLovedProducts } from '../api/products';
@@ -12,7 +13,12 @@ import { useVariantSelection } from '../hooks/useVariantSelection';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { useHead, defaultHead } from '../seo/head';
 import { breadcrumbJsonLd, organizationJsonLd, productJsonLd } from '../seo/jsonLd';
-import { jewelleryType, productImageAlt, productSeoDescription, productSeoTitle } from '../seo/productSeo';
+import {
+  jewelleryType,
+  productImageAlt,
+  productSeoDescription,
+  productSeoTitle,
+} from '../seo/productSeo';
 import { ImageGallery } from '../features/pdp/ImageGallery';
 import { ProductInfo } from '../features/pdp/ProductInfo';
 import { ProductTabs } from '../features/pdp/ProductTabs';
@@ -140,6 +146,20 @@ export function PDPPage() {
   // Jewellery type from the top-level category ("Rings" -> "Ring").
   const type = jewelleryType(ancestors[0]?.name ?? category?.name);
 
+  // Meta Pixel product view — once per product opened (not per re-render or
+  // variant change). Same item id as the GA4 / add-to-cart events.
+  const viewedProductId = product?.id;
+  useEffect(() => {
+    if (!product) return;
+    pixelViewContent({
+      id: product.sku || product.id,
+      name: product.name,
+      category: category?.name,
+      price: product.sellingPrice,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedProductId]);
+
   // Size guide by jewellery type: category first ("Bangle", "Rings" and
   // their subcategories), then the size labels themselves as a fallback —
   // anna sizes look like "2.4" / "2-4", ring sizes are whole numbers.
@@ -160,11 +180,17 @@ export function PDPPage() {
     product
       ? {
           title: product.metaTitle || productSeoTitle(product, type),
-          description: product.metaDescription || product.shortDescription || productSeoDescription(product, type),
+          description:
+            product.metaDescription ||
+            product.shortDescription ||
+            productSeoDescription(product, type),
           canonicalPath,
           jsonLd: [
             organizationJsonLd(),
-            breadcrumbJsonLd([{ name: 'Home', path: '/' }, ...breadcrumbs.map((b) => ({ name: b.label, path: b.href ?? canonicalPath }))]),
+            breadcrumbJsonLd([
+              { name: 'Home', path: '/' },
+              ...breadcrumbs.map((b) => ({ name: b.label, path: b.href ?? canonicalPath })),
+            ]),
             productJsonLd(product, canonicalPath),
           ],
         }
@@ -219,7 +245,9 @@ export function PDPPage() {
   // containing the primary flag/manual image).
   const hasAiGeneratedImage = product.images.some((img) => img.type === 'AI_GENERATED');
   const galleryImages = reorderForProductSize(
-    hasAiGeneratedImage ? product.images.filter((img) => !(img.type === 'ORIGINAL' && img.isPrimary)) : product.images,
+    hasAiGeneratedImage
+      ? product.images.filter((img) => !(img.type === 'ORIGINAL' && img.isPrimary))
+      : product.images,
   );
 
   return (
@@ -283,7 +311,8 @@ export function PDPPage() {
                       sellingPrice: displayPrice,
                       gstAmount: displayGstAmount,
                       primaryImageUrl:
-                        product.images.find((img) => img.isPrimary && img.variant === 'small')?.url ?? null,
+                        product.images.find((img) => img.isPrimary && img.variant === 'small')
+                          ?.url ?? null,
                       availableStock: product.availableStock,
                       sizeLabel: selectedSize?.label ?? null,
                       goldColor: selectedGoldColor ?? null,
@@ -301,7 +330,10 @@ export function PDPPage() {
 
         <ProductTabs product={product} />
 
-        <RelatedProducts products={relatedData?.products ?? []} categorySlug={category?.slug ?? null} />
+        <RelatedProducts
+          products={relatedData?.products ?? []}
+          categorySlug={category?.slug ?? null}
+        />
 
         <RelatedProducts
           products={mostLovedData?.products ?? []}

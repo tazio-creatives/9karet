@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchOrderById } from '../api/orders';
+import { trackPurchase } from '../analytics/ecommerce';
 import { formatPrice } from '../utils/formatPrice';
 import { placeholderGradient } from '../utils/placeholderGradient';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
@@ -115,6 +116,13 @@ export function OrderConfirmationPage() {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
     }
   }, [data?.order.orderStatus, queryClient]);
+
+  // GA4 purchase + Meta Pixel Purchase — only once the payment webhook has
+  // marked the order PAID (this page polls until then); trackPurchase itself
+  // makes sure each order is counted once.
+  useEffect(() => {
+    if (data?.order.paymentStatus === 'PAID') trackPurchase(data.order);
+  }, [data?.order]);
 
   useEffect(() => {
     if (!copied) return undefined;
