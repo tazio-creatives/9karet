@@ -185,6 +185,7 @@ export function PDPPage() {
             product.shortDescription ||
             productSeoDescription(product, type),
           canonicalPath,
+          image: product.images.find((img) => img.variant === 'large')?.url,
           jsonLd: [
             organizationJsonLd(),
             breadcrumbJsonLd([

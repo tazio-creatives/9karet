@@ -126,7 +126,7 @@ export function MobileNavDrawer({ categories, wishlistCount, isLoggedIn, onClose
       <div id="mobile-nav-drawer" className={styles.drawer} role="dialog" aria-modal="true" aria-label="Menu">
         <div className={styles.header}>
           <Link to="/" className={styles.logo} onClick={onClose} aria-label="Box Diamonds — home">
-            <img src="/images/logo.png" alt="Box Diamonds" className={styles.logoImg} />
+            <img src="/images/logo.png" alt="Box Diamonds" className={styles.logoImg} width={260} height={166} />
           </Link>
           <div className={styles.headerActions}>
             <Link to="/wishlist" className={styles.iconBtn} onClick={onClose} aria-label="Wishlist">

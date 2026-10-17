@@ -7,6 +7,9 @@ export interface HeadData {
   description: string;
   canonicalPath: string;
   jsonLd: object[];
+  // Absolute URL for og:image / twitter:image (link previews). Falls back to
+  // the logo in renderHeadHtml when a page has no image of its own.
+  image?: string;
 }
 
 export const defaultHead: HeadData = {

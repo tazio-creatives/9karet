@@ -16,6 +16,11 @@ function imageFor(item: HomepageItem): string | null {
   return item.imageUrl ?? item.category?.imageUrl ?? item.product?.imageUrl ?? null;
 }
 
+function bannerAlt(item: HomepageItem): string {
+  const name = item.heading ?? item.category?.name ?? item.collection?.name ?? item.product?.name;
+  return name ? `${name} — BOX DIAMONDS jewellery` : 'BOX DIAMONDS jewellery';
+}
+
 function DuoCard({ item, index }: { item: HomepageItem; index: number }) {
   const href = linkFor(item);
   const image = imageFor(item);
@@ -23,7 +28,7 @@ function DuoCard({ item, index }: { item: HomepageItem; index: number }) {
 
   const content = (
     <>
-      {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+      {image && <img src={image} alt={bannerAlt(item)} loading="lazy" decoding="async" />}
       <div className={styles.duoContent}>
         {item.heading && <p className={styles.duoTitle}>{item.heading}</p>}
         {item.subheading && <p className={styles.duoSubtitle}>{item.subheading}</p>}

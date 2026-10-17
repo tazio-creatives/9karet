@@ -82,11 +82,18 @@ export function Footer() {
     <footer className={styles.footer}>
       <div className={styles.top}>
         <div className={styles.brandCol}>
-          <img src="/images/logo-white.png" alt="Box Diamonds" className={styles.logo} />
+          <img src="/images/logo-white.png" alt="Box Diamonds" className={styles.logo} width={260} height={166} loading="lazy" />
           <p className={styles.tagline}>
             Shop certified natural diamond jewellery online — fine diamond jewellery delivered across India. Because
             every precious moment deserves a perfect sparkle.
           </p>
+          {/* Same details as the Contact page — visible business identity for
+              shoppers, search engines and AI assistants on every page. */}
+          <address className={styles.contact}>
+            <a href="mailto:info@boxdiamonds.com">info@boxdiamonds.com</a>
+            <br />
+            Goldbox Diamonds Private Limited, Mumbai, Maharashtra
+          </address>
           <div className={styles.social}>
             <SocialIcon label="Instagram" href={SOCIAL_LINKS.instagram}>
               <rect x="3" y="3" width="18" height="18" rx="5" />

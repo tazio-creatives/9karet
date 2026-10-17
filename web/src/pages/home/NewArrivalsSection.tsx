@@ -100,7 +100,7 @@ export function NewArrivalsSection({ items }: { items: HomepageItem[] }) {
             {bannerImageMobile && <source media={MOBILE_BREAKPOINT} srcSet={bannerImageMobile} />}
             <img
               src={bannerImage}
-              alt=""
+              alt="New arrivals in diamond jewellery — BOX DIAMONDS"
               className={styles.bannerImg}
               loading="lazy"
               decoding="async"

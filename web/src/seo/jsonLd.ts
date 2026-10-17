@@ -25,10 +25,43 @@ export function organizationJsonLd() {
     name: 'BOX DIAMONDS',
     alternateName: BRAND_ALTERNATE_NAMES,
     url: `${SITE_URL}/`,
+    legalName: 'Goldbox Diamonds Private Limited',
     logo: `${SITE_URL}/images/logo.png`,
     email: 'info@boxdiamonds.com',
+    // Registered office, as published on the Contact page.
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'No 281/287, 39 1-3, Narsi Natha Street, Princess Dock',
+      addressLocality: 'Mumbai',
+      addressRegion: 'Maharashtra',
+      postalCode: '400009',
+      addressCountry: 'IN',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'customer service',
+      email: 'info@boxdiamonds.com',
+      url: `${SITE_URL}/contact`,
+      areaServed: 'IN',
+      availableLanguage: ['English'],
+    },
+    areaServed: 'IN',
     sameAs: Object.values(SOCIAL_LINKS),
     description: 'Certified Natural Diamond Jewellery',
+  };
+}
+
+// Homepage FAQ — must mirror the visible questions/answers exactly (Google
+// treats FAQ markup for content that isn't on the page as spam).
+export function faqPageJsonLd(items: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
   };
 }
 

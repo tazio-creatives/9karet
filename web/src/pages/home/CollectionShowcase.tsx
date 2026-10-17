@@ -15,6 +15,11 @@ function imageFor(item: HomepageItem): string | null {
   return item.imageUrl ?? item.category?.imageUrl ?? item.product?.imageUrl ?? null;
 }
 
+function bannerAlt(item: HomepageItem): string {
+  const name = item.heading ?? item.collection?.name ?? item.category?.name ?? item.product?.name;
+  return name ? `${name} — BOX DIAMONDS jewellery` : 'BOX DIAMONDS jewellery';
+}
+
 function CollectionCard({ item, large }: { item: HomepageItem; large?: boolean }) {
   const href = linkFor(item);
   const image = imageFor(item);
@@ -22,7 +27,7 @@ function CollectionCard({ item, large }: { item: HomepageItem; large?: boolean }
 
   const content = (
     <>
-      {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+      {image && <img src={image} alt={bannerAlt(item)} loading="lazy" decoding="async" />}
       <div className={styles.collectionContent}>
         {item.heading && <p className={styles.collectionTitle}>{item.heading}</p>}
         {item.subheading && <p className={styles.collectionDescription}>{item.subheading}</p>}

@@ -102,7 +102,11 @@ async function createServer() {
       '/assets',
       express.static(path.join(root, 'dist/client/assets'), { immutable: true, maxAge: '1y' }),
     );
-    app.use(express.static(path.join(root, 'dist/client'), { index: false }));
+    // public/ files (logo, favicons, page photos) aren't content-hashed, so
+    // not `immutable` — but they change rarely, and without a max-age
+    // Cloudflare fell back to a 4h browser cache (flagged by PageSpeed).
+    // Changing one of these files means renaming it, or waiting out 30 days.
+    app.use(express.static(path.join(root, 'dist/client'), { index: false, maxAge: '30d' }));
   }
 
   async function loadSsrModule(specifier) {

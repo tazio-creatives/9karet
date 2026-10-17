@@ -45,7 +45,7 @@ export function CollectionProductShowcase({ items }: { items: HomepageItem[] }) 
             {item.imageUrlMobile && <source media={MOBILE_BREAKPOINT} srcSet={item.imageUrlMobile} />}
             <img
               src={item.imageUrl}
-              alt=""
+              alt={`${collection.name} collection — BOX DIAMONDS`}
               className={styles.bannerImg}
               loading="lazy"
               decoding="async"

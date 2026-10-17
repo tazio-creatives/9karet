@@ -6,6 +6,7 @@ import { SITE_URL } from '../config';
 // <head>, so it's present in the initial response bots see (plan §1a).
 export function renderHeadHtml(head: HeadData): string {
   const canonicalUrl = `${SITE_URL}${head.canonicalPath}`;
+  const imageUrl = head.image ?? `${SITE_URL}/images/logo.png`;
 
   const jsonLdScripts = head.jsonLd
     .map(
@@ -27,6 +28,15 @@ export function renderHeadHtml(head: HeadData): string {
     `<meta property="og:type" content="website" />`,
     // Site name for Google's "site name" and link previews (WhatsApp, Facebook).
     `<meta property="og:site_name" content="BOX DIAMONDS" />`,
+    `<meta property="og:image" content="${escapeHtml(imageUrl)}" />`,
+    `<meta property="og:locale" content="en_IN" />`,
+    // X (Twitter) falls back to og:* for anything not set here, but needs
+    // twitter:card to show a preview at all. Large image only when the page
+    // has its own photo — the logo fallback looks wrong stretched to 2:1.
+    `<meta name="twitter:card" content="${head.image ? 'summary_large_image' : 'summary'}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(head.title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(head.description)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`,
     jsonLdScripts,
   ].join('\n    ');
 }

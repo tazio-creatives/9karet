@@ -3,14 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchHomepage } from '../api/homepage';
 import { AssuranceStrip } from './home/AssuranceStrip';
 import { HomepageSection } from './home/HomepageSection';
+import { HomeFaq, HOME_FAQ } from './home/HomeFaq';
 import { useHead, defaultHead } from '../seo/head';
-import { breadcrumbJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd';
+import { breadcrumbJsonLd, faqPageJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
   useHead({
     ...defaultHead,
-    jsonLd: [organizationJsonLd(), websiteJsonLd(), breadcrumbJsonLd([{ name: 'Home', path: '/' }])],
+    jsonLd: [
+      organizationJsonLd(),
+      websiteJsonLd(),
+      breadcrumbJsonLd([{ name: 'Home', path: '/' }]),
+      faqPageJsonLd(HOME_FAQ),
+    ],
   });
 
   const { data, isLoading, isError } = useQuery({
@@ -54,6 +60,7 @@ export function HomePage() {
           {i === firstHeroIndex && <AssuranceStrip />}
         </Fragment>
       ))}
+      <HomeFaq />
     </div>
   );
 }
