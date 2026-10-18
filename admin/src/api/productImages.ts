@@ -28,7 +28,7 @@ export async function uploadProductImage(productId: string, file: File) {
   const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/images`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Requested-With': 'box-diamonds' },
+    headers: { 'X-Requested-With': '9karet' },
     body: formData,
   });
 

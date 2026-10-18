@@ -39,7 +39,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       // CSRF defense-in-depth header the backend requires on state-changing
       // requests (plan §8) — see backend/src/middleware/csrf.js.
-      ...(isStateChanging ? { 'X-Requested-With': 'box-diamonds' } : {}),
+      ...(isStateChanging ? { 'X-Requested-With': '9karet' } : {}),
       ...options.headers,
     },
   });

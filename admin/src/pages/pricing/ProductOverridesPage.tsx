@@ -23,17 +23,17 @@ const BULK_ACTION_COPY: Record<ProductOverrideBulkAction, { label: string; title
     message: (n) =>
       `Permanently clear the making-charge discount override on ${n} product${n === 1 ? '' : 's'}? Each will fall back to any Category/Global rule, or 0% if none applies. Base pricing (gold value, making charge amount, selling price history) is never touched, and this can be undone with Restore Previous Overrides.`,
   },
-  REMOVE_DIAMOND_OVERRIDE: {
-    label: 'Remove Diamond Override',
-    title: 'Remove diamond-value overrides',
+  REMOVE_STONE_OVERRIDE: {
+    label: 'Remove Stone Override',
+    title: 'Remove gemstone-value overrides',
     message: (n) =>
-      `Permanently clear the diamond-value discount override on ${n} product${n === 1 ? '' : 's'}? Base pricing is never touched, and this can be undone with Restore Previous Overrides.`,
+      `Permanently clear the gemstone-value discount override on ${n} product${n === 1 ? '' : 's'}? Base pricing is never touched, and this can be undone with Restore Previous Overrides.`,
   },
   DISABLE_OVERRIDES: {
     label: 'Disable Selected Overrides',
     title: 'Disable all overrides',
     message: (n) =>
-      `Permanently clear BOTH the making-charge and diamond-value overrides on ${n} product${n === 1 ? '' : 's'}? This can be undone with Restore Previous Overrides.`,
+      `Permanently clear BOTH the making-charge and gemstone-value overrides on ${n} product${n === 1 ? '' : 's'}? This can be undone with Restore Previous Overrides.`,
   },
   RESTORE_PREVIOUS_OVERRIDES: {
     label: 'Restore Previous Overrides',
@@ -44,7 +44,7 @@ const BULK_ACTION_COPY: Record<ProductOverrideBulkAction, { label: string; title
 };
 
 // Deliberately reads the RAW flat columns (flatMakingChargeDiscountPercent/
-// flatDiamondDiscountPercent), never the cached effective* columns — those
+// flatStoneDiscountPercent), never the cached effective* columns — those
 // are only refreshed when applyBaseProductPricing actually runs for a
 // product (e.g. on its next save), so they can lag behind a flat column
 // that was just changed. This page's whole purpose is showing exactly
@@ -57,20 +57,20 @@ function overrideSummary(row: ProductOverride): string {
   if (row.hasMakingOverride) {
     parts.push(row.flatMakingChargeDiscountPercent > 0 ? `${row.flatMakingChargeDiscountPercent}% making` : 'Making (by purity)');
   }
-  if (row.hasDiamondOverride) {
-    parts.push(row.flatDiamondDiscountPercent > 0 ? `${row.flatDiamondDiscountPercent}% diamond` : 'Diamond (by purity)');
+  if (row.hasStoneOverride) {
+    parts.push(row.flatStoneDiscountPercent > 0 ? `${row.flatStoneDiscountPercent}% stones` : 'Stones (by purity rule)');
   }
   return parts.join(' · ') || '—';
 }
 
 function exportOverridesCsv(rows: ProductOverride[]) {
-  const header = ['SKU', 'Name', 'Category', 'Making Override %', 'Diamond Override %', 'Restorable'];
+  const header = ['SKU', 'Name', 'Category', 'Making Override %', 'Stone Override %', 'Restorable'];
   const csvRows = rows.map((r) => [
     r.sku,
     r.name,
     r.categoryName ?? '',
     r.hasMakingOverride ? (r.flatMakingChargeDiscountPercent > 0 ? String(r.flatMakingChargeDiscountPercent) : 'by purity') : '',
-    r.hasDiamondOverride ? (r.flatDiamondDiscountPercent > 0 ? String(r.flatDiamondDiscountPercent) : 'by purity') : '',
+    r.hasStoneOverride ? (r.flatStoneDiscountPercent > 0 ? String(r.flatStoneDiscountPercent) : 'by purity') : '',
     r.hasRestorableOverride ? 'Yes' : 'No',
   ]);
   const csv = [header, ...csvRows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n');
@@ -88,7 +88,7 @@ export function ProductOverridesPage() {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [hasMakingOverride, setHasMakingOverride] = useState<TriFilter>('');
-  const [hasDiamondOverride, setHasDiamondOverride] = useState<TriFilter>('');
+  const [hasStoneOverride, setHasStoneOverride] = useState<TriFilter>('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<PendingBulkAction | null>(null);
@@ -100,7 +100,7 @@ export function ProductOverridesPage() {
     search: search || undefined,
     categoryId: categoryId || undefined,
     hasMakingOverride: hasMakingOverride === '' ? undefined : hasMakingOverride === 'true',
-    hasDiamondOverride: hasDiamondOverride === '' ? undefined : hasDiamondOverride === 'true',
+    hasStoneOverride: hasStoneOverride === '' ? undefined : hasStoneOverride === 'true',
   };
 
   const { data, isLoading } = useQuery({
@@ -175,7 +175,7 @@ export function ProductOverridesPage() {
         <div>
           <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, margin: 0 }}>Product Overrides</h2>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-            Every product with its own making-charge or diamond-value discount — independent of any Category/Global
+            Every product with its own making-charge or gemstone-value discount — independent of any Category/Global
             rule. Clearing an override here never deletes base pricing data and can always be restored.
           </p>
         </div>
@@ -215,12 +215,12 @@ export function ProductOverridesPage() {
           </select>
           <select
             className={styles.formControl}
-            value={hasDiamondOverride}
-            onChange={(e) => { setHasDiamondOverride(e.target.value as TriFilter); setPage(1); }}
+            value={hasStoneOverride}
+            onChange={(e) => { setHasStoneOverride(e.target.value as TriFilter); setPage(1); }}
           >
-            <option value="">Diamond override: any</option>
-            <option value="true">Has diamond override</option>
-            <option value="false">No diamond override</option>
+            <option value="">Stone override: any</option>
+            <option value="true">Has stone override</option>
+            <option value="false">No stone override</option>
           </select>
         </div>
       </div>

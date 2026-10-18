@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 63, 69, 0.45);
+  background: rgba(69, 18, 25, 0.45);
   z-index: 1000;
   display: flex;
   align-items: flex-end;
@@ -28,7 +28,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #123f45;
+  color: #451219;
 }
 
 .closeButton {
@@ -56,7 +56,7 @@
   background: none;
   border-bottom: 1px solid #e3ddd4;
   font-size: 14px;
-  color: #123f45;
+  color: #451219;
   cursor: pointer;
 }
 
@@ -66,6 +66,6 @@
 }
 
 .optionActive {
-  color: #075968;
+  color: #670815;
   font-weight: 600;
 }

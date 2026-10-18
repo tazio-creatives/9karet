@@ -1,17 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchFilterOptions } from '../../api/categories';
 import type { GoldColor, MetalType, Purity } from '../../api/types';
 import { PriceRangeSlider } from './PriceRangeSlider';
 import styles from './FilterSidebar.module.css';
 
-const KARATS: Purity[] = ['9K', '14K', '18K', '22K'];
-
-const METAL_OPTIONS: { label: string; metal: MetalType; goldColor: GoldColor | null }[] = [
-  { label: 'Yellow Gold', metal: 'GOLD', goldColor: 'YELLOW' },
-  { label: 'Rose Gold', metal: 'GOLD', goldColor: 'ROSE' },
-  { label: 'White Gold', metal: 'GOLD', goldColor: 'WHITE' },
-  { label: 'Platinum', metal: 'PLATINUM', goldColor: null },
-];
+// Metal and Karat options come from Admin → Attributes (Gold Color and
+// Purity): a value switched off there is not offered here.
+export const FILTER_OPTIONS_QUERY_KEY = ['filter-options'];
 
 export interface FilterValues {
   metal?: MetalType;
@@ -83,7 +80,19 @@ export function FilterSidebar({ values, onChange, onClear, categoryFilter, isOpe
     values.metal != null || values.purity != null || values.goldColor != null ||
     values.priceMin != null || values.priceMax != null;
 
-  const selectedMetalOption = METAL_OPTIONS.find(
+  const { data: filterOptions } = useQuery({
+    queryKey: FILTER_OPTIONS_QUERY_KEY,
+    queryFn: fetchFilterOptions,
+    staleTime: 5 * 60_000,
+  });
+  const metalOptions = (filterOptions?.goldColors ?? []).map((c) => ({
+    label: c.label,
+    metal: 'GOLD' as MetalType,
+    goldColor: c.value as GoldColor,
+  }));
+  const karats = (filterOptions?.purities ?? []).map((p) => p.value as Purity);
+
+  const selectedMetalOption = metalOptions.find(
     (m) => m.metal === values.metal && m.goldColor === (values.goldColor ?? null),
   );
 
@@ -142,10 +151,11 @@ export function FilterSidebar({ values, onChange, onClear, categoryFilter, isOpe
         />
       </FilterGroup>
 
+      {metalOptions.length > 0 && (
       <FilterGroup title="Metal">
         <ul className={styles.checkList}>
-          {METAL_OPTIONS.map((option) => {
-            const isChecked = selectedMetalOption === option;
+          {metalOptions.map((option) => {
+            const isChecked = selectedMetalOption?.goldColor === option.goldColor;
             return (
               <li key={option.label} className={styles.checkItem}>
                 <button
@@ -167,10 +177,14 @@ export function FilterSidebar({ values, onChange, onClear, categoryFilter, isOpe
           })}
         </ul>
       </FilterGroup>
+      )}
 
+      {/* Every 9Karet piece is 9K — a single-option Karat filter would
+          filter nothing, so it only shows if more purities ever exist. */}
+      {karats.length > 1 && (
       <FilterGroup title="Karat">
         <ul className={styles.checkList}>
-          {KARATS.map((karat) => {
+          {karats.map((karat) => {
             const isChecked = values.purity === karat;
             return (
               <li key={karat} className={styles.checkItem}>
@@ -187,6 +201,7 @@ export function FilterSidebar({ values, onChange, onClear, categoryFilter, isOpe
           })}
         </ul>
       </FilterGroup>
+      )}
       </aside>
     </>
   );

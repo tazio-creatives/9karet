@@ -67,7 +67,7 @@ export function HomepageSection({ section, alternate }: Props) {
               </div>
             ))}
           </div>
-          <p className={styles.instagramLink}>Follow Us @boxdiamonds</p>
+          <p className={styles.instagramLink}>Follow Us @9karet</p>
         </section>
       );
 

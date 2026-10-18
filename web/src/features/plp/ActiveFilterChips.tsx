@@ -15,8 +15,6 @@ export function ActiveFilterChips({ values, onChange }: ActiveFilterChipsProps) 
 
   if (values.goldColor) {
     chips.push({ key: 'goldColor', label: COLOR_SWATCH[values.goldColor].label, clear: { goldColor: undefined } });
-  } else if (values.metal === 'PLATINUM') {
-    chips.push({ key: 'metal', label: 'Platinum', clear: { metal: undefined } });
   }
   if (values.purity) {
     chips.push({ key: 'purity', label: values.purity, clear: { purity: undefined } });

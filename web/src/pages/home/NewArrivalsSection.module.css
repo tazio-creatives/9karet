@@ -170,7 +170,7 @@
   border-radius: 50%;
   background: #ffffff;
   color: var(--color-text);
-  box-shadow: 0 4px 14px rgba(23, 56, 60, 0.14);
+  box-shadow: 0 4px 14px rgba(60, 23, 28, 0.14);
   cursor: pointer;
 }
 

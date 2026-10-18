@@ -3,7 +3,7 @@ import {
   findProductOverrides,
   captureOverrideSnapshot,
   clearMakingOverride,
-  clearDiamondOverride,
+  clearStoneOverride,
   restoreOverrideSnapshot,
 } from '../repositories/productOverrides.repository.js';
 import { findLatestOverrideRemovalLog, insertPricingRuleAuditLog } from '../repositories/pricingRuleAudit.repository.js';
@@ -13,12 +13,12 @@ export async function listProductOverrides(filters, pagination) {
   return findProductOverrides(filters, pagination);
 }
 
-const CLEAR_ACTIONS = new Set(['REMOVE_MAKING_OVERRIDE', 'REMOVE_DIAMOND_OVERRIDE', 'DISABLE_OVERRIDES']);
+const CLEAR_ACTIONS = new Set(['REMOVE_MAKING_OVERRIDE', 'REMOVE_STONE_OVERRIDE', 'DISABLE_OVERRIDES']);
 const ALL_ACTIONS = new Set([...CLEAR_ACTIONS, 'RESTORE_PREVIOUS_OVERRIDES']);
 
 // The Product Overrides page's bulk actions — every one of them nulls or
 // restores specific override fields, never deletes a product_purity_pricing_
-// rules row or touches making_charge/gold_value/diamond_value/selling_price
+// rules row or touches making_charge/gold_value/stone_value/selling_price
 // (enforced by only ever calling the narrow repository functions above, which
 // don't expose those columns to this layer at all). Each product gets its
 // own audit row (product_id set, previous_value = that product's own
@@ -63,8 +63,8 @@ export async function applyBulkOverrideAction({ productIds, action, confirmed },
     if (action === 'REMOVE_MAKING_OVERRIDE' || action === 'DISABLE_OVERRIDES') {
       await clearMakingOverride(productId);
     }
-    if (action === 'REMOVE_DIAMOND_OVERRIDE' || action === 'DISABLE_OVERRIDES') {
-      await clearDiamondOverride(productId);
+    if (action === 'REMOVE_STONE_OVERRIDE' || action === 'DISABLE_OVERRIDES') {
+      await clearStoneOverride(productId);
     }
     await insertPricingRuleAuditLog({
       action: 'BULK_OVERRIDE_ACTION',

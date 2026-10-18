@@ -10,15 +10,19 @@ import styles from './HomeFaq.module.css';
 // visible text.
 export const HOME_FAQ: { question: string; answer: string; link?: { label: string; to: string } }[] = [
   {
-    question: 'Are BOX DIAMONDS diamonds natural and certified?',
+    question: 'What gold is 9KARET jewellery made in?',
     answer:
-      'Yes. BOX DIAMONDS uses natural diamonds, certified by IGI or GIA. The certificate is supplied with your jewellery, along with the invoice.',
-    link: { label: 'Why BOX DIAMONDS', to: '/why-box-diamonds' },
+      'Every 9KARET piece is made in BIS-hallmarked 9K gold (37.5% pure gold), in yellow, rose or white gold depending on the design. 9K gold is harder-wearing than higher karats, which makes it ideal for jewellery you wear every day.',
   },
   {
-    question: 'What gold purity is BOX DIAMONDS jewellery made in?',
+    question: 'What stones are used, and how are they priced?',
     answer:
-      'Our jewellery is made in BIS-hallmarked 9K and 18K gold, in yellow, rose or white gold depending on the design. 18K gold offers a traditional richness, while 9K gold keeps real diamond jewellery more affordable and durable for everyday wear.',
+      'Our pieces are set with genuine gemstones such as ruby, emerald and sapphire, along with cubic zirconia in some designs. Each product page lists every stone with its count and weight, and the price breakup shows the gemstone value separately from the gold value, making charge and GST.',
+  },
+  {
+    question: 'How is the price calculated?',
+    answer:
+      'The price is the gold value at the live 9K gold rate, plus the gemstone value, plus the making charge, plus 3% GST. The full breakup is shown on every product page, so you always know what you are paying for.',
   },
   {
     question: 'Do you deliver across India, and is shipping free?',
@@ -27,20 +31,20 @@ export const HOME_FAQ: { question: string; answer: string; link?: { label: strin
     link: { label: 'Shipping Policy', to: '/shipping-policy' },
   },
   {
-    question: 'Can I return jewellery bought from BOX DIAMONDS?',
+    question: 'Can I return jewellery bought from 9KARET?',
     answer:
-      'Eligible products can be returned within seven calendar days of delivery, with free return pickup across India. Raise the request from My Account. Solitaire jewellery, loose diamonds and engraved pieces are not returnable. Refunds are processed after a quality inspection.',
+      'Eligible products can be returned within seven calendar days of delivery, with free return pickup across India. Raise the request from My Account. Custom and engraved pieces are not returnable. Refunds are processed after a quality inspection.',
     link: { label: 'Return & Refund Policy', to: '/refund-policy' },
   },
   {
-    question: 'Does BOX DIAMONDS offer buyback and exchange?',
+    question: 'Does 9KARET offer buyback and exchange?',
     answer:
-      'Yes. Eligible BOX DIAMONDS jewellery is covered by exchange and buyback benefits, subject to the conditions shown before you complete your purchase.',
+      'Yes. Eligible 9KARET jewellery is covered by exchange and buyback benefits, subject to the conditions shown before you complete your purchase.',
   },
   {
-    question: 'How can I contact BOX DIAMONDS?',
+    question: 'How can I contact 9KARET?',
     answer:
-      'Email info@boxdiamonds.com or use the contact form on our Contact page. BOX DIAMONDS is operated by Goldbox Diamonds Private Limited, registered at No 281/287, 39 1-3, Narsi Natha Street, Princess Dock, Mumbai – 400009, Maharashtra.',
+      'Email info@9karet.com or use the contact form on our Contact page. 9KARET is operated by Goldbox Diamonds Private Limited, registered at No 281/287, 39 1-3, Narsi Natha Street, Princess Dock, Mumbai – 400009, Maharashtra.',
     link: { label: 'Contact Us', to: '/contact' },
   },
 ];
@@ -50,17 +54,16 @@ export function HomeFaq() {
     <section className={styles.wrap} aria-labelledby="home-about-heading">
       <div className={styles.about}>
         <h2 id="home-about-heading" className={styles.heading}>
-          About BOX DIAMONDS
+          About 9KARET
         </h2>
         <p>
-          BOX DIAMONDS is an Indian fine jewellery brand that sells certified natural diamond jewellery online at
-          boxdiamonds.com, with delivery across India. It is operated by Goldbox Diamonds Private Limited, Mumbai.
+          9KARET is an Indian jewellery brand that sells 9K gold jewellery online at 9karet.com, with delivery across
+          India. It is operated by Goldbox Diamonds Private Limited, Mumbai.
         </p>
         <p>
-          Our rings, earrings, necklaces, pendants, bangles and bracelets are crafted by our own artisans in
-          BIS-hallmarked 9K and 18K gold and set with IGI- or GIA-certified natural diamonds. We keep the designs
-          lightweight and the pricing transparent, so real diamond jewellery is something you can wear every day, not
-          only on special occasions.
+          Our rings, earrings, necklaces, pendants and bracelets are made in BIS-hallmarked 9K gold and set with
+          genuine gemstones. 9K gold keeps real gold jewellery affordable and durable — smart gold you can wear every
+          day — and our pricing is transparent, with the gold, gemstone and making charges shown separately.
         </p>
       </div>
 

@@ -4,13 +4,14 @@ import { query } from '../config/db.js';
 // §11) — the SELECT ... FOR UPDATE is what makes the stock check+reserve
 // atomic across concurrent checkouts. Callers must lock rows for a
 // multi-item order in ascending product_id order to avoid deadlocks.
+// The full row, not a column subset: checkout prices the line from it via
+// computeVariantPricing, which needs every pricing input the cart used
+// (making_charge_percent, the offer discount percents, category_id for
+// category rules) — a narrower list silently charged a different price
+// than the cart showed.
 export async function lockProductForCheckoutTx(client, productId) {
   const { rows } = await client.query(
-    `SELECT id, name, sku, status, metal_type, purity, gold_color, gold_value, diamond_value,
-            making_charge, gst_percent, selling_price, stock_quantity,
-            net_weight_grams, gold_weight_grams, diamond_weight_carats, diamond_config_id,
-            diamond_count, diamond_colour, diamond_clarity
-     FROM products WHERE id = $1 FOR UPDATE`,
+    `SELECT * FROM products WHERE id = $1 FOR UPDATE`,
     [productId],
   );
   return rows[0] ?? null;
@@ -21,11 +22,11 @@ export async function lockProductForCheckoutTx(client, productId) {
 // own product_variants row before the stock check+reserve. Also resolves
 // the variant's attribute values (same shape findVariantById returns) in a
 // second query — computeVariantPricing's resolvedPurity/resolvedGoldColor/
-// resolvedDiamondConfigId helpers need it, and it must reflect the
+// resolvedSizeLabel helpers need it, and it must reflect the
 // just-locked row, not a stale pre-lock read.
 export async function lockProductVariantForCheckoutTx(client, variantId) {
   const { rows } = await client.query(
-    `SELECT id, product_id, gold_weight_grams, diamond_weight_grams, diamond_weight_carats,
+    `SELECT id, product_id, gold_weight_grams, price_override,
             stock_quantity, is_available, combination_key
      FROM product_variants WHERE id = $1 FOR UPDATE`,
     [variantId],
@@ -99,10 +100,9 @@ export async function insertOrderItemTx(client, fields) {
     `INSERT INTO order_items
        (order_id, product_id, product_variant_id, variant_attributes_snapshot,
         product_name, product_sku, quantity,
-        gold_value, diamond_value, making_charge, gst_amount, unit_price, line_total, gold_rate_id,
-        is_backordered, gold_weight_grams_snapshot, diamond_weight_carats_snapshot,
-        diamond_count_snapshot, diamond_colour_snapshot, diamond_clarity_snapshot, customization_note)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+        gold_value, stone_value, making_charge, gst_amount, unit_price, line_total, gold_rate_id,
+        is_backordered, gold_weight_grams_snapshot, stones_snapshot, customization_note)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
      RETURNING *`,
     [
       fields.orderId,
@@ -113,7 +113,7 @@ export async function insertOrderItemTx(client, fields) {
       fields.productSku,
       fields.quantity,
       fields.goldValue,
-      fields.diamondValue,
+      fields.stoneValue,
       fields.makingCharge,
       fields.gstAmount,
       fields.unitPrice,
@@ -121,10 +121,7 @@ export async function insertOrderItemTx(client, fields) {
       fields.goldRateId ?? null,
       fields.isBackordered ?? false,
       fields.goldWeightGramsSnapshot ?? null,
-      fields.diamondWeightCaratsSnapshot ?? null,
-      fields.diamondCountSnapshot ?? null,
-      fields.diamondColourSnapshot ?? null,
-      fields.diamondClaritySnapshot ?? null,
+      JSON.stringify(fields.stonesSnapshot ?? []),
       fields.customizationNote ?? null,
     ],
   );
@@ -408,23 +405,20 @@ export async function getOrderSummaryStats({ status } = {}) {
 // primary product image (thumbnail + a larger size for the hover preview) —
 // a deliberate live lookup, since there's no requirement the thumbnail stay
 // pinned to whatever existed at order time, and it can be null (no photo
-// uploaded). diamond_count/colour/clarity are ALSO joined live here, but
-// only as a fallback for orders placed before the 20260918000000 migration
-// added *_snapshot columns to order_items — orderDto.js prefers the
-// snapshot when present, exactly like it already does for
-// sizeLabel/goldColor/purity via variant_attributes_snapshot. category_name is
-// always a live join (products.category_id -> categories.name) — no
-// snapshot needed since the work order (the one consumer that needs it)
-// only cares about the product's current category, not a historical one.
-// metal_type/net_weight_grams/gross_weight_grams/diamond_weight_grams/gemstone
+// uploaded). The stones a piece was sold with come from the line's own
+// stones_snapshot, never a live join. category_name is always a live join
+// (products.category_id -> categories.name) — no snapshot needed since the
+// work order (the one consumer that needs it) only cares about the
+// product's current category, not a historical one.
+// metal_type/net_weight_grams/gross_weight_grams/stone_weight_carats
 // (admin "Product Details" panel, mirrors the storefront PDP's AttributesList)
 // are always a live join too — these aren't per-variant fields in this schema
 // (the PDP itself reads them straight off the product, no live-variant
 // override), so there's nothing checkout-time to snapshot.
 export async function findOrderItems(orderId) {
   const { rows } = await query(
-    `SELECT oi.*, p.diamond_count, p.diamond_colour, p.diamond_clarity, c.name AS category_name,
-            p.metal_type, p.net_weight_grams, p.gross_weight_grams, p.diamond_weight_grams, p.gemstone,
+    `SELECT oi.*, c.name AS category_name,
+            p.metal_type, p.net_weight_grams, p.gross_weight_grams, p.stone_weight_carats,
             thumb.url AS product_image_url, large.url AS product_image_large_url
      FROM order_items oi
      LEFT JOIN products p ON p.id = oi.product_id

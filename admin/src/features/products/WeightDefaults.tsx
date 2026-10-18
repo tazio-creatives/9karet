@@ -32,10 +32,10 @@ interface WeightDefaultsProps {
   onChange: (_next: WeightRulesInput) => void;
 }
 
-// Weight resolution hierarchy — lets an admin declare "this weighs
-// differently at this purity" and/or "...at this purity + size" as live
-// defaults, without hand-editing every exact combination. Priority, most
-// specific wins: a Purity+Size default here > a Purity-only default here >
+// Weight resolution hierarchy — lets an admin declare "this size weighs
+// differently" as a live default, without hand-editing every exact
+// combination. Priority, most specific wins: a Purity+Size default here >
+// a Purity-only default >
 // a combination's own legacy weight (set in Advanced Variant Management, or
 // seeded from the old Size-level weight field) > the product's base weight.
 //
@@ -90,95 +90,59 @@ export function WeightDefaults({ purities, sizes, value, onChange }: WeightDefau
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axisSignature, value]);
 
-  function updatePurityDraft(purity: string, raw: string) {
-    const next = { ...purityDrafts, [purity]: raw };
-    setPurityDrafts(next);
-    onChange(valueFromDrafts(next, matrixDrafts));
-  }
-
   function updateMatrixDraft(key: string, raw: string) {
     const next = { ...matrixDrafts, [key]: raw };
     setMatrixDrafts(next);
     onChange(valueFromDrafts(purityDrafts, next));
   }
 
-  if (purities.length === 0) return null;
+  // 9Karet has the one 9K purity, so a purity-only default would just repeat
+  // the product's Base Gold Weight — only the by-size weights are shown.
+  // Purity-only drafts are still tracked above, so a saved one survives.
+  if (purities.length === 0 || sizeLabels.length === 0) return null;
 
   return (
     <div className={styles.rulesPanel}>
-      <span className={styles.advancedTitle}>Weight Defaults</span>
+      <span className={styles.advancedTitle}>Gold Weight by Size</span>
       <p className={styles.advancedSub} style={{ padding: 0, marginTop: 4 }}>
-        Set how gold weight changes by purity, or by purity + size. Saved together with the rest of the product
-        when you click Save Product.
+        A bigger size uses more gold — enter each size's gold weight, or leave it blank to use the base gold weight.
+        Saved together with the rest of the product when you click Save Product.
       </p>
 
-      <table className={styles.sizeTable} style={{ marginTop: 12 }}>
-        <thead>
-          <tr>
-            <th>Purity</th>
-            <th>Gold Weight (g)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {purities.map((p) => (
-            <tr key={p}>
-              <td>{p}</td>
-              <td>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.001"
-                  placeholder="uses base weight"
-                  value={purityDrafts[p] ?? ''}
-                  onChange={(e) => updatePurityDraft(p, e.target.value)}
-                />
-              </td>
+      <div className={styles.sizeTableWrap} style={{ marginTop: 12 }}>
+        <table className={styles.sizeTable}>
+          <thead>
+            <tr>
+              <th>Size</th>
+              {purities.map((p) => (
+                <th key={p}>Gold Weight (g)</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {sizeLabels.length > 0 && (
-        <>
-          <p className={styles.attrLabel} style={{ marginTop: 16, marginBottom: 8 }}>
-            By Purity + Size
-          </p>
-          <div className={styles.sizeTableWrap}>
-            <table className={styles.sizeTable}>
-              <thead>
-                <tr>
-                  <th>Size</th>
-                  {purities.map((p) => (
-                    <th key={p}>{p}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sizeLabels.map((s) => (
-                  <tr key={s}>
-                    <td>{s}</td>
-                    {purities.map((p) => {
-                      const key = `${p}|${s}`;
-                      return (
-                        <td key={p}>
-                          <input
-                            type="number"
-                            min={0}
-                            step="0.001"
-                            placeholder="—"
-                            value={matrixDrafts[key] ?? ''}
-                            onChange={(e) => updateMatrixDraft(key, e.target.value)}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+          </thead>
+          <tbody>
+            {sizeLabels.map((s) => (
+              <tr key={s}>
+                <td>{s}</td>
+                {purities.map((p) => {
+                  const key = `${p}|${s}`;
+                  return (
+                    <td key={p}>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.001"
+                        placeholder="uses base weight"
+                        value={matrixDrafts[key] ?? ''}
+                        onChange={(e) => updateMatrixDraft(key, e.target.value)}
+                      />
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -60,7 +60,7 @@ export function ContactPage() {
         <h1 className={styles.title}>Contact Us</h1>
         <div className={styles.divider} aria-hidden="true">
           <span />
-          {POLICY_ICONS.diamond}
+          {POLICY_ICONS.gem}
           <span />
         </div>
         <p className={styles.subtitle}>
@@ -182,7 +182,7 @@ export function ContactPage() {
             <span className={styles.sideIcon}>{POLICY_ICONS.mail}</span>
             <h3>Email us</h3>
             <p>
-              <a href="mailto:info@boxdiamonds.com">info@boxdiamonds.com</a>
+              <a href="mailto:info@9karet.com">info@9karet.com</a>
             </p>
             <p className={styles.sideNote}>Please include your order number for order-related questions.</p>
           </div>
@@ -190,7 +190,7 @@ export function ContactPage() {
             <span className={styles.sideIcon}>{POLICY_ICONS.map}</span>
             <h3>Registered office</h3>
             <p>
-              Box Diamonds
+              9Karet
               <br />
               Goldbox Diamonds Private Limited
               <br />

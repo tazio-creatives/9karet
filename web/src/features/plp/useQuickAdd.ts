@@ -7,7 +7,7 @@ import { addCartItem } from '../../api/cart';
 
 // Owned once by ProductListing, shared across every PlpProductCard — decides
 // per-tap whether a product can be added directly or needs the QuickAddSheet
-// (mandatory gold color / purity / diamond quality / size), by fetching the
+// (mandatory gold color / size), by fetching the
 // same full product detail the PDP itself uses (same query key, so it's
 // instant from cache if the shopper already visited that PDP this session).
 //
@@ -46,11 +46,7 @@ export function useQuickAdd(onAdded?: (_productId: string) => void) {
         queryKey: ['product', product.slug],
         queryFn: () => fetchProductBySlug(product.slug),
       });
-      const hasCustomizations =
-        detail.goldColorOptions.length > 0 ||
-        detail.purityOptions.length > 0 ||
-        detail.diamondOptions.length > 0 ||
-        detail.sizes.length > 0;
+      const hasCustomizations = detail.goldColorOptions.length > 0 || detail.sizes.length > 0;
       if (hasCustomizations) {
         setSheetProduct(detail);
         setPendingProductId(null);

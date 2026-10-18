@@ -21,7 +21,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     credentials: 'include',
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(isStateChanging ? { 'X-Requested-With': 'box-diamonds' } : {}),
+      ...(isStateChanging ? { 'X-Requested-With': '9karet' } : {}),
       ...options.headers,
     },
   });

@@ -1,9 +1,9 @@
 {
-  "name": "box-diamonds",
+  "name": "9karet",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "BOX DIAMONDS — premium jewellery ecommerce platform (monorepo: backend, web, admin)",
+  "description": "9KARET — premium jewellery ecommerce platform (monorepo: backend, web, admin)",
   "workspaces": [
     "backend",
     "web",

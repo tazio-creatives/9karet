@@ -3,7 +3,7 @@ import { z } from 'zod';
 const uuid = z.string().uuid();
 
 const conditionSchema = z.object({
-  conditionType: z.enum(['DIAMOND_QUALITY', 'DIAMOND_COLOUR', 'DIAMOND_CLARITY', 'CARAT_RANGE']),
+  conditionType: z.enum(['CARAT_RANGE']),
   stringValues: z.array(z.string()).optional().nullable(),
   minValue: z.number().nullable().optional(),
   maxValue: z.number().nullable().optional(),
@@ -14,7 +14,7 @@ const conditionSchema = z.object({
 // the preview can never diverge from what create would actually accept).
 export const createPricingRuleSchema = z
   .object({
-    ruleType: z.enum(['MAKING_CHARGE', 'DIAMOND']),
+    ruleType: z.enum(['MAKING_CHARGE', 'STONE']),
     name: z.string().trim().min(1).max(200),
     scope: z.enum(['GLOBAL', 'CATEGORY', 'PRODUCT']),
     discountType: z.enum(['PERCENT', 'FIXED_AMOUNT', 'FIXED_AMOUNT_PER_CARAT']),
@@ -29,7 +29,7 @@ export const createPricingRuleSchema = z
     notes: z.string().max(2000).nullable().optional(),
     categoryIds: z.array(uuid).default([]),
     productIds: z.array(uuid).default([]),
-    diamondTypeIds: z.array(uuid).default([]),
+    stoneTypeIds: z.array(uuid).default([]),
     conditions: z.array(conditionSchema).default([]),
   })
   .superRefine((input, ctx) => {
@@ -80,7 +80,7 @@ export const updatePricingRuleSchema = z
     notes: z.string().max(2000).nullable().optional(),
     categoryIds: z.array(uuid).optional(),
     productIds: z.array(uuid).optional(),
-    diamondTypeIds: z.array(uuid).optional(),
+    stoneTypeIds: z.array(uuid).optional(),
     conditions: z.array(conditionSchema).optional(),
   })
   .superRefine((input, ctx) => {
@@ -96,7 +96,7 @@ export const updatePricingRuleSchema = z
   });
 
 export const listPricingRulesQuerySchema = z.object({
-  ruleType: z.enum(['MAKING_CHARGE', 'DIAMOND']).optional(),
+  ruleType: z.enum(['MAKING_CHARGE', 'STONE']).optional(),
   status: z.enum(['DRAFT', 'SCHEDULED', 'ACTIVE', 'EXPIRED', 'DISABLED']).optional(),
   scope: z.enum(['GLOBAL', 'CATEGORY', 'PRODUCT']).optional(),
   search: z.string().optional(),

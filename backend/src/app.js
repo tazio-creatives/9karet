@@ -25,6 +25,7 @@ import { productsRouter } from './routes/products.routes.js';
 import { categoriesRouter } from './routes/categories.routes.js';
 import { collectionsRouter } from './routes/collections.routes.js';
 import { searchRouter } from './routes/search.routes.js';
+import { filterOptionsRouter } from './routes/filterOptions.routes.js';
 import { homepageRouter } from './routes/homepage.routes.js';
 import { adminProductsRouter } from './routes/admin/products.routes.js';
 import { adminAttributesRouter } from './routes/admin/attributes.routes.js';
@@ -32,6 +33,7 @@ import { adminImageEnhancementRouter } from './routes/admin/imageEnhancement.rou
 import { adminCategoriesRouter } from './routes/admin/categories.routes.js';
 import { adminCollectionsRouter } from './routes/admin/collections.routes.js';
 import { adminPricingRouter } from './routes/admin/pricing.routes.js';
+import { adminStoneTypesRouter } from './routes/admin/stoneTypes.routes.js';
 import { adminPresentersRouter } from './routes/admin/presenters.routes.js';
 import { adminShippingRouter } from './routes/admin/shipping.routes.js';
 import { adminOrdersRouter } from './routes/admin/orders.routes.js';
@@ -109,6 +111,7 @@ export function createApp() {
   publicCatalogRouter.use('/categories', categoriesRouter);
   publicCatalogRouter.use('/collections', collectionsRouter);
   publicCatalogRouter.use('/search', searchRouter);
+  publicCatalogRouter.use('/filter-options', filterOptionsRouter);
   publicCatalogRouter.use('/homepage', homepageRouter);
   publicCatalogRouter.use('/blog', blogRouter);
   app.use('/api/v1', publicCatalogRouter);
@@ -146,6 +149,7 @@ export function createApp() {
   adminCatalogRouter.use('/categories', adminCategoriesRouter);
   adminCatalogRouter.use('/collections', adminCollectionsRouter);
   adminCatalogRouter.use('/pricing', adminPricingRouter);
+  adminCatalogRouter.use('/stone-types', adminStoneTypesRouter);
   adminCatalogRouter.use('/presenters', adminPresentersRouter);
   adminCatalogRouter.use('/shipping', adminShippingRouter);
   adminCatalogRouter.use('/orders', adminOrdersRouter);

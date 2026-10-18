@@ -9,17 +9,6 @@ import {
 } from '../../controllers/pricing.controller.js';
 import { goldRateSyncRateLimiter } from '../../middleware/rateLimit.js';
 import {
-  list as listDiamondConfigs,
-  create as createDiamondConfig,
-  update as updateDiamondConfig,
-  remove as removeDiamondConfig,
-} from '../../controllers/diamondConfigs.controller.js';
-import {
-  list as listDiamondTypes,
-  create as createDiamondType,
-  update as updateDiamondType,
-} from '../../controllers/diamondTypes.controller.js';
-import {
   list as listRules,
   get as getRule,
   create as createRule,
@@ -46,17 +35,9 @@ adminPricingRouter.post('/gold-rates/sync', goldRateSyncRateLimiter, syncGoldRat
 adminPricingRouter.get('/gold-rate-settings', getGoldRateSettings);
 adminPricingRouter.put('/gold-rate-settings', putGoldRateSettings);
 adminPricingRouter.post('/gold-rate-settings/manual-rate', postManualGoldRate);
-adminPricingRouter.get('/diamond-configs', listDiamondConfigs);
-adminPricingRouter.post('/diamond-configs', createDiamondConfig);
-adminPricingRouter.put('/diamond-configs/:id', updateDiamondConfig);
-adminPricingRouter.delete('/diamond-configs/:id', removeDiamondConfig);
 adminPricingRouter.post('/preview', preview);
 
 // Pricing Rule Management (Phase 3).
-adminPricingRouter.get('/diamond-types', listDiamondTypes);
-adminPricingRouter.post('/diamond-types', createDiamondType);
-adminPricingRouter.put('/diamond-types/:id', updateDiamondType);
-
 adminPricingRouter.get('/rules', listRules);
 adminPricingRouter.post('/rules', createRule);
 adminPricingRouter.post('/rules/preview', previewUnsavedRule);

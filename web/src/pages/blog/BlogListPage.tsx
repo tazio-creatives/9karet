@@ -16,9 +16,9 @@ export function BlogListPage() {
   });
 
   useHead({
-    title: page > 1 ? `Blog — Page ${page} | BOX DIAMONDS` : 'Blog | BOX DIAMONDS',
+    title: page > 1 ? `Blog — Page ${page} | 9KARET` : 'Blog | 9KARET',
     description:
-      'Diamond and jewellery guides, styling ideas, care tips and stories from Box Diamonds — natural diamonds, lightweight gold and everyday luxury.',
+      'Jewellery guides, styling ideas, care tips and stories from 9Karet — 9K gold, gemstones and everyday style.',
     canonicalPath: page > 1 ? `/blog?page=${page}` : '/blog',
     jsonLd: [
       organizationJsonLd(),
@@ -40,13 +40,13 @@ export function BlogListPage() {
           <span aria-hidden="true">›</span>
           <span>Blog</span>
         </nav>
-        <h1 className={styles.heroTitle}>The Box Diamonds Journal</h1>
+        <h1 className={styles.heroTitle}>The 9Karet Journal</h1>
         <div className={styles.divider} aria-hidden="true">
           <span />
-          {POLICY_ICONS.diamond}
+          {POLICY_ICONS.gem}
           <span />
         </div>
-        <p className={styles.heroSubtitle}>Diamond guides, styling ideas, care tips and stories from our workshop.</p>
+        <p className={styles.heroSubtitle}>Jewellery guides, styling ideas, care tips and stories from our workshop.</p>
       </header>
 
       <div className={styles.container}>
@@ -62,7 +62,7 @@ export function BlogListPage() {
               {featured.coverImageUrl ? (
                 <img src={featured.coverImageUrl} alt={featured.coverImageAlt ?? featured.title} />
               ) : (
-                <div className={styles.placeholder}>{POLICY_ICONS.diamond}</div>
+                <div className={styles.placeholder}>{POLICY_ICONS.gem}</div>
               )}
             </div>
             <div className={styles.featuredText}>

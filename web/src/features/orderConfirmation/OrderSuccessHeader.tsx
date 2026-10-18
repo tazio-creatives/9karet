@@ -96,8 +96,8 @@ export function OrderSuccessHeader() {
           )}
         </div>
 
-        <Link to="/" className={styles.logo} aria-label="Box Diamonds — home">
-          <img src="/images/logo.png" alt="Box Diamonds" className={styles.logoImg} />
+        <Link to="/" className={styles.logo} aria-label="9Karet — home">
+          <img src="/images/logo.png" alt="9Karet" className={styles.logoImg} />
         </Link>
 
         <Link to="/cart" className={styles.iconButton} aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}>

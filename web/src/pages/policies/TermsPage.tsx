@@ -28,15 +28,15 @@ const SECTIONS: PolicySection[] = [
   {
     id: 'products-pricing',
     title: 'Products, Pricing & Availability',
-    icon: 'diamond',
+    icon: 'gem',
     content: (
       <ul>
         <li>
           We aim to display accurate product images, descriptions, weights and prices, but slight variations (e.g.
-          natural gemstone/diamond characteristics, minor metal-weight tolerances) may occur.
+          natural gemstone characteristics, minor metal-weight tolerances) may occur.
         </li>
         <li>
-          Prices are subject to change, including due to gold/diamond rate fluctuations, without prior notice — the
+          Prices are subject to change, including due to gold rate fluctuations, without prior notice — the
           price shown at the time your order is placed and confirmed will apply to that order.
         </li>
         <li>Products are subject to availability. We reserve the right to limit quantities or discontinue any product.</li>
@@ -81,7 +81,7 @@ const SECTIONS: PolicySection[] = [
     content: (
       <p>
         All content on the Website — including text, graphics, logos, product images, and design — is owned by or
-        licensed to Box Diamonds and protected by applicable intellectual property laws. You may not copy, reproduce,
+        licensed to 9Karet and protected by applicable intellectual property laws. You may not copy, reproduce,
         distribute or create derivative works from this content without our prior written consent.
       </p>
     ),
@@ -109,8 +109,8 @@ const SECTIONS: PolicySection[] = [
     content: (
       <p>
         Jewellery images are for illustrative purposes; actual product colour may vary slightly due to photography,
-        lighting and display settings. Diamond and gemstone certification, where provided, is issued by independent
-        certification bodies and reflects their assessment at the time of certification.
+        lighting and display settings. Gemstone certification, where provided, is issued by independent certification
+        bodies and reflects their assessment at the time of certification.
       </p>
     ),
   },
@@ -120,7 +120,7 @@ const SECTIONS: PolicySection[] = [
     icon: 'alert',
     content: (
       <p>
-        To the extent permitted by applicable law, Box Diamonds shall not be liable for any indirect, incidental or
+        To the extent permitted by applicable law, 9Karet shall not be liable for any indirect, incidental or
         consequential damages arising from your use of the Website or purchase of products, beyond the value of the
         relevant order. Nothing in this section limits any liability that cannot be excluded under applicable Indian
         law, including in respect of defective goods.
@@ -133,7 +133,7 @@ const SECTIONS: PolicySection[] = [
     icon: 'shield',
     content: (
       <p>
-        You agree to indemnify and hold Box Diamonds harmless from any claims, losses or damages arising from your
+        You agree to indemnify and hold 9Karet harmless from any claims, losses or damages arising from your
         violation of these Terms or misuse of the Website.
       </p>
     ),
@@ -175,7 +175,7 @@ const SECTIONS: PolicySection[] = [
   },
   {
     id: 'contact',
-    title: 'Contact Box Diamonds',
+    title: 'Contact 9Karet',
     icon: 'mail',
     content: <PolicyContact assistanceWith="questions about these Terms" />,
   },
@@ -188,17 +188,17 @@ export function TermsPage() {
       lastUpdated="2 October 2026"
       subtitle={
         <>
-          The terms that govern your use of BoxDiamonds.com and your purchases with us.
+          The terms that govern your use of 9Karet.com and your purchases with us.
           <br />
           Please read them carefully.
         </>
       }
       glance={{
-        heading: 'Using Box Diamonds',
+        heading: 'Using 9Karet',
         content: (
           <p>
-            These Terms &amp; Conditions (“Terms”) govern your use of www.boxdiamonds.com (the “Website”), owned and
-            operated by Goldbox Diamonds Private Limited (“Box Diamonds”, “we”, “us”). By accessing the Website or
+            These Terms &amp; Conditions (“Terms”) govern your use of www.9karet.com (the “Website”), owned and
+            operated by Goldbox Diamonds Private Limited (“9Karet”, “we”, “us”). By accessing the Website or
             placing an order, you agree to these Terms. If you do not agree, please do not use the Website.
           </p>
         ),

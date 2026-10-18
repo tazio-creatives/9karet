@@ -3,7 +3,6 @@ import { AppError, NotFoundError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
 import { findAddressById } from '../repositories/addresses.repository.js';
 import { getCurrentGoldRate } from '../repositories/goldRates.repository.js';
-import { findDiamondConfigById } from '../repositories/diamondConfigs.repository.js';
 import {
   lockProductForCheckoutTx,
   lockProductVariantForCheckoutTx,
@@ -87,9 +86,20 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
       // Row-level locks don't cascade — every line also locks its own
       // product_variants row so the stock check+reserve is atomic for that
       // exact combination.
+      // No variantId (e.g. Buy Now on a product without colour/size options)
+      // means the product's only variant — same rule as cartService.addItem.
+      let resolvedVariantId = variantId;
+      if (!resolvedVariantId) {
+        const { rows: soleVariants } = await client.query(
+          'SELECT id FROM product_variants WHERE product_id = $1',
+          [product.id],
+        );
+        if (soleVariants.length === 1) resolvedVariantId = soleVariants[0].id;
+      }
+
       let variant = null;
-      if (variantId) {
-        variant = await lockProductVariantForCheckoutTx(client, variantId);
+      if (resolvedVariantId) {
+        variant = await lockProductVariantForCheckoutTx(client, resolvedVariantId);
         if (!variant || variant.product_id !== product.id) {
           throw new AppError(400, `${product.name}: selected combination is no longer available`);
         }
@@ -120,28 +130,21 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
         null,
         ruleSet,
       );
-      let diamondConfigName = null;
-      if (pricing.diamondConfigId) {
-        const config = await findDiamondConfigById(pricing.diamondConfigId);
-        diamondConfigName = config?.name ?? null;
-      }
-
       const attributesSnapshot = [];
       if (pricing.purity) attributesSnapshot.push({ attributeCode: 'purity', label: pricing.purity });
       if (pricing.goldColor) attributesSnapshot.push({ attributeCode: 'gold_color', label: pricing.goldColor });
-      if (diamondConfigName) attributesSnapshot.push({ attributeCode: 'diamond_quality', label: diamondConfigName });
       const sizeAttr = variant?.attributes?.size;
       if (sizeAttr) attributesSnapshot.push({ attributeCode: 'size', label: sizeAttr.label });
 
       const lineGoldValue = round2(pricing.goldValue * quantity);
-      const lineDiamondValue = round2(pricing.diamondValue * quantity);
+      const lineStoneValue = round2(pricing.stoneValue * quantity);
       const lineMakingCharge = round2(pricing.makingCharge * quantity);
       const unitPrice = pricing.sellingPrice;
       const lineTotal = round2(unitPrice * quantity);
-      const lineGst = round2(lineTotal - lineGoldValue - lineDiamondValue - lineMakingCharge);
+      const lineGst = round2(lineTotal - lineGoldValue - lineStoneValue - lineMakingCharge);
 
       let goldRateId = null;
-      if (product.metal_type === 'GOLD' && pricing.purity) {
+      if (pricing.purity) {
         const rate = await getCurrentGoldRate(pricing.purity);
         goldRateId = rate?.id ?? null;
       }
@@ -151,7 +154,7 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
         variant,
         quantity,
         lineGoldValue,
-        lineDiamondValue,
+        lineStoneValue,
         lineMakingCharge,
         lineGst,
         unitPrice,
@@ -160,7 +163,14 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
         attributesSnapshot,
         isBackordered,
         goldWeightGrams: pricing.goldWeightGrams ?? null,
-        diamondWeightCarats: pricing.diamondWeightCarats ?? null,
+        // What stones this exact piece was sold with, per unit — frozen so
+        // the invoice/work order stays right if the product is edited later.
+        stonesSnapshot: pricing.stoneComponents.map((c) => ({
+          stoneTypeName: c.stoneTypeName,
+          count: c.count,
+          weightCarats: c.carats,
+          price: c.finalValue,
+        })),
         customizationNote: customizationNote || null,
       });
       subtotal += lineTotal - lineGst;
@@ -221,7 +231,7 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
         productSku: line.product.sku,
         quantity: line.quantity,
         goldValue: line.lineGoldValue,
-        diamondValue: line.lineDiamondValue,
+        stoneValue: line.lineStoneValue,
         makingCharge: line.lineMakingCharge,
         gstAmount: line.lineGst,
         unitPrice: line.unitPrice,
@@ -229,10 +239,7 @@ export async function createOrder({ userId, contact, addressId, items, couponCod
         goldRateId: line.goldRateId,
         isBackordered: line.isBackordered,
         goldWeightGramsSnapshot: line.goldWeightGrams,
-        diamondWeightCaratsSnapshot: line.diamondWeightCarats,
-        diamondCountSnapshot: line.product.diamond_count,
-        diamondColourSnapshot: line.product.diamond_colour,
-        diamondClaritySnapshot: line.product.diamond_clarity,
+        stonesSnapshot: line.stonesSnapshot,
         customizationNote: line.customizationNote,
       });
 

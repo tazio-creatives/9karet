@@ -149,15 +149,15 @@ describe('computeEffectiveRate (adjustment layer)', () => {
   });
 });
 
-describe('purity derivation (existing deriveRatesFromBase24k, reused unchanged)', () => {
+describe('purity derivation (deriveRatesFromBase24k)', () => {
   const derived = deriveRatesFromBase24k(16100);
   const byPurity = Object.fromEntries(derived.map((r) => [r.purity, r.ratePerGram]));
 
-  test('6. 24K = base rate', () => assert.equal(byPurity['24K'], 16100));
-  test('7. 22K = base * 22/24', () => assert.equal(byPurity['22K'], Math.round(((16100 * 22) / 24) * 100) / 100));
-  test('8. 18K = base * 18/24', () => assert.equal(byPurity['18K'], Math.round(((16100 * 18) / 24) * 100) / 100));
-  test('9. 14K = base * 14/24', () => assert.equal(byPurity['14K'], Math.round(((16100 * 14) / 24) * 100) / 100));
-  test('10. 9K = base * 9/24', () => assert.equal(byPurity['9K'], Math.round(((16100 * 9) / 24) * 100) / 100));
+  test('6. 24K = base rate (market reference)', () => assert.equal(byPurity['24K'], 16100));
+  test('7. 9K = base * 9/24 (the rate 9Karet sells at)', () =>
+    assert.equal(byPurity['9K'], Math.round(((16100 * 9) / 24) * 100) / 100));
+  test('8. only 9K and 24K are derived — 9Karet sells 9K gold only', () =>
+    assert.deepEqual(Object.keys(byPurity).sort(), ['24K', '9K']));
 });
 
 describe('checkDeviation (extreme movement sanity check)', () => {

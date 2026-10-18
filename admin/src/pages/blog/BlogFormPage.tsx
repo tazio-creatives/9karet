@@ -377,7 +377,7 @@ export function BlogFormPage() {
               <input
                 value={form.seoTitle}
                 onChange={(e) => set('seoTitle', e.target.value)}
-                placeholder={form.title ? `${form.title} | BOX DIAMONDS Blog` : ''}
+                placeholder={form.title ? `${form.title} | 9KARET Blog` : ''}
                 maxLength={200}
               />
             </label>

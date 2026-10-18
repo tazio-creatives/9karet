@@ -11,23 +11,22 @@ const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 // Other ways people write the brand — Google uses alternateName (on both
 // Organization and WebSite) to connect these spellings to this site's
 // "site name" in results.
-const BRAND_ALTERNATE_NAMES = ['Box Diamonds', 'BoxDiamonds', 'boxdiamonds.com'];
+const BRAND_ALTERNATE_NAMES = ['9Karet', '9 Karet', '9karet.com'];
 
 // OnlineStore is schema.org's Organization subtype for an online shop — tells
-// search engines BOX DIAMONDS is a jewellery brand/store, not a "diamond box"
-// product. sameAs lists the brand's real social profiles (config.ts) so
+// search engines 9KARET is a jewellery brand/store. sameAs lists the brand's real social profiles (config.ts) so
 // Google links them to this site.
 export function organizationJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'OnlineStore',
     '@id': ORGANIZATION_ID,
-    name: 'BOX DIAMONDS',
+    name: '9KARET',
     alternateName: BRAND_ALTERNATE_NAMES,
     url: `${SITE_URL}/`,
     legalName: 'Goldbox Diamonds Private Limited',
     logo: `${SITE_URL}/images/logo.png`,
-    email: 'info@boxdiamonds.com',
+    email: 'info@9karet.com',
     // Registered office, as published on the Contact page.
     address: {
       '@type': 'PostalAddress',
@@ -40,14 +39,14 @@ export function organizationJsonLd() {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'info@boxdiamonds.com',
+      email: 'info@9karet.com',
       url: `${SITE_URL}/contact`,
       areaServed: 'IN',
       availableLanguage: ['English'],
     },
     areaServed: 'IN',
     sameAs: Object.values(SOCIAL_LINKS),
-    description: 'Certified Natural Diamond Jewellery',
+    description: '9K Gold & Gemstone Jewellery',
   };
 }
 
@@ -72,10 +71,10 @@ export function websiteJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': `${SITE_URL}/#website`,
-    name: 'BOX DIAMONDS',
+    name: '9KARET',
     alternateName: BRAND_ALTERNATE_NAMES,
     url: `${SITE_URL}/`,
-    description: 'Certified Natural Diamond Jewellery',
+    description: '9K Gold & Gemstone Jewellery',
     publisher: { '@id': ORGANIZATION_ID },
   };
 }
@@ -97,7 +96,7 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
 // Merchant Center and the site's Shipping and Return & Refund policies: free
 // shipping across India; 4-5 days to make/pack (made to order) + 3-4 days in
 // transit; 7-day free return by courier pickup — unless the product (or its
-// category) is non-returnable, e.g. solitaires.
+// category) is non-returnable, e.g. custom pieces.
 const SHIPPING_DETAILS = {
   '@type': 'OfferShippingDetails',
   shippingRate: { '@type': 'MonetaryAmount', value: 0, currency: 'INR' },
@@ -134,7 +133,7 @@ export function productJsonLd(product: ProductDetail, canonicalPath: string) {
     sku: product.sku,
     // Handmade jewellery has no GTIN barcode; the brand is the identifier
     // Google accepts instead.
-    brand: { '@type': 'Brand', name: 'BOX DIAMONDS' },
+    brand: { '@type': 'Brand', name: '9KARET' },
     description: product.shortDescription ?? product.name,
     image: product.images.filter((img) => img.variant === 'large').map((img) => img.url),
     offers: {

@@ -17,7 +17,7 @@ const ENHANCEMENT_PROMPT = `You are a professional luxury jewellery product-imag
 
 The uploaded jewellery is the definitive product reference. Preserve its exact design, shape, dimensions, proportions, stone count, stone shapes, stone positions, gemstone colours, metal colour, metal finish, engraving, texture, chain structure, clasps and every other identifiable component.
 
-Do not redesign, reinterpret, simplify or beautify the jewellery by changing its construction. Do not add, remove, replace, resize or reposition any diamond, gemstone, metal component or decorative detail.
+Do not redesign, reinterpret, simplify or beautify the jewellery by changing its construction. Do not add, remove, replace, resize or reposition any gemstone, metal component or decorative detail.
 
 Improve only image sharpness, detail clarity, exposure, white balance, colour accuracy, studio lighting, contrast, noise, edge quality, background cleanliness, product centring and natural shadows.
 

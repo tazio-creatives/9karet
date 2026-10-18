@@ -8,8 +8,7 @@ import {
   previewPricingRule as previewPricingRuleApi,
 } from '../../api/pricingRules';
 import { fetchAdminProducts, fetchAdminProduct } from '../../api/products';
-import { fetchAttributes } from '../../api/attributes';
-import { fetchDiamondConfigs } from '../../api/diamondConfigs';
+import { fetchStoneTypes } from '../../api/stoneTypes';
 import { CategoryTreeSelect } from '../../components/CategoryTreeSelect';
 import { MultiSelect, type MultiSelectOption } from '../../components/MultiSelect';
 import { DateTimeField } from '../../components/DateTimeField';
@@ -36,7 +35,7 @@ const DISCOUNT_TYPE_OPTIONS: Record<PricingRuleType, { value: PricingDiscountTyp
     { value: 'PERCENT', label: 'Percent (%)' },
     { value: 'FIXED_AMOUNT', label: 'Fixed Amount (₹)' },
   ],
-  DIAMOND: [
+  STONE: [
     { value: 'PERCENT', label: 'Percent (%)' },
     { value: 'FIXED_AMOUNT', label: 'Fixed Amount (₹)' },
     { value: 'FIXED_AMOUNT_PER_CARAT', label: 'Fixed Amount per Carat (₹)' },
@@ -45,69 +44,17 @@ const DISCOUNT_TYPE_OPTIONS: Record<PricingRuleType, { value: PricingDiscountTyp
 
 const RULE_TYPE_LABEL: Record<PricingRuleType, string> = {
   MAKING_CHARGE: 'Making Charge Rule',
-  DIAMOND: 'Diamond Discount Rule',
+  STONE: 'Stone Discount Rule',
 };
 
 const LIST_ROUTE: Record<PricingRuleType, string> = {
   MAKING_CHARGE: '/pricing/making-charge-rules',
-  DIAMOND: '/pricing/diamond-rules',
+  STONE: '/pricing/stone-rules',
 };
 
 async function loadProductOptions(query: string): Promise<MultiSelectOption[]> {
   const res = await fetchAdminProducts({ search: query || undefined, limit: 20 });
   return res.products.map((p) => ({ id: p.id, label: `${p.name} (${p.slug})` }));
-}
-
-// A handful of free-text chips — used for Diamond Colour/Clarity conditions,
-// where real product data is inconsistent enough ("White" alongside real
-// GIA grades — confirmed against the dev DB) that a fixed dropdown would be
-// actively misleading. Kept local to this file rather than promoted to a
-// shared component since nothing else needs it yet.
-function TextChipsField({
-  label,
-  values,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  values: string[];
-  onChange: (values: string[]) => void;
-  placeholder?: string;
-}) {
-  const [draft, setDraft] = useState('');
-  function commit() {
-    const v = draft.trim();
-    if (v && !values.includes(v)) onChange([...values, v]);
-    setDraft('');
-  }
-  return (
-    <label className={sharedStyles.field}>
-      {label}
-      <div className={styles.chipsInputWrap}>
-        {values.map((v) => (
-          <span key={v} className={styles.textChip}>
-            {v}
-            <button type="button" onClick={() => onChange(values.filter((x) => x !== v))} aria-label={`Remove ${v}`}>
-              ×
-            </button>
-          </span>
-        ))}
-        <input
-          className={styles.chipsInputField}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ',') {
-              e.preventDefault();
-              commit();
-            }
-          }}
-          onBlur={commit}
-          placeholder={values.length ? '' : placeholder}
-        />
-      </div>
-    </label>
-  );
 }
 
 export function RuleFormPage({ ruleType }: RuleFormPageProps) {
@@ -122,15 +69,10 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
     enabled: isEdit,
   });
 
-  const { data: attributesData } = useQuery({ queryKey: ['admin-attributes'], queryFn: fetchAttributes });
-  const purityValues = (attributesData?.attributes.find((a) => a.code === 'purity')?.values ?? [])
-    .slice()
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  const { data: diamondConfigsData } = useQuery({
-    queryKey: ['admin-diamond-configs-active'],
-    queryFn: () => fetchDiamondConfigs({ activeOnly: true }),
-    enabled: ruleType === 'DIAMOND',
+  const { data: stoneTypesData } = useQuery({
+    queryKey: ['admin-stone-types-active'],
+    queryFn: () => fetchStoneTypes({ activeOnly: true }),
+    enabled: ruleType === 'STONE',
   });
 
   const [name, setName] = useState('');
@@ -140,8 +82,6 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
   const [productLabels, setProductLabels] = useState<Record<string, string>>({});
   const [discountType, setDiscountType] = useState<PricingDiscountType>('PERCENT');
   const [discountValue, setDiscountValue] = useState('');
-  const [purityScope, setPurityScope] = useState<'ALL' | 'SELECTED'>('ALL');
-  const [purityValueIds, setPurityValueIds] = useState<string[]>([]);
   const [overrideMode, setOverrideMode] = useState<PricingOverrideMode>('PRESERVE');
   const [startsAt, setStartsAt] = useState<string | null>(null);
   const [endsAt, setEndsAt] = useState<string | null>(null);
@@ -150,10 +90,8 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // DIAMOND-only fields.
-  const [diamondQualityIds, setDiamondQualityIds] = useState<string[]>([]);
-  const [colourValues, setColourValues] = useState<string[]>([]);
-  const [clarityValues, setClarityValues] = useState<string[]>([]);
+  // STONE-only fields. No stone types selected = every stone type.
+  const [stoneTypeIds, setStoneTypeIds] = useState<string[]>([]);
   const [caratMin, setCaratMin] = useState('');
   const [caratMax, setCaratMax] = useState('');
 
@@ -169,8 +107,6 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
     setProductIds(r.productIds);
     setDiscountType(r.discountType);
     setDiscountValue(String(r.discountValue));
-    setPurityScope(r.purityScope);
-    setPurityValueIds(r.purityValueIds);
     setOverrideMode(r.overrideMode);
     setStartsAt(r.startsAt);
     setEndsAt(r.endsAt);
@@ -178,13 +114,8 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
     setPriority(String(r.priority));
     setNotes(r.notes ?? '');
 
-    const qualityCondition = r.conditions.find((c) => c.conditionType === 'DIAMOND_QUALITY');
-    const colourCondition = r.conditions.find((c) => c.conditionType === 'DIAMOND_COLOUR');
-    const clarityCondition = r.conditions.find((c) => c.conditionType === 'DIAMOND_CLARITY');
     const caratCondition = r.conditions.find((c) => c.conditionType === 'CARAT_RANGE');
-    setDiamondQualityIds(qualityCondition?.stringValues ?? []);
-    setColourValues(colourCondition?.stringValues ?? []);
-    setClarityValues(clarityCondition?.stringValues ?? []);
+    setStoneTypeIds(r.stoneTypeIds);
     setCaratMin(caratCondition?.minValue != null ? String(caratCondition.minValue) : '');
     setCaratMax(caratCondition?.maxValue != null ? String(caratCondition.maxValue) : '');
 
@@ -196,17 +127,8 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
   }, [ruleData]);
 
   function buildConditions(): PricingRuleCondition[] {
-    if (ruleType !== 'DIAMOND') return [];
+    if (ruleType !== 'STONE') return [];
     const conditions: PricingRuleCondition[] = [];
-    if (diamondQualityIds.length > 0) {
-      conditions.push({ conditionType: 'DIAMOND_QUALITY', stringValues: diamondQualityIds, minValue: null, maxValue: null });
-    }
-    if (colourValues.length > 0) {
-      conditions.push({ conditionType: 'DIAMOND_COLOUR', stringValues: colourValues, minValue: null, maxValue: null });
-    }
-    if (clarityValues.length > 0) {
-      conditions.push({ conditionType: 'DIAMOND_CLARITY', stringValues: clarityValues, minValue: null, maxValue: null });
-    }
     if (caratMin !== '' || caratMax !== '') {
       conditions.push({
         conditionType: 'CARAT_RANGE',
@@ -225,8 +147,9 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
       scope,
       discountType,
       discountValue: Number(discountValue) || 0,
-      purityScope,
-      purityValueIds: purityScope === 'SELECTED' ? purityValueIds : [],
+      // Every product is 9K, so a rule never needs narrowing by purity.
+      purityScope: 'ALL',
+      purityValueIds: [],
       overrideMode: scope === 'PRODUCT' ? 'PRESERVE' : overrideMode,
       startsAt,
       endsAt,
@@ -235,9 +158,7 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
       notes: notes.trim() || null,
       categoryIds: scope === 'CATEGORY' ? categoryIds : [],
       productIds: scope === 'PRODUCT' ? productIds : [],
-      // Diamond type no longer targets rules (natural diamonds only) — always
-      // sent empty, which also clears any legacy links on save.
-      diamondTypeIds: [],
+      stoneTypeIds: ruleType === 'STONE' ? stoneTypeIds : [],
       conditions: buildConditions(),
     };
   }
@@ -310,7 +231,9 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
               className={styles.formControl}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Festive Season — 15% off Making Charges on Rings"
+              placeholder={
+                ruleType === 'STONE' ? 'e.g. Ruby Week — 20% off Ruby' : 'e.g. Festive Season — 15% off Making Charges on Rings'
+              }
               required
             />
           </label>
@@ -390,42 +313,37 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
             />
           </label>
 
-          {ruleType === 'DIAMOND' && (
+          {ruleType === 'STONE' && (
             <>
               <hr className={styles.sectionDivider} />
               <p className={styles.sectionLabel}>Filters (optional)</p>
               <div className={styles.fieldFull}>
                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--color-text-muted)' }}>
-                  Diamond Quality
+                  Stone Types — leave all unticked to apply to every stone
                 </span>
                 <div className={styles.radioRow} style={{ flexWrap: 'wrap', gap: 'var(--space-3)', marginTop: 6 }}>
-                  {(diamondConfigsData?.diamondConfigs ?? []).map((c) => (
-                    <label key={c.id} className={styles.radioOption} style={{ gap: 6 }}>
+                  {(stoneTypesData?.stoneTypes ?? []).map((t) => (
+                    <label key={t.id} className={styles.radioOption} style={{ gap: 6 }}>
                       <input
                         type="checkbox"
-                        checked={diamondQualityIds.includes(c.id)}
+                        checked={stoneTypeIds.includes(t.id)}
                         onChange={() =>
-                          setDiamondQualityIds((prev) =>
-                            prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id],
-                          )
+                          setStoneTypeIds((prev) => (prev.includes(t.id) ? prev.filter((id) => id !== t.id) : [...prev, t.id]))
                         }
                       />
-                      <strong style={{ fontWeight: 500 }}>{c.name}</strong>
+                      <strong style={{ fontWeight: 500 }}>{t.name}</strong>
                     </label>
                   ))}
-                  {(diamondConfigsData?.diamondConfigs ?? []).length === 0 && (
+                  {(stoneTypesData?.stoneTypes ?? []).length === 0 && (
                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-faint)' }}>
-                      No quality tiers configured yet.
+                      No stone types configured yet.
                     </span>
                   )}
                 </div>
               </div>
 
-              <TextChipsField label="Diamond Colour" values={colourValues} onChange={setColourValues} placeholder="e.g. F, then Enter" />
-              <TextChipsField label="Diamond Clarity" values={clarityValues} onChange={setClarityValues} placeholder="e.g. VS1, then Enter" />
-
               <label className={sharedStyles.field}>
-                Carat Range — Min
+                Stone Weight per Line (ct) — Min
                 <input
                   className={styles.formControl}
                   type="number"
@@ -436,7 +354,7 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
                 />
               </label>
               <label className={sharedStyles.field}>
-                Carat Range — Max
+                Stone Weight per Line (ct) — Max
                 <input
                   className={styles.formControl}
                   type="number"
@@ -447,40 +365,6 @@ export function RuleFormPage({ ruleType }: RuleFormPageProps) {
                 />
               </label>
             </>
-          )}
-
-          <hr className={styles.sectionDivider} />
-          <label className={sharedStyles.field}>
-            Applies To Purities
-            <select
-              className={styles.formControl}
-              value={purityScope}
-              onChange={(e) => setPurityScope(e.target.value as 'ALL' | 'SELECTED')}
-            >
-              <option value="ALL">All purities</option>
-              <option value="SELECTED">Selected purities…</option>
-            </select>
-          </label>
-          {purityScope === 'SELECTED' && (
-            <div className={sharedStyles.field}>
-              <span>Purities</span>
-              <div className={styles.radioRow} style={{ flexWrap: 'wrap', gap: 'var(--space-3)' }}>
-                {purityValues.map((v) => (
-                  <label key={v.id} className={styles.radioOption} style={{ gap: 6 }}>
-                    <input
-                      type="checkbox"
-                      checked={purityValueIds.includes(v.id)}
-                      onChange={() =>
-                        setPurityValueIds((prev) =>
-                          prev.includes(v.id) ? prev.filter((id) => id !== v.id) : [...prev, v.id],
-                        )
-                      }
-                    />
-                    <strong style={{ fontWeight: 500 }}>{v.label}</strong>
-                  </label>
-                ))}
-              </div>
-            </div>
           )}
 
           {scope !== 'PRODUCT' && (

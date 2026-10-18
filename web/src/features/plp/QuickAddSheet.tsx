@@ -7,7 +7,6 @@ import { useVariantSelection } from '../../hooks/useVariantSelection';
 import { formatPrice } from '../../utils/formatPrice';
 import { getStockStatus } from '../../utils/stockStatus';
 import { ColorSelector } from '../pdp/ColorSelector';
-import { PillSelector } from '../pdp/PillSelector';
 import { SizeSelector } from '../pdp/SizeSelector';
 import styles from './QuickAddSheet.module.css';
 
@@ -30,14 +29,8 @@ export function QuickAddSheet({ product, onClose, onAdded }: QuickAddSheetProps)
     setSelectedSizeId,
     selectedGoldColor,
     setSelectedGoldColor,
-    selectedPurity,
-    setSelectedPurity,
-    selectedDiamondConfigId,
-    setSelectedDiamondConfigId,
     selectedVariantId,
-    isColorAvailableAtPurity,
-    isPurityAvailable,
-    isDiamondAvailableAtPurity,
+    isColorAvailable,
     isOutOfStock,
     displayPrice,
     displayMrp,
@@ -45,9 +38,7 @@ export function QuickAddSheet({ product, onClose, onAdded }: QuickAddSheetProps)
 
   const sizeRequired = product.sizes.length > 0 && !selectedSizeId;
   const colorRequired = product.goldColorOptions.length > 0 && !selectedGoldColor;
-  const purityRequired = product.purityOptions.length > 0 && !selectedPurity;
-  const diamondRequired = product.diamondOptions.length > 0 && !selectedDiamondConfigId;
-  const variantRequired = sizeRequired || colorRequired || purityRequired || diamondRequired || !selectedVariantId;
+  const variantRequired = sizeRequired || colorRequired || !selectedVariantId;
 
   const addMutation = useMutation({
     mutationFn: () => addCartItem(product.id, 1, selectedVariantId),
@@ -99,26 +90,7 @@ export function QuickAddSheet({ product, onClose, onAdded }: QuickAddSheetProps)
               colors={product.goldColorOptions}
               selectedColor={selectedGoldColor}
               onSelect={setSelectedGoldColor}
-              selectedPurity={selectedPurity}
-              isColorAvailable={isColorAvailableAtPurity}
-            />
-          )}
-          {product.purityOptions.length > 0 && (
-            <PillSelector
-              title="Gold Purity"
-              options={product.purityOptions.map((p) => ({ value: p, label: p }))}
-              selectedValue={selectedPurity}
-              onSelect={setSelectedPurity}
-              isOptionAvailable={isPurityAvailable}
-            />
-          )}
-          {product.diamondOptions.length > 0 && (
-            <PillSelector
-              title="Natural Diamond Quality"
-              options={product.diamondOptions.map((d) => ({ value: d.id, label: d.name }))}
-              selectedValue={selectedDiamondConfigId}
-              onSelect={setSelectedDiamondConfigId}
-              isOptionAvailable={isDiamondAvailableAtPurity}
+              isColorAvailable={isColorAvailable}
             />
           )}
           {product.sizes.length > 0 && (

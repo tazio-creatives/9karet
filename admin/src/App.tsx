@@ -203,9 +203,9 @@ export function App() {
           <Route path="making-charge-rules" element={<PricingRulesListPage ruleType="MAKING_CHARGE" />} />
           <Route path="making-charge-rules/new" element={<RuleFormPage ruleType="MAKING_CHARGE" />} />
           <Route path="making-charge-rules/:ruleId" element={<RuleFormPage ruleType="MAKING_CHARGE" />} />
-          <Route path="diamond-rules" element={<PricingRulesListPage ruleType="DIAMOND" />} />
-          <Route path="diamond-rules/new" element={<RuleFormPage ruleType="DIAMOND" />} />
-          <Route path="diamond-rules/:ruleId" element={<RuleFormPage ruleType="DIAMOND" />} />
+          <Route path="stone-rules" element={<PricingRulesListPage ruleType="STONE" />} />
+          <Route path="stone-rules/new" element={<RuleFormPage ruleType="STONE" />} />
+          <Route path="stone-rules/:ruleId" element={<RuleFormPage ruleType="STONE" />} />
           <Route path="overrides" element={<ProductOverridesPage />} />
           <Route path="audit" element={<PricingAuditPage />} />
         </Route>

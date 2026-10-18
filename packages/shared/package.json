@@ -1,5 +1,5 @@
 {
-  "name": "@box-diamonds/shared",
+  "name": "@9karet/shared",
   "private": true,
   "version": "0.0.0",
   "description": "Shared TS types, zod schemas, and constants used by backend, web, and admin",

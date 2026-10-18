@@ -28,7 +28,7 @@
 .filterHeaderTitle {
   font-size: 16px;
   font-weight: 600;
-  color: #173c40;
+  color: #40171c;
 }
 
 .filterHeaderActions {
@@ -70,7 +70,7 @@
 .groupHeading {
   font-size: 14px;
   font-weight: 600;
-  color: #173c40;
+  color: #40171c;
 }
 
 .chevron {
@@ -125,8 +125,8 @@
 }
 
 .checkboxChecked {
-  background: #124e57;
-  border-color: #124e57;
+  background: #57121b;
+  border-color: #57121b;
 }
 
 .checkboxChecked::after {
@@ -155,7 +155,7 @@
   background: none;
   border: none;
   padding: 0;
-  color: #124e57;
+  color: #57121b;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -166,7 +166,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(23, 56, 60, 0.45);
+    background: rgba(60, 23, 28, 0.45);
     z-index: 60;
   }
 

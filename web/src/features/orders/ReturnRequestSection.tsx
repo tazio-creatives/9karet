@@ -24,7 +24,7 @@ const REASON_OPTIONS: { value: ReturnReason; label: string }[] = [
 const MIN_PHOTOS = 3;
 const MAX_PHOTOS = 8;
 const MAX_PHOTO_MB = 10;
-// Non-returnable items (solitaire, custom…) can only come back for a problem.
+// Non-returnable items (custom, engraved…) can only come back for a problem.
 const PROBLEM_REASONS: ReturnReason[] = ['DAMAGED', 'DEFECTIVE', 'WRONG_ITEM', 'NOT_AS_DESCRIBED'];
 
 const STATUS_LABEL: Record<string, string> = {
@@ -188,7 +188,7 @@ export function ReturnRequestSection({
           </label>
           {nonReturnable && (
             <p className={styles.meta}>
-              This order includes a non-returnable item (such as solitaire or custom jewellery), so it can only be
+              This order includes a non-returnable item (such as custom or engraved jewellery), so it can only be
               returned if it arrived damaged, defective, incorrect or not as described.
             </p>
           )}

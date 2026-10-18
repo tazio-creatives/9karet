@@ -4,9 +4,9 @@ import sharedStyles from '../../styles/shared.module.css';
 import styles from './pricing.module.css';
 
 const TABS = [
-  { to: '/pricing/rates', label: 'Rates & Tiers' },
+  { to: '/pricing/rates', label: 'Rates & Stones' },
   { to: '/pricing/making-charge-rules', label: 'Making Charge Rules' },
-  { to: '/pricing/diamond-rules', label: 'Diamond Rules' },
+  { to: '/pricing/stone-rules', label: 'Stone Rules' },
   { to: '/pricing/overrides', label: 'Product Overrides' },
   { to: '/pricing/audit', label: 'Audit History' },
 ];

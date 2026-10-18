@@ -1,151 +1,266 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeVariantPricing, computeSellingPrice } from '../../src/services/pricingService.js';
+import {
+  computeVariantPricing,
+  computeSellingPrice,
+  computeStoneValue,
+  computeStoneWeightCarats,
+} from '../../src/services/pricingService.js';
 import { getCurrentGoldRate } from '../../src/repositories/goldRates.repository.js';
 
-// Base product with cached gold_value/diamond_value — mirrors a row as it
-// comes back from lockProductForCheckoutTx/findProductById.
+// Base product with a cached gold_value — mirrors a row as it comes back
+// from lockProductForCheckoutTx/findProductById. `stones` is attached
+// directly (as the batch paths do) so these tests don't need product_stones
+// rows in the DB; only the live 9K gold-rate lookup hits it.
 const baseProduct = {
+  id: '00000000-0000-4000-8000-000000000001', // valid UUID, matches no product
   metal_type: 'GOLD',
-  purity: '18K',
+  purity: '9K',
   net_weight_grams: '10.000',
   gold_weight_grams: '10.000',
-  gold_value: 100000,
-  diamond_value: 0,
-  diamond_config_id: null,
-  diamond_weight_carats: null,
+  gold_value: 30000,
+  stone_value: 0,
   making_charge: 5000,
   gst_percent: 3,
+  stones: [],
 };
+
+const RUBY = 'type-ruby';
+const CZ = 'type-cz';
+
+function stoneRow({ id, typeId, typeName, count = 1, carats, price }) {
+  return {
+    id,
+    stone_type_id: typeId,
+    stone_type_name: typeName,
+    stone_count: count,
+    weight_carats: String(carats),
+    price: String(price),
+  };
+}
+
+const rubyAndCz = [
+  stoneRow({ id: 's-ruby', typeId: RUBY, typeName: 'Ruby', carats: 0.3, price: 2400 }),
+  stoneRow({ id: 's-cz', typeId: CZ, typeName: 'Cubic Zirconia', count: 12, carats: 0.24, price: 360 }),
+];
 
 // Builds a variant row shaped like productVariants.repository.js's
 // findVariantById/findVariantsByProductId output (resolvedPurity etc. read
 // from `.attributes`), for a variant that only overrides what's passed.
-function makeVariant({ purity, goldColor, diamondConfigId, goldWeightGrams, diamondWeightCarats, priceOverride, sizeValueId, sizeLabel } = {}) {
+function makeVariant({ purity, goldColor, goldWeightGrams, priceOverride, sizeValueId, sizeLabel } = {}) {
   const attributes = {};
   if (purity) attributes.purity = { valueId: 'v-purity', value: purity, label: purity, refId: null };
   if (goldColor) attributes.gold_color = { valueId: 'v-color', value: goldColor, label: goldColor, refId: null };
-  if (diamondConfigId) {
-    attributes.diamond_quality = { valueId: 'v-diamond', value: diamondConfigId, label: 'Test', refId: diamondConfigId };
-  }
   if (sizeValueId) {
     attributes.size = { valueId: sizeValueId, value: sizeLabel ?? sizeValueId, label: sizeLabel ?? sizeValueId, refId: null };
   }
   return {
     gold_weight_grams: goldWeightGrams ?? null,
-    diamond_weight_carats: diamondWeightCarats ?? null,
     price_override: priceOverride ?? null,
     combination_key: Object.keys(attributes).length ? 'x' : '',
     attributes,
   };
 }
 
-describe('computeVariantPricing — size weight override (per-size ring pricing)', () => {
-  test('no variant at all (synthetic default) -> byte-identical to today: reuses cached gold_value, no DB call', async () => {
+async function rate9k() {
+  const rate = await getCurrentGoldRate('9K');
+  assert.ok(rate, 'test requires a 9K gold rate in the dev DB (npm run seed)');
+  return Number(rate.rate_per_gram);
+}
+
+const goldAt = (grams, rate) => Math.round(grams * rate * 100) / 100;
+
+function stoneRule({ id = 'r-stone', stoneTypeIds = [], discountType = 'PERCENT', discountValue, conditions = [] }) {
+  return {
+    id,
+    name: `rule ${id}`,
+    rule_type: 'STONE',
+    scope: 'GLOBAL',
+    discount_type: discountType,
+    discount_value: discountValue,
+    purity_scope: 'ALL',
+    override_mode: 'PRESERVE',
+    priority: 0,
+    created_at: new Date().toISOString(),
+    purityValueIds: new Set(),
+    stoneTypeIds: new Set(stoneTypeIds),
+    conditions,
+  };
+}
+
+function ruleSetWith({ stoneGlobal = [], makingGlobal = [] } = {}) {
+  return {
+    makingByProduct: new Map(),
+    makingByCategory: new Map(),
+    makingGlobal,
+    stoneByProduct: new Map(),
+    stoneByCategory: new Map(),
+    stoneGlobal,
+  };
+}
+
+describe('computeVariantPricing — gold weight', () => {
+  test('no variant at all (synthetic default) -> reuses cached gold_value, no DB call', async () => {
     const result = await computeVariantPricing(baseProduct, null);
-    assert.equal(result.goldValue, 100000);
-    assert.equal(result.purity, '18K');
+    assert.equal(result.goldValue, 30000);
+    assert.equal(result.purity, '9K');
   });
 
-  test('variant with no overrides at all -> still recomputed live off the base weight/purity, not the cached column', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(10 * Number(rate.rate_per_gram) * 100) / 100;
+  test('variant with no overrides at all -> recomputed live off the base weight, not the cached column', async () => {
+    const rate = await rate9k();
     const result = await computeVariantPricing(baseProduct, makeVariant({}));
-    assert.equal(result.goldValue, expected);
+    assert.equal(result.goldValue, goldAt(10, rate));
   });
 
-  test('variant weight override, same purity as product -> recomputes goldValue off the variant weight', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    assert.ok(rate, 'test requires a seeded 18K gold rate in the dev DB');
-    const expected = Math.round(15 * Number(rate.rate_per_gram) * 100) / 100;
-
+  test('variant weight override -> recomputes goldValue off the variant weight', async () => {
+    const rate = await rate9k();
     const result = await computeVariantPricing(baseProduct, makeVariant({ goldWeightGrams: 15 }));
-    assert.equal(result.goldValue, expected);
-    assert.notEqual(result.goldValue, 100000);
+    assert.equal(result.goldValue, goldAt(15, rate));
+    assert.notEqual(result.goldValue, 30000);
   });
 
-  test('variant weight override + a purity override together -> uses the overridden weight at the overridden purity', async () => {
-    const rate = await getCurrentGoldRate('22K');
-    assert.ok(rate, 'test requires a seeded 22K gold rate in the dev DB');
-    const expected = Math.round(12 * Number(rate.rate_per_gram) * 100) / 100;
-
-    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '22K', goldWeightGrams: 12 }));
-    assert.equal(result.goldValue, expected);
-    assert.equal(result.purity, '22K');
-  });
-
-  test('variant weight override numerically equal to the product\'s own weight -> still recomputed live, matches (not a stale-cache reuse)', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(10 * Number(rate.rate_per_gram) * 100) / 100;
-    const result = await computeVariantPricing(baseProduct, makeVariant({ goldWeightGrams: 10 }));
-    assert.equal(result.goldValue, expected);
-  });
-
-  test('PLATINUM product ignores a gold weight override -> gold-only override, no crash', async () => {
-    const platinumProduct = { ...baseProduct, metal_type: 'PLATINUM', purity: null, gold_value: 80000 };
-    const result = await computeVariantPricing(platinumProduct, makeVariant({ goldWeightGrams: 15 }));
-    assert.equal(result.goldValue, 80000);
-  });
-
-  test('a Gold Color-only variant can carry its own weight override too (new capability)', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    assert.ok(rate, 'test requires a seeded 18K gold rate in the dev DB');
-    const expected = Math.round(11 * Number(rate.rate_per_gram) * 100) / 100;
-
-    // Same purity as the product, only Gold Color differs — weight override
-    // alone must still trigger a recompute even with no purity change.
-    const result = await computeVariantPricing(
-      baseProduct,
-      makeVariant({ goldColor: 'ROSE', goldWeightGrams: 11 }),
-    );
+  test('a Gold Color-only variant can carry its own weight override too', async () => {
+    const rate = await rate9k();
+    const result = await computeVariantPricing(baseProduct, makeVariant({ goldColor: 'ROSE', goldWeightGrams: 11 }));
     assert.equal(result.goldColor, 'ROSE');
-    assert.equal(result.goldValue, expected);
+    assert.equal(result.goldValue, goldAt(11, rate));
   });
 });
 
 describe('computeVariantPricing — making_charge_percent (live making charge)', () => {
-  test('no making_charge_percent set -> unchanged, uses the flat making_charge column', async () => {
+  test('no making_charge_percent set -> uses the flat making_charge column', async () => {
     const result = await computeVariantPricing(baseProduct, null);
     assert.equal(result.makingCharge, 5000);
   });
 
   test('making_charge_percent set -> making charge is that % of goldValue, not the flat column', async () => {
-    const product = { ...baseProduct, making_charge_percent: 10 };
-    const result = await computeVariantPricing(product, null);
-    assert.equal(result.goldValue, 100000);
-    assert.equal(result.makingCharge, 10000); // 10% of 100000, not the flat 5000
+    const result = await computeVariantPricing({ ...baseProduct, making_charge_percent: 10 }, null);
+    assert.equal(result.makingCharge, 3000); // 10% of 30000, not the flat 5000
   });
 
   test('making_charge_percent + a variant weight override -> making charge scales with the recomputed goldValue', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    assert.ok(rate, 'test requires a seeded 18K gold rate in the dev DB');
-    const expectedGoldValue = Math.round(15 * Number(rate.rate_per_gram) * 100) / 100;
-    const expectedMakingCharge = Math.round(expectedGoldValue * 0.1 * 100) / 100;
-
-    const product = { ...baseProduct, making_charge_percent: 10 };
-    const result = await computeVariantPricing(product, makeVariant({ goldWeightGrams: 15 }));
-    assert.equal(result.goldValue, expectedGoldValue);
-    assert.equal(result.makingCharge, expectedMakingCharge);
-    assert.notEqual(result.makingCharge, 5000);
+    const rate = await rate9k();
+    const goldValue = goldAt(15, rate);
+    const result = await computeVariantPricing({ ...baseProduct, making_charge_percent: 10 }, makeVariant({ goldWeightGrams: 15 }));
+    assert.equal(result.goldValue, goldValue);
+    assert.equal(result.makingCharge, Math.round(goldValue * 0.1 * 100) / 100);
   });
 
-  test('making_charge_percent set but goldValue is 0 (e.g. no weight yet) -> falls back to flat making_charge', async () => {
-    const product = { ...baseProduct, making_charge_percent: 10, gold_value: 0 };
-    const result = await computeVariantPricing(product, null);
+  test('making_charge_percent set but goldValue is 0 (no weight yet) -> falls back to flat making_charge', async () => {
+    const result = await computeVariantPricing({ ...baseProduct, making_charge_percent: 10, gold_value: 0 }, null);
     assert.equal(result.goldValue, 0);
     assert.equal(result.makingCharge, 5000);
   });
+});
 
-  test('PLATINUM product with making_charge_percent set -> still flat (percent of gold value is meaningless with no gold)', async () => {
-    const platinumProduct = {
-      ...baseProduct,
-      metal_type: 'PLATINUM',
-      purity: null,
-      gold_value: 0,
-      making_charge_percent: 10,
-    };
-    const result = await computeVariantPricing(platinumProduct, null);
-    assert.equal(result.makingCharge, 5000);
+describe('computeVariantPricing — stones', () => {
+  test('stone value is the sum of the stone lines\' prices; weight is the sum of their carats', async () => {
+    const result = await computeVariantPricing({ ...baseProduct, stones: rubyAndCz }, null);
+    assert.equal(result.stoneValue, 2760);
+    assert.equal(result.stoneWeightCarats, 0.54);
+    assert.equal(result.stoneComponents.length, 2);
+    assert.deepEqual(
+      result.stoneComponents.map((c) => [c.stoneTypeName, c.count, c.carats, c.value]),
+      [
+        ['Ruby', 1, 0.3, 2400],
+        ['Cubic Zirconia', 12, 0.24, 360],
+      ],
+    );
+  });
+
+  test('stones add to the price before GST: (gold + stones + making) x 1.03', async () => {
+    const result = await computeVariantPricing({ ...baseProduct, stones: rubyAndCz }, null);
+    assert.equal(result.sellingPrice, computeSellingPrice({ goldValue: 30000, stoneValue: 2760, makingCharge: 5000, gstPercent: 3 }));
+    assert.equal(result.gstAmount, Math.round((30000 + 2760 + 5000) * 0.03 * 100) / 100);
+  });
+
+  test('stone value does not move with the gold weight/rate', async () => {
+    const product = { ...baseProduct, stones: rubyAndCz };
+    const light = await computeVariantPricing(product, makeVariant({ goldWeightGrams: 2 }));
+    const heavy = await computeVariantPricing(product, makeVariant({ goldWeightGrams: 20 }));
+    assert.equal(light.stoneValue, heavy.stoneValue);
+  });
+
+  test('a product with no stones prices as plain gold', async () => {
+    const result = await computeVariantPricing(baseProduct, null);
+    assert.equal(result.stoneValue, 0);
+    assert.equal(result.stoneWeightCarats, null);
+    assert.deepEqual(result.stoneComponents, []);
+  });
+
+  test('flat product stone discount % applies to the whole stone value', async () => {
+    const result = await computeVariantPricing({ ...baseProduct, stones: rubyAndCz, stone_discount_percent: 10 }, null);
+    assert.equal(result.stoneValueOriginal, 2760);
+    assert.equal(result.stoneValue, 2484);
+    assert.equal(result.stoneDiscountPercent, 10);
+    assert.equal(result.stoneDiscountAmount, 276);
+  });
+
+  test('computeStoneValue/computeStoneWeightCarats accept the admin form\'s camelCase shape too', () => {
+    const formStones = [
+      { stoneTypeId: RUBY, count: 1, weightCarats: 0.25, price: 1999.5 },
+      { stoneTypeId: CZ, count: 4, weightCarats: 0.1, price: 200 },
+    ];
+    assert.equal(computeStoneValue(formStones), 2199.5);
+    assert.equal(computeStoneWeightCarats(formStones), 0.35);
+  });
+});
+
+describe('computeVariantPricing — stone discount rules', () => {
+  const product = { ...baseProduct, stones: rubyAndCz };
+
+  test('a rule scoped to Ruby discounts only the ruby line, not the CZ line', async () => {
+    const ruleSet = ruleSetWith({ stoneGlobal: [stoneRule({ stoneTypeIds: [RUBY], discountValue: 25 })] });
+    const result = await computeVariantPricing(product, null, null, null, ruleSet);
+    const [ruby, cz] = result.stoneComponents;
+    assert.equal(ruby.discountAmount, 600);
+    assert.equal(ruby.finalValue, 1800);
+    assert.equal(ruby.source, 'GLOBAL_RULE');
+    assert.equal(cz.discountAmount, 0);
+    assert.equal(cz.finalValue, 360);
+    assert.equal(result.stoneValue, 2160);
+    assert.equal(result.stoneValueOriginal, 2760);
+  });
+
+  test('a rule with no stone types selected applies to every stone line', async () => {
+    const ruleSet = ruleSetWith({ stoneGlobal: [stoneRule({ discountValue: 10 })] });
+    const result = await computeVariantPricing(product, null, null, null, ruleSet);
+    assert.deepEqual(
+      result.stoneComponents.map((c) => c.discountAmount),
+      [240, 36],
+    );
+    assert.equal(result.stoneValue, 2484);
+  });
+
+  test('a carat-range condition only matches lines inside the range', async () => {
+    const ruleSet = ruleSetWith({
+      stoneGlobal: [
+        stoneRule({
+          discountValue: 50,
+          conditions: [{ condition_type: 'CARAT_RANGE', min_value: '0.25', max_value: null, string_values: null }],
+        }),
+      ],
+    });
+    const result = await computeVariantPricing(product, null, null, null, ruleSet);
+    const [ruby, cz] = result.stoneComponents;
+    assert.equal(ruby.discountAmount, 1200, '0.30 ct ruby is inside >= 0.25 ct');
+    assert.equal(cz.discountAmount, 0, '0.24 ct CZ is outside');
+  });
+
+  test('a fixed per-carat rule discounts carats x amount, clamped to the line value', async () => {
+    const ruleSet = ruleSetWith({
+      stoneGlobal: [stoneRule({ discountType: 'FIXED_AMOUNT_PER_CARAT', discountValue: 2000 })],
+    });
+    const result = await computeVariantPricing(product, null, null, null, ruleSet);
+    const [ruby, cz] = result.stoneComponents;
+    assert.equal(ruby.discountAmount, 600); // 0.30 ct x 2000
+    assert.equal(cz.discountAmount, 360); // 0.24 x 2000 = 480, clamped to the ₹360 line
+    assert.equal(cz.clamped, true);
+  });
+
+  test('with no live rule, the flat product discount still applies through the ruleSet path', async () => {
+    const result = await computeVariantPricing({ ...product, stone_discount_percent: 10 }, null, null, null, ruleSetWith());
+    assert.equal(result.stoneValue, 2484);
   });
 });
 
@@ -153,350 +268,199 @@ describe('computeVariantPricing — weight resolution hierarchy (Purity / Purity
   const purityRule = { purity_value_id: 'v-purity', size_value_id: null, gold_weight_grams: '5.000' };
   const puritySizeRule = { purity_value_id: 'v-purity', size_value_id: 'v-size', gold_weight_grams: '7.500' };
 
-  function makeVariantWithSize({ purity, sizeValueId, goldWeightGrams }) {
-    const v = makeVariant({ purity, goldWeightGrams });
-    if (sizeValueId) {
-      v.attributes.size = { valueId: sizeValueId, value: '6', label: '6', refId: null };
-    }
+  function makeVariantWithSize({ sizeValueId, goldWeightGrams }) {
+    const v = makeVariant({ purity: '9K', goldWeightGrams });
+    if (sizeValueId) v.attributes.size = { valueId: sizeValueId, value: '6', label: '6', refId: null };
     return v;
   }
 
-  test('no matching rule at all -> falls through to base product weight, recomputed live at that weight/purity', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(10 * Number(rate.rate_per_gram) * 100) / 100;
-    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '18K' }), []);
-    assert.equal(result.goldValue, expected);
+  test('no matching rule at all -> falls through to base product weight', async () => {
+    const rate = await rate9k();
+    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '9K' }), []);
+    assert.equal(result.goldValue, goldAt(10, rate));
   });
 
   test('a Purity-only rule applies when the variant has no exact weight of its own', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(5 * Number(rate.rate_per_gram) * 100) / 100;
-    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '18K' }), [purityRule]);
-    assert.equal(result.goldValue, expected);
+    const rate = await rate9k();
+    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '9K' }), [purityRule]);
+    assert.equal(result.goldValue, goldAt(5, rate));
   });
 
-  test('a Purity+Size rule beats a Purity-only rule for the same purity when both match', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(7.5 * Number(rate.rate_per_gram) * 100) / 100;
-    const variant = makeVariantWithSize({ purity: '18K', sizeValueId: 'v-size' });
+  test('a Purity+Size rule beats a Purity-only rule when both match', async () => {
+    const rate = await rate9k();
+    const result = await computeVariantPricing(baseProduct, makeVariantWithSize({ sizeValueId: 'v-size' }), [purityRule, puritySizeRule]);
+    assert.equal(result.goldValue, goldAt(7.5, rate));
+  });
+
+  test('a Purity-only rule still applies for a size not covered by any Purity+Size rule', async () => {
+    const rate = await rate9k();
+    const result = await computeVariantPricing(baseProduct, makeVariantWithSize({ sizeValueId: 'v-other-size' }), [purityRule, puritySizeRule]);
+    assert.equal(result.goldValue, goldAt(5, rate));
+  });
+
+  test('a matching Purity+Size rule wins over the variant\'s own weight override', async () => {
+    const rate = await rate9k();
+    const variant = makeVariantWithSize({ sizeValueId: 'v-size', goldWeightGrams: 3 });
     const result = await computeVariantPricing(baseProduct, variant, [purityRule, puritySizeRule]);
-    assert.equal(result.goldValue, expected);
+    assert.equal(result.goldValue, goldAt(7.5, rate));
   });
 
-  test('a Purity-only rule still applies for a different size not covered by any Purity+Size rule', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(5 * Number(rate.rate_per_gram) * 100) / 100;
-    const variant = makeVariantWithSize({ purity: '18K', sizeValueId: 'v-other-size' });
-    const result = await computeVariantPricing(baseProduct, variant, [purityRule, puritySizeRule]);
-    assert.equal(result.goldValue, expected);
-  });
-
-  test('a matching Purity+Size rule now wins over the variant\'s own legacy weight override (precedence fix)', async () => {
-    const variant = makeVariantWithSize({ purity: '18K', sizeValueId: 'v-size', goldWeightGrams: 3 });
-    const rate = await getCurrentGoldRate('18K');
-    // 7.5g (the Purity+Size rule) wins over the variant's own 3g — Weight
-    // Defaults is now authoritative, and a variant's own column is only a
-    // fallback for when no rule matches at all (see the next test).
-    const expected = Math.round(7.5 * Number(rate.rate_per_gram) * 100) / 100;
-    const result = await computeVariantPricing(baseProduct, variant, [purityRule, puritySizeRule]);
-    assert.equal(result.goldValue, expected);
-  });
-
-  test('the variant\'s own weight override is still used when no rule matches its purity+size at all', async () => {
-    const variant = makeVariantWithSize({ purity: '18K', sizeValueId: 'v-unruled-size', goldWeightGrams: 3 });
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(3 * Number(rate.rate_per_gram) * 100) / 100;
-    // purityRule has size_value_id: null (a Purity-only default) — it would
-    // normally apply here, so this variant's own weight only wins because
-    // there's no rule at all for this purity in scope for this assertion.
+  test('the variant\'s own weight is used when no rule matches it at all', async () => {
+    const rate = await rate9k();
+    const variant = makeVariantWithSize({ sizeValueId: 'v-unruled-size', goldWeightGrams: 3 });
     const result = await computeVariantPricing(baseProduct, variant, []);
-    assert.equal(result.goldValue, expected);
+    assert.equal(result.goldValue, goldAt(3, rate));
   });
 
   test('a variant with no purity at all never consults weight rules', async () => {
-    const rate = await getCurrentGoldRate('18K');
-    const expected = Math.round(10 * Number(rate.rate_per_gram) * 100) / 100;
+    const rate = await rate9k();
     const result = await computeVariantPricing(baseProduct, makeVariant({ goldColor: 'ROSE' }), [purityRule]);
-    assert.equal(result.goldValue, expected);
+    assert.equal(result.goldValue, goldAt(10, rate));
   });
 });
 
 describe('computeVariantPricing — per-variant price override', () => {
   test('a variant with a price override short-circuits to it, not the live computation', async () => {
-    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '22K', priceOverride: 55000 }));
+    const result = await computeVariantPricing({ ...baseProduct, stones: rubyAndCz }, makeVariant({ purity: '9K', priceOverride: 55000 }));
     assert.equal(result.sellingPrice, 55000);
     assert.equal(result.sellingPriceOriginal, 55000);
     assert.equal(result.isPriceOverridden, true);
-    // Component breakdown is still the normal live computation (informational only) —
-    // it's just the final total that's replaced.
+    // Component breakdown is still the live computation (informational only).
+    assert.equal(result.stoneValue, 2760);
     assert.notEqual(result.goldValue, 55000);
   });
 
-  test('a variant with no override -> isPriceOverridden is false, byte-identical to before this feature existed', async () => {
-    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '22K' }));
+  test('a variant with no override -> isPriceOverridden is false', async () => {
+    const result = await computeVariantPricing(baseProduct, makeVariant({ purity: '9K' }));
     assert.equal(result.isPriceOverridden, false);
   });
 
   test('a product-level promotional offer does not layer on top of a manual override', async () => {
-    const product = { ...baseProduct, making_charge_discount_percent: 50, diamond_discount_percent: 50 };
+    const product = { ...baseProduct, stones: rubyAndCz, making_charge_discount_percent: 50, stone_discount_percent: 50 };
     const result = await computeVariantPricing(product, makeVariant({ priceOverride: 42000 }));
     assert.equal(result.sellingPrice, 42000);
     assert.equal(result.makingChargeDiscountPercent, 0);
-    assert.equal(result.diamondDiscountPercent, 0);
-  });
-
-  test('a synthetic default variant (no variant row at all) never reads price_override -> unaffected', async () => {
-    const result = await computeVariantPricing(baseProduct, null);
-    assert.equal(result.isPriceOverridden, false);
-    assert.equal(result.goldValue, 100000);
+    assert.equal(result.stoneDiscountPercent, 0);
   });
 });
 
-// Tests A-D: the exact required weight-precedence scenarios from the
-// implementation spec, phrased with the spec's own example numbers so the
-// mapping to the requirement is direct and unambiguous (the earlier
-// "weight resolution hierarchy" suite above already covers the same logic
-// with arbitrary numbers — this suite is the literal acceptance test).
+// The exact weight-precedence scenarios from the implementation spec,
+// phrased with the spec's own example numbers.
 describe('Required weight-precedence scenarios (Tests A-D)', () => {
-  const product = {
-    metal_type: 'GOLD',
-    purity: '9K',
-    gold_weight_grams: '0.500',
-    gold_value: 0,
-    diamond_value: 0,
-    diamond_config_id: null,
-    diamond_weight_carats: null,
-    making_charge: 100,
-    gst_percent: 3,
-  };
+  const product = { ...baseProduct, gold_weight_grams: '0.500', gold_value: 0, making_charge: 100 };
 
-  test('Test A - exact rule wins: 9K+Size6 rule 0.256g overrides variant legacy weight 0.586g', async () => {
-    const variant = makeVariant({ purity: '9K', goldWeightGrams: 0.586 });
+  function sized(goldWeightGrams) {
+    const variant = makeVariant({ purity: '9K', goldWeightGrams });
     variant.attributes.size = { valueId: 'v-size', value: '6', label: '6', refId: null };
+    return variant;
+  }
+
+  test('Test A - exact rule wins: 9K+Size6 rule 0.256g overrides variant weight 0.586g', async () => {
     const rules = [{ purity_value_id: 'v-purity', size_value_id: 'v-size', gold_weight_grams: '0.256' }];
-    const result = await computeVariantPricing(product, variant, rules);
+    const result = await computeVariantPricing(product, sized(0.586), rules);
     assert.equal(result.goldWeightGrams, 0.256);
   });
 
-  test('Test B - purity default fallback: no exact rule, 9K default 0.300g overrides variant legacy weight 0.586g', async () => {
-    const variant = makeVariant({ purity: '9K', goldWeightGrams: 0.586 });
-    variant.attributes.size = { valueId: 'v-size', value: '6', label: '6', refId: null };
+  test('Test B - purity default fallback: 9K default 0.300g overrides variant weight 0.586g', async () => {
     const rules = [{ purity_value_id: 'v-purity', size_value_id: null, gold_weight_grams: '0.300' }];
-    const result = await computeVariantPricing(product, variant, rules);
+    const result = await computeVariantPricing(product, sized(0.586), rules);
     assert.equal(result.goldWeightGrams, 0.3);
   });
 
-  test('Test C - variant legacy fallback: no exact or purity-default rule -> variant weight 0.586g used', async () => {
-    const variant = makeVariant({ purity: '9K', goldWeightGrams: 0.586 });
-    variant.attributes.size = { valueId: 'v-size', value: '6', label: '6', refId: null };
-    const result = await computeVariantPricing(product, variant, []);
+  test('Test C - variant fallback: no rule -> variant weight 0.586g used', async () => {
+    const result = await computeVariantPricing(product, sized(0.586), []);
     assert.equal(result.goldWeightGrams, 0.586);
   });
 
   test('Test D - product fallback: no rule and no variant weight -> product base weight 0.500g used', async () => {
-    const variant = makeVariant({ purity: '9K' });
-    variant.attributes.size = { valueId: 'v-size', value: '6', label: '6', refId: null };
-    const result = await computeVariantPricing(product, variant, []);
+    const result = await computeVariantPricing(product, sized(undefined), []);
     assert.equal(result.goldWeightGrams, 0.5);
   });
 });
 
-describe('Required purity-switching scenario (Test G)', () => {
-  test('9K -> 18K -> 9K each resolve to their own rule weight, with no leftover from the previous selection', async () => {
-    const product = {
-      metal_type: 'GOLD',
-      purity: '9K',
-      gold_weight_grams: '0.500',
-      gold_value: 0,
-      diamond_value: 0,
-      diamond_config_id: null,
-      diamond_weight_carats: null,
-      making_charge: 100,
-      gst_percent: 3,
-    };
-    const rules = [
-      { purity_value_id: 'purity-9k', size_value_id: 'size-6', gold_weight_grams: '0.256' },
-      { purity_value_id: 'purity-18k', size_value_id: 'size-6', gold_weight_grams: '0.456' },
-    ];
-    const sizeAttr = { valueId: 'size-6', value: '6', label: '6', refId: null };
-    const variant9k = {
-      gold_weight_grams: null,
-      diamond_weight_carats: null,
-      price_override: null,
-      combination_key: 'x',
-      attributes: { purity: { valueId: 'purity-9k', value: '9K', label: '9K', refId: null }, size: sizeAttr },
-    };
-    const variant18k = {
-      ...variant9k,
-      attributes: { purity: { valueId: 'purity-18k', value: '18K', label: '18K', refId: null }, size: sizeAttr },
-    };
-
-    const first = await computeVariantPricing(product, variant9k, rules);
-    assert.equal(first.goldWeightGrams, 0.256);
-
-    const second = await computeVariantPricing(product, variant18k, rules);
-    assert.equal(second.goldWeightGrams, 0.456);
-
-    const third = await computeVariantPricing(product, variant9k, rules);
-    assert.equal(third.goldWeightGrams, 0.256);
-  });
-});
-
-describe('Required calculation scenario (Test H)', () => {
-  test('9K @ Rs.5056.97/g, 0.256g, 2-cent diamond @ Rs.1500/cent, 60% making charge, 3% GST -> Rs.5223.47', () => {
-    // Reuses the real exported computeSellingPrice (the exact function
-    // computeVariantPricing calls) for the actual formula composition;
-    // goldValue/diamondValue are derived by hand here with the same
-    // rounding computeGoldValue/computeDiamondValue apply internally, so
-    // this is deterministic and doesn't need a seeded gold-rate row — the
-    // live rate-lookup path itself is already covered by the "variant
-    // weight override" tests above, which do hit the real DB rate.
-    const rate = 5056.97;
-    const weightGrams = 0.256;
-    const goldValue = Math.round(rate * weightGrams * 100) / 100;
-
-    const diamondWeightCarats = 0.02; // 2 cents
-    const ratePerCent = 1500;
-    const diamondValue = Math.round(diamondWeightCarats * 100 * ratePerCent * 100) / 100;
-
-    const makingChargePercent = 60;
-    const makingCharge = Math.round(goldValue * (makingChargePercent / 100) * 100) / 100;
+describe('Required calculation scenario', () => {
+  test('9K @ Rs.5056.97/g, 0.256g, stones Rs.3000, 60% making charge, 3% GST -> Rs.5223.47', () => {
+    const goldValue = Math.round(5056.97 * 0.256 * 100) / 100;
+    const stoneValue = computeStoneValue([{ price: 3000 }]);
+    const makingCharge = Math.round(goldValue * 0.6 * 100) / 100;
 
     assert.equal(goldValue, 1294.58);
-    assert.equal(diamondValue, 3000);
+    assert.equal(stoneValue, 3000);
     assert.equal(makingCharge, 776.75);
-
-    const finalPrice = computeSellingPrice({ goldValue, diamondValue, makingCharge, gstPercent: 3 });
-    assert.equal(finalPrice, 5223.47);
+    assert.equal(computeSellingPrice({ goldValue, stoneValue, makingCharge, gstPercent: 3 }), 5223.47);
   });
 });
 
 // Purity Pricing Rules (product_purity_pricing_rules) — Product+Purity
 // overrides for making_charge_percent / making_charge_discount_percent /
-// diamond_discount_percent, independent of the (unrelated) weight
-// resolution tested above. Test letters below match the business spec's own
-// lettering (Tests A-F, H, I), not the earlier "weight-precedence Tests
-// A-D"/"Test G"/"Test H" blocks in this same file, which cover a different
-// axis (weight) and happen to reuse the same letters for their own scenarios.
-describe('Purity Pricing Rules — Product+Purity making charge/discount resolution', () => {
+// stone_discount_percent. 9Karet only has the one 9K purity, so these act as
+// the product's per-size-independent charge/discount overrides.
+describe('Purity Pricing Rules — making charge/discount resolution', () => {
   const product = {
-    metal_type: 'GOLD',
-    purity: '9K',
+    ...baseProduct,
     gold_weight_grams: '1.000',
     gold_value: 0,
-    diamond_value: 0,
-    diamond_config_id: null,
-    diamond_weight_carats: null,
     making_charge: 500,
     making_charge_percent: 40,
     making_charge_discount_percent: 10,
-    diamond_discount_percent: 10,
-    gst_percent: 3,
+    stone_discount_percent: 10,
+    stones: rubyAndCz,
   };
 
-  function variantFor(purityValueId, purityLabel, sizeValueId) {
-    const attributes = { purity: { valueId: purityValueId, value: purityLabel, label: purityLabel, refId: null } };
+  function variantFor(purityValueId, sizeValueId) {
+    const attributes = { purity: { valueId: purityValueId, value: '9K', label: '9K', refId: null } };
     if (sizeValueId) attributes.size = { valueId: sizeValueId, value: sizeValueId, label: sizeValueId, refId: null };
-    return {
-      gold_weight_grams: null,
-      diamond_weight_carats: null,
-      price_override: null,
-      combination_key: 'x',
-      attributes,
-    };
+    return { gold_weight_grams: null, price_override: null, combination_key: 'x', attributes };
   }
 
-  test('Test A - purity override: 9K rule (60/10/5) wins over product defaults (40/10/10)', async () => {
-    const rules = [
-      { purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: '10', diamond_discount_percent: '5' },
-    ];
-    const result = await computeVariantPricing(product, variantFor('purity-9k', '9K'), [], rules);
+  const rule = (fields) => ({ purity_value_id: 'purity-9k', ...fields });
+
+  test('purity rule (60/10/5) wins over product defaults (40/10/10)', async () => {
+    const rules = [rule({ making_charge_percent: '60', making_charge_discount_percent: '10', stone_discount_percent: '5' })];
+    const result = await computeVariantPricing(product, variantFor('purity-9k'), [], rules);
     assert.equal(result.goldValue > 0, true);
-    const expectedMakingCharge = Math.round(result.goldValue * 0.6 * 100) / 100;
-    assert.equal(result.makingChargeOriginal, expectedMakingCharge);
+    assert.equal(result.makingChargeOriginal, Math.round(result.goldValue * 0.6 * 100) / 100);
     assert.equal(result.makingChargeDiscountPercent, 10);
-    assert.equal(result.diamondDiscountPercent, 5);
+    assert.equal(result.stoneDiscountPercent, 5);
   });
 
-  test('Test B - switching to 18K immediately resolves that purity\'s own rule (70/15/8), not 9K\'s', async () => {
-    const rules = [
-      { purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: '10', diamond_discount_percent: '5' },
-      { purity_value_id: 'purity-18k', making_charge_percent: '70', making_charge_discount_percent: '15', diamond_discount_percent: '8' },
-    ];
-    const result = await computeVariantPricing({ ...product, purity: '18K' }, variantFor('purity-18k', '18K'), [], rules);
-    const expectedMakingCharge = Math.round(result.goldValue * 0.7 * 100) / 100;
-    assert.equal(result.makingChargeOriginal, expectedMakingCharge);
-    assert.equal(result.makingChargeDiscountPercent, 15);
-    assert.equal(result.diamondDiscountPercent, 8);
-  });
-
-  test('Test C - field-level fallback: rule overrides making charge only, discount and diamond fall back independently', async () => {
-    const rules = [
-      { purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: null, diamond_discount_percent: '0' },
-    ];
-    const result = await computeVariantPricing(product, variantFor('purity-9k', '9K'), [], rules);
-    const expectedMakingCharge = Math.round(result.goldValue * 0.6 * 100) / 100;
-    assert.equal(result.makingChargeOriginal, expectedMakingCharge, 'making charge: rule override (60%)');
+  test('field-level fallback: rule overrides making charge only, discounts fall back independently', async () => {
+    const rules = [rule({ making_charge_percent: '60', making_charge_discount_percent: null, stone_discount_percent: '0' })];
+    const result = await computeVariantPricing(product, variantFor('purity-9k'), [], rules);
+    assert.equal(result.makingChargeOriginal, Math.round(result.goldValue * 0.6 * 100) / 100, 'making charge: rule override (60%)');
     assert.equal(result.makingChargeDiscountPercent, 10, 'making discount: inherited from product default (10%)');
-    assert.equal(result.diamondDiscountPercent, 0, 'diamond discount: explicit rule override (0%), not product default (10%)');
+    assert.equal(result.stoneDiscountPercent, 0, 'stone discount: explicit rule 0%, not product default 10%');
   });
 
-  test('Test D - missing rule for this purity -> all three fields fall back to product-level defaults', async () => {
-    const result = await computeVariantPricing(product, variantFor('purity-14k', '14K'), [], []);
-    const expectedMakingCharge = Math.round(result.goldValue * 0.4 * 100) / 100;
-    assert.equal(result.makingChargeOriginal, expectedMakingCharge);
+  test('no rule row for the variant\'s purity -> all three fields fall back to product-level defaults', async () => {
+    const result = await computeVariantPricing(product, variantFor('purity-other'), [], [rule({ making_charge_percent: '60' })]);
+    assert.equal(result.makingChargeOriginal, Math.round(result.goldValue * 0.4 * 100) / 100);
     assert.equal(result.makingChargeDiscountPercent, 10);
-    assert.equal(result.diamondDiscountPercent, 10);
+    assert.equal(result.stoneDiscountPercent, 10);
   });
 
-  test('Test E - explicit 0 on a rule field is used as-is, never replaced by a nonzero product default', async () => {
-    const rules = [{ purity_value_id: 'purity-9k', making_charge_percent: null, making_charge_discount_percent: null, diamond_discount_percent: '0' }];
-    const result = await computeVariantPricing(product, variantFor('purity-9k', '9K'), [], rules);
-    assert.equal(result.diamondDiscountPercent, 0, 'explicit rule 0% must win over the product\'s 10% default');
-  });
-
-  test('Test F - the same purity rule applies identically across different sizes (charges are Product+Purity only, never Product+Purity+Size)', async () => {
-    const rules = [
-      { purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: '10', diamond_discount_percent: '5' },
-    ];
+  test('the same rule applies identically across sizes (charges never vary by size)', async () => {
+    const rules = [rule({ making_charge_percent: '60', making_charge_discount_percent: '10', stone_discount_percent: '5' })];
     const weightRules = [
       { purity_value_id: 'purity-9k', size_value_id: 'size-6', gold_weight_grams: '0.256' },
       { purity_value_id: 'purity-9k', size_value_id: 'size-8', gold_weight_grams: '0.400' },
     ];
-    const size6 = await computeVariantPricing(product, variantFor('purity-9k', '9K', 'size-6'), weightRules, rules);
-    const size8 = await computeVariantPricing(product, variantFor('purity-9k', '9K', 'size-8'), weightRules, rules);
+    const size6 = await computeVariantPricing(product, variantFor('purity-9k', 'size-6'), weightRules, rules);
+    const size8 = await computeVariantPricing(product, variantFor('purity-9k', 'size-8'), weightRules, rules);
 
     assert.notEqual(size6.goldWeightGrams, size8.goldWeightGrams, 'sanity check: weight does differ by size');
     assert.equal(size6.makingChargeDiscountPercent, size8.makingChargeDiscountPercent);
-    assert.equal(size6.diamondDiscountPercent, size8.diamondDiscountPercent);
-    assert.equal(size6.makingChargeOriginal, Math.round(size6.goldValue * 0.6 * 100) / 100, 'same 60% rate applied to size 6\'s own gold value');
-    assert.equal(size8.makingChargeOriginal, Math.round(size8.goldValue * 0.6 * 100) / 100, 'same 60% rate applied to size 8\'s own gold value');
+    assert.equal(size6.stoneDiscountPercent, size8.stoneDiscountPercent);
+    assert.equal(size6.makingChargeOriginal, Math.round(size6.goldValue * 0.6 * 100) / 100);
+    assert.equal(size8.makingChargeOriginal, Math.round(size8.goldValue * 0.6 * 100) / 100);
   });
 
-  test('Test H - a variant price_override still bypasses purity-pricing rules entirely, same as today', async () => {
-    const rules = [
-      { purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: '10', diamond_discount_percent: '5' },
-    ];
-    const variant = { ...variantFor('purity-9k', '9K'), price_override: 12345 };
-    const result = await computeVariantPricing(product, variant, [], rules);
+  test('a variant price_override still bypasses purity-pricing rules entirely', async () => {
+    const rules = [rule({ making_charge_percent: '60', making_charge_discount_percent: '10', stone_discount_percent: '5' })];
+    const result = await computeVariantPricing(product, { ...variantFor('purity-9k'), price_override: 12345 }, [], rules);
     assert.equal(result.isPriceOverridden, true);
     assert.equal(result.sellingPrice, 12345);
     assert.equal(result.makingChargeDiscountPercent, 0);
-    assert.equal(result.diamondDiscountPercent, 0);
-  });
-
-  test('Test I - a purity rule change does not retroactively alter a price already computed/captured earlier', async () => {
-    const rulesBefore = [{ purity_value_id: 'purity-9k', making_charge_percent: '60', making_charge_discount_percent: null, diamond_discount_percent: null }];
-    const capturedAtOrderTime = await computeVariantPricing(product, variantFor('purity-9k', '9K'), [], rulesBefore);
-
-    // Simulates the rule being edited in the admin after the order above was
-    // placed — order_items stores computeVariantPricing's OUTPUT (money
-    // values), never a live reference back to this rule row, so nothing
-    // re-derives `capturedAtOrderTime` from the new rule.
-    const rulesAfter = [{ purity_value_id: 'purity-9k', making_charge_percent: '70', making_charge_discount_percent: null, diamond_discount_percent: null }];
-    const newQuote = await computeVariantPricing(product, variantFor('purity-9k', '9K'), [], rulesAfter);
-
-    assert.notEqual(newQuote.makingChargeOriginal, capturedAtOrderTime.makingChargeOriginal, 'sanity check: the rule change really does move the live price');
-    assert.equal(capturedAtOrderTime.makingChargeOriginal, Math.round(capturedAtOrderTime.goldValue * 0.6 * 100) / 100, 'the already-captured value is untouched by the later rule change');
+    assert.equal(result.stoneDiscountPercent, 0);
   });
 });

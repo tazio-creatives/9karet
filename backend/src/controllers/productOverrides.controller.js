@@ -9,20 +9,18 @@ function toDto(row) {
     slug: row.slug,
     categoryId: row.category_id,
     categoryName: row.category_name,
-    diamondTypeId: row.diamond_type_id,
-    diamondTypeName: row.diamond_type_name,
     flatMakingChargeDiscountPercent:
       row.flat_making_discount_percent == null ? 0 : Number(row.flat_making_discount_percent),
-    flatDiamondDiscountPercent:
-      row.flat_diamond_discount_percent == null ? 0 : Number(row.flat_diamond_discount_percent),
+    flatStoneDiscountPercent:
+      row.flat_stone_discount_percent == null ? 0 : Number(row.flat_stone_discount_percent),
     effectiveMakingChargeDiscountPercent:
       row.effective_making_charge_discount_percent == null ? null : Number(row.effective_making_charge_discount_percent),
-    effectiveDiamondDiscountPercent:
-      row.effective_diamond_discount_percent == null ? null : Number(row.effective_diamond_discount_percent),
+    effectiveStoneDiscountPercent:
+      row.effective_stone_discount_percent == null ? null : Number(row.effective_stone_discount_percent),
     effectiveMakingChargeRuleId: row.effective_making_charge_rule_id,
-    effectiveDiamondRuleId: row.effective_diamond_rule_id,
+    effectiveStoneRuleId: row.effective_stone_rule_id,
     hasMakingOverride: row.has_making_override,
-    hasDiamondOverride: row.has_diamond_override,
+    hasStoneOverride: row.has_stone_override,
     hasRestorableOverride: row.has_restorable_override,
   };
 }

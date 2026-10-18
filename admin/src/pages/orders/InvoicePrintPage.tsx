@@ -147,7 +147,7 @@ export function InvoicePrintPage() {
               <th className={styles.colItem}>Item</th>
               <th className={styles.colQty}>Qty</th>
               <th className={styles.colAmt}>Gold</th>
-              <th className={styles.colAmt}>Diamond</th>
+              <th className={styles.colAmt}>Stones</th>
               <th className={styles.colAmt}>Making</th>
               <th className={styles.colAmt}>GST</th>
               <th className={styles.colAmt}>Total</th>
@@ -155,7 +155,7 @@ export function InvoicePrintPage() {
           </thead>
           <tbody>
             {order.items.map((item, i) => {
-              const preTaxBase = item.goldValue + item.diamondValue + item.makingCharge;
+              const preTaxBase = item.goldValue + item.stoneValue + item.makingCharge;
               const pct = gstPercent(item.gstAmount, preTaxBase);
               return (
                 <tr key={item.id} className={styles.itemRow}>
@@ -170,7 +170,7 @@ export function InvoicePrintPage() {
                   </td>
                   <td className={styles.colQty}>{item.quantity}</td>
                   <td className={styles.colAmt}>{formatPrice(item.goldValue)}</td>
-                  <td className={styles.colAmt}>{formatPrice(item.diamondValue)}</td>
+                  <td className={styles.colAmt}>{formatPrice(item.stoneValue)}</td>
                   <td className={styles.colAmt}>{formatPrice(item.makingCharge)}</td>
                   <td className={styles.colAmt}>
                     {formatPrice(item.gstAmount)}

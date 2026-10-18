@@ -10,7 +10,7 @@ import {
   findRuleById,
   findRuleCategoryLinks,
   findRuleProductLinks,
-  findRuleDiamondTypeLinks,
+  findRuleStoneTypeLinks,
   findRulePurityLinks,
   findRuleConditions,
 } from '../repositories/pricingRules.repository.js';
@@ -51,10 +51,10 @@ function ruleSummaryDto(row) {
 }
 
 async function ruleDetailDto(row) {
-  const [categoryLinks, productLinks, diamondTypeLinks, purityLinks, conditionRows] = await Promise.all([
+  const [categoryLinks, productLinks, stoneTypeLinks, purityLinks, conditionRows] = await Promise.all([
     findRuleCategoryLinks([row.id]),
     findRuleProductLinks([row.id]),
-    findRuleDiamondTypeLinks([row.id]),
+    findRuleStoneTypeLinks([row.id]),
     findRulePurityLinks([row.id]),
     findRuleConditions([row.id]),
   ]);
@@ -62,7 +62,7 @@ async function ruleDetailDto(row) {
     ...ruleSummaryDto(row),
     categoryIds: categoryLinks.map((r) => r.category_id),
     productIds: productLinks.map((r) => r.product_id),
-    diamondTypeIds: diamondTypeLinks.map((r) => r.diamond_type_id),
+    stoneTypeIds: stoneTypeLinks.map((r) => r.stone_type_id),
     purityValueIds: purityLinks.map((r) => r.purity_value_id),
     conditions: conditionRows.map((r) => ({
       conditionType: r.condition_type,
@@ -96,12 +96,12 @@ export async function list(req, res, next) {
   try {
     const query = listPricingRulesQuerySchema.parse(req.query);
     const { items, total } = await listRules(query);
-    // The list page's Diamond Types column reads diamondTypeIds — one bulk
+    // The list page's Stone Types column reads stoneTypeIds — one bulk
     // lookup for the whole page rather than a ruleDetailDto per row.
-    const diamondTypeLinks = await findRuleDiamondTypeLinks(items.map((r) => r.id));
+    const stoneTypeLinks = await findRuleStoneTypeLinks(items.map((r) => r.id));
     const rules = items.map((row) => ({
       ...ruleSummaryDto(row),
-      diamondTypeIds: diamondTypeLinks.filter((l) => l.rule_id === row.id).map((l) => l.diamond_type_id),
+      stoneTypeIds: stoneTypeLinks.filter((l) => l.rule_id === row.id).map((l) => l.stone_type_id),
     }));
     res.json({ rules, total, page: query.page, limit: query.limit });
   } catch (err) {
@@ -198,7 +198,7 @@ export async function previewSaved(req, res, next) {
       priority: detail.priority,
       categoryIds: detail.categoryIds,
       productIds: detail.productIds,
-      diamondTypeIds: detail.diamondTypeIds,
+      stoneTypeIds: detail.stoneTypeIds,
       conditions: detail.conditions,
     });
     res.json(result);

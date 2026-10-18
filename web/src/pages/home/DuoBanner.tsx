@@ -18,7 +18,7 @@ function imageFor(item: HomepageItem): string | null {
 
 function bannerAlt(item: HomepageItem): string {
   const name = item.heading ?? item.category?.name ?? item.collection?.name ?? item.product?.name;
-  return name ? `${name} — BOX DIAMONDS jewellery` : 'BOX DIAMONDS jewellery';
+  return name ? `${name} — 9KARET jewellery` : '9KARET jewellery';
 }
 
 function DuoCard({ item, index }: { item: HomepageItem; index: number }) {

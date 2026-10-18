@@ -60,9 +60,9 @@ function RingGuide({ highlight }: { highlight: Set<string> }) {
         <h3>1. Measure your finger</h3>
         <div className={styles.step}>
           <svg className={styles.art} viewBox="0 0 120 130" aria-hidden="true">
-            <rect x="22" y="6" width="76" height="118" rx="38" fill="#ecd3c1" stroke="#17383c" strokeWidth="2" />
+            <rect x="22" y="6" width="76" height="118" rx="38" fill="#ecd3c1" stroke="#3c171c" strokeWidth="2" />
             <rect x="12" y="52" width="96" height="22" fill="#f1e4c8" stroke="#a07a3b" strokeWidth="2" />
-            <line x1="80" y1="48" x2="80" y2="78" stroke="#17383c" strokeWidth="2.5" />
+            <line x1="80" y1="48" x2="80" y2="78" stroke="#3c171c" strokeWidth="2.5" />
           </svg>
           <ol className={styles.instructions}>
             <li>Wrap a thin paper strip snugly around your finger.</li>
@@ -73,10 +73,10 @@ function RingGuide({ highlight }: { highlight: Set<string> }) {
         <div className={styles.strip}>
           <svg viewBox="0 0 400 70" aria-hidden="true">
             <rect x="2" y="4" width="380" height="20" fill="#f1e4c8" stroke="#a07a3b" strokeWidth="1.5" />
-            <line x1="350" y1="0" x2="350" y2="28" stroke="#17383c" strokeWidth="2.5" />
-            <line x1="2" y1="44" x2="350" y2="44" stroke="#17383c" strokeWidth="1.5" />
-            <line x1="2" y1="37" x2="2" y2="51" stroke="#17383c" strokeWidth="1.5" />
-            <line x1="350" y1="37" x2="350" y2="51" stroke="#17383c" strokeWidth="1.5" />
+            <line x1="350" y1="0" x2="350" y2="28" stroke="#3c171c" strokeWidth="2.5" />
+            <line x1="2" y1="44" x2="350" y2="44" stroke="#3c171c" strokeWidth="1.5" />
+            <line x1="2" y1="37" x2="2" y2="51" stroke="#3c171c" strokeWidth="1.5" />
+            <line x1="350" y1="37" x2="350" y2="51" stroke="#3c171c" strokeWidth="1.5" />
             <text x="176" y="66" textAnchor="middle" fontSize="12" fill="#4e5a5a">
               Length = circumference
             </text>
@@ -93,9 +93,9 @@ function RingGuide({ highlight }: { highlight: Set<string> }) {
         <div className={styles.step}>
           <svg className={styles.art} viewBox="0 0 120 100" aria-hidden="true">
             <ellipse cx="60" cy="50" rx="52" ry="42" fill="none" stroke="#b08a4a" strokeWidth="9" />
-            <line x1="14" y1="50" x2="106" y2="50" stroke="#17383c" strokeWidth="2" />
-            <line x1="14" y1="44" x2="14" y2="56" stroke="#17383c" strokeWidth="2" />
-            <line x1="106" y1="44" x2="106" y2="56" stroke="#17383c" strokeWidth="2" />
+            <line x1="14" y1="50" x2="106" y2="50" stroke="#3c171c" strokeWidth="2" />
+            <line x1="14" y1="44" x2="14" y2="56" stroke="#3c171c" strokeWidth="2" />
+            <line x1="106" y1="44" x2="106" y2="56" stroke="#3c171c" strokeWidth="2" />
           </svg>
           <ul className={styles.instructions}>
             <li>Measure across the centre, from inner edge to inner edge.</li>
@@ -144,9 +144,9 @@ function BangleGuide({ highlight }: { highlight: Set<string> }) {
       <figcaption>{label}</figcaption>
       <svg viewBox="0 0 180 180" aria-hidden="true">
         <circle cx="90" cy="90" r={r} fill="none" stroke="#b08a4a" strokeWidth="12" />
-        <line x1={90 - r + 7} y1="90" x2={90 + r - 7} y2="90" stroke="#17383c" strokeWidth="2" />
-        <path d={`M${90 - r + 7} 90l8 -5v10zM${90 + r - 7} 90l-8 -5v10z`} fill="#17383c" />
-        <text x="90" y="78" textAnchor="middle" fontSize="15" fill="#17383c">
+        <line x1={90 - r + 7} y1="90" x2={90 + r - 7} y2="90" stroke="#3c171c" strokeWidth="2" />
+        <path d={`M${90 - r + 7} 90l8 -5v10zM${90 + r - 7} 90l-8 -5v10z`} fill="#3c171c" />
+        <text x="90" y="78" textAnchor="middle" fontSize="15" fill="#3c171c">
           {mm} mm
         </text>
         <text x="90" y="108" textAnchor="middle" fontSize="11" fill="#4e5a5a">

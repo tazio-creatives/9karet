@@ -16,7 +16,7 @@
   margin: 0 0 12px;
   font-size: 15px;
   font-weight: 600;
-  color: #0f2a30;
+  color: #300f13;
 }
 
 /* ---- Order Summary ------------------------------------------------------ */
@@ -30,7 +30,7 @@
 }
 
 .back:hover {
-  color: #075a63;
+  color: #620814;
 }
 
 .summaryHeader {
@@ -44,7 +44,7 @@
   margin: 0;
   font-size: 20px;
   font-weight: 650;
-  color: #0f2a30;
+  color: #300f13;
 }
 
 .placedDate {
@@ -75,8 +75,8 @@
 }
 
 .badgeInfo {
-  background: #e3f3f1;
-  color: #0f6b63;
+  background: #f3e3e5;
+  color: #6b0f1b;
 }
 
 .badgePending {
@@ -188,7 +188,7 @@
   margin: 0;
   font-size: 14px;
   font-weight: 650;
-  color: #0f2a30;
+  color: #300f13;
   font-variant-numeric: tabular-nums;
 }
 
@@ -260,7 +260,7 @@
   border-top: 1px solid #eef1f3;
   font-size: 18px;
   font-weight: 600;
-  color: #075a63;
+  color: #620814;
 }
 
 /* ---- Delivery Address ------------------------------------------------------- */

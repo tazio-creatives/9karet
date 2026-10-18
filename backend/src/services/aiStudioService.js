@@ -297,7 +297,7 @@ const PRESENTER_BACKGROUND_NOTE =
 const RING_GOLD_CATALOGUE_BACKGROUND_NOTE =
   ' Use a soft champagne-ivory satin fabric backdrop with visible natural folds and drape — base colour #F4E7DA, a #FFF8F0 highlight and a #D9BDA7 grounding shadow. Keep the background lighter and less saturated than the jewellery itself, with clear separation between the gold and the backdrop.';
 const RING_ROSE_CATALOGUE_BACKGROUND_NOTE =
-  ' Use a soft blush-peach satin fabric backdrop with visible natural folds and drape — base colour #E8C4B2, a #F8E7DD highlight and a #C98F76 grounding shadow. Keep sufficient contrast around the product, and do not let the background tint the diamonds or alter their colour.';
+  ' Use a soft blush-peach satin fabric backdrop with visible natural folds and drape — base colour #E8C4B2, a #F8E7DD highlight and a #C98F76 grounding shadow. Keep sufficient contrast around the product, and do not let the background tint the gemstones or alter their colour.';
 const RING_CATALOGUE_LIGHTING_NOTE =
   ' Use soft, premium studio lighting with natural, controlled product shadows, keeping the jewellery clearly separated from the background. Avoid busy props, flowers, boxes, unrelated decorative objects or hard reflections. The background must remain secondary to the product.';
 const RING_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px.';

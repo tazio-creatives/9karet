@@ -82,12 +82,7 @@ export function ProductCard({
         <WishlistButton productId={product.id} className={styles.wishlistButton} />
       </div>
       <div className={styles.body}>
-        {product.purity && (
-          <p className={styles.meta}>
-            {product.purity} {product.metalType === 'GOLD' ? 'Gold' : 'Platinum'}
-          </p>
-        )}
-        {!product.purity && <p className={styles.meta}>{product.metalType === 'GOLD' ? 'Gold' : 'Platinum'}</p>}
+        <p className={styles.meta}>{product.purity ?? '9K'} Gold</p>
         <h3 className={styles.name}>{product.name}</h3>
         {product.ratingCount > 0 && (
           <p className={styles.rating}>

@@ -10,7 +10,7 @@
 }
 
 .sidebar {
-  background: #00515a;
+  background: #530711;
   color: #e5e7eb;
   display: flex;
   flex-direction: column;
@@ -148,7 +148,7 @@
   height: 34px;
   border-radius: 50%;
   background: #c6a15b;
-  color: #00363c;
+  color: #38040b;
   display: flex;
   align-items: center;
   justify-content: center;

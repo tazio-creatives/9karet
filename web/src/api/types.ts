@@ -10,12 +10,12 @@ export interface DeliveryEstimate {
   timezone: string;
 }
 
-// A single discount badge — Making Charge and Diamond Value discounts are
-// always rendered as separate badges, never combined into one string, so a
-// "20% off Making Charges" offer and a "15% off Diamond Value" offer stay
-// visually distinct even when both apply to the same product.
+// A single discount badge — Making Charge and Gemstone discounts are always
+// rendered as separate badges, never combined into one string, so a "20% off
+// Making Charges" offer and a "15% off Gemstones" offer stay visually
+// distinct even when both apply to the same product.
 export interface OfferBadge {
-  type: 'MAKING_CHARGE' | 'DIAMOND';
+  type: 'MAKING_CHARGE' | 'STONE';
   percent: number;
   label: string;
 }
@@ -25,11 +25,10 @@ export interface ProductCard {
   slug: string;
   categorySlug: string | null;
   name: string;
-  metalType: 'GOLD' | 'PLATINUM';
+  metalType: MetalType;
   purity: string | null;
   goldColor: GoldColor | null;
-  diamondColour: string | null;
-  diamondClarity: string | null;
+  stoneWeightCarats: number | null;
   sellingPrice: number;
   sellingPriceOriginal: number;
   mrp: number;
@@ -41,7 +40,7 @@ export interface ProductCard {
   hasDiscount: boolean;
   effectiveDiscountPercent: number;
   makingChargeDiscountPercent: number;
-  diamondDiscountPercent: number;
+  stoneDiscountPercent: number;
   offerLabel: string | null;
   offerBadges: OfferBadge[];
   primaryImageUrl: string | null;
@@ -217,12 +216,12 @@ export interface ProductSizeMeasurements {
 
 export interface PriceBreakup {
   goldValue: number;
-  diamondValue: number;
-  diamondValueOriginal: number;
+  stoneValue: number;
+  stoneValueOriginal: number;
   makingCharge: number;
   makingChargeOriginal: number;
   makingChargeDiscountPercent: number;
-  diamondDiscountPercent: number;
+  stoneDiscountPercent: number;
   gstAmount: number;
   total: number;
 }
@@ -245,21 +244,15 @@ export interface ProductDetail {
   shortDescription: string | null;
   fullDescription: string | null;
 
-  metalType: 'GOLD' | 'PLATINUM';
+  metalType: MetalType;
   purity: Purity | null;
   goldColor: GoldColor | null;
   grossWeightGrams: number | null;
   netWeightGrams: number | null;
   goldWeightGrams: number | null;
-  diamondWeightGrams: number | null;
-  diamondWeightCarats: number | null;
-  diamondConfigId: string | null;
-  diamondConfigName: string | null;
-  diamondCount: number | null;
-  diamondType: string | null;
-  diamondColour: string | null;
-  diamondClarity: string | null;
-  gemstone: string | null;
+  stoneWeightCarats: number | null;
+  // The gemstones set in the piece — one line per stone type.
+  stones: ProductStone[];
   certification: string | null;
   productSize: string | null;
   // Overrides the "Size" wording on the storefront (e.g. "Length" for a
@@ -304,16 +297,22 @@ export interface ProductDetail {
   // PillSelector, SizeSelector) read these directly, unchanged.
   sizes: ProductSize[];
   goldColorOptions: GoldColor[];
-  purityOptions: Purity[];
-  diamondOptions: { id: string; name: string }[];
 
   // The generic attribute + variant model — every real sellable combination
   // is one entry in `variants`, with its own stock/availability/weight
-  // overrides. useVariantSelection resolves a selection (goldColor/purity/
-  // diamondConfigId/sizeId, same as before) to one of these to get a real
-  // variantId for pricing/cart/checkout.
+  // overrides. useVariantSelection resolves a selection (goldColor/sizeId)
+  // to one of these to get a real variantId for pricing/cart/checkout.
   attributes: ProductAttribute[];
   variants: ProductVariant[];
+}
+
+export interface ProductStone {
+  id: string;
+  stoneTypeId: string;
+  stoneTypeName: string;
+  count: number;
+  weightCarats: number;
+  price: number;
 }
 
 export interface ProductAttribute {
@@ -328,8 +327,6 @@ export interface ProductVariant {
   stockQuantity: number;
   availableStock: number;
   goldWeightGrams: number | null;
-  diamondWeightGrams: number | null;
-  diamondWeightCarats: number | null;
   attributeValueIds: string[];
 }
 
@@ -337,17 +334,16 @@ export interface ProductVariant {
 // checkout use, so what's shown while shopping matches what gets charged.
 export interface VariantPricePreview {
   purity: string | null;
-  diamondConfigId: string | null;
   goldColor: string | null;
   goldWeightGrams: number | null;
-  diamondWeightCarats: number | null;
+  stoneWeightCarats: number | null;
   goldValue: number;
-  diamondValue: number;
-  diamondValueOriginal: number;
+  stoneValue: number;
+  stoneValueOriginal: number;
   makingCharge: number;
   makingChargeOriginal: number;
   makingChargeDiscountPercent: number;
-  diamondDiscountPercent: number;
+  stoneDiscountPercent: number;
   gstAmount: number;
   sellingPrice: number;
   sellingPriceOriginal: number;
@@ -361,8 +357,9 @@ export interface VariantPricePreview {
 }
 
 export type SortOption = 'featured' | 'newest' | 'price_asc' | 'price_desc' | 'bestseller';
-export type MetalType = 'GOLD' | 'PLATINUM';
-export type Purity = '9K' | '14K' | '18K' | '22K' | '24K';
+// 9Karet sells 9K gold only.
+export type MetalType = 'GOLD';
+export type Purity = '9K';
 export type GoldColor = 'YELLOW' | 'ROSE' | 'WHITE';
 
 export interface CategoryFilterCounts {
@@ -392,8 +389,6 @@ export interface CartItem {
   goldColor: GoldColor | null;
   productSize: string | null;
   sizeLabel: string | null;
-  diamondConfigId: string | null;
-  diamondConfigName: string | null;
   sellingPrice: number;
   sellingPriceOriginal: number;
   mrp: number;
@@ -460,7 +455,7 @@ export interface OrderItem {
   productImageUrl: string | null;
   quantity: number;
   goldValue: number;
-  diamondValue: number;
+  stoneValue: number;
   makingCharge: number;
   gstAmount: number;
   unitPrice: number;
@@ -470,7 +465,6 @@ export interface OrderItem {
   sizeLabel: string | null;
   goldColor: string | null;
   purity: string | null;
-  diamondConfigName: string | null;
   customizationNote: string | null;
   isBackordered: boolean;
 }
@@ -630,7 +624,6 @@ export interface BuyNowItem {
   sizeLabel?: string | null;
   goldColor?: string | null;
   purity?: string | null;
-  diamondConfigName?: string | null;
   isBackordered?: boolean;
   // Carried from the PDP's already-fetched product.deliveryEstimate — Buy
   // Now skips the cart entirely, so this is how Checkout gets a real,

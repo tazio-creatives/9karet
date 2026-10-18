@@ -9,7 +9,6 @@ import { SizeSelector } from './SizeSelector';
 import type { SizeGuideType } from './SizeGuide';
 import { ColorSelector } from './ColorSelector';
 import { COLOR_SWATCH } from './goldColorSwatch';
-import { PillSelector } from './PillSelector';
 import { DetailsCard } from './DetailsCard';
 import { PriceBreakupTable } from './PriceBreakupTable';
 import { AttributesList } from './AttributesList';
@@ -54,7 +53,7 @@ function TagIcon() {
   );
 }
 
-function DiamondChipIcon() {
+function GemChipIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <path d="M6 8h12l3 4-9 9-9-9 3-4z" strokeLinejoin="round" />
@@ -75,13 +74,8 @@ interface ProductInfoProps {
   onSelectSize: (sizeId: string) => void;
   selectedGoldColor: GoldColor | null;
   onSelectGoldColor: (color: GoldColor) => void;
-  isColorAvailableAtPurity: (color: GoldColor, purity: string | null | undefined) => boolean;
+  isColorAvailable: (color: GoldColor) => boolean;
   selectedPurity: string | null;
-  onSelectPurity: (purity: string) => void;
-  isPurityAvailable: (purity: string) => boolean;
-  selectedDiamondConfigId: string | null;
-  onSelectDiamondConfigId: (id: string) => void;
-  isDiamondAvailableAtPurity: (diamondConfigId: string) => boolean;
   displayPrice: number;
   displayMrp: number;
   offerLabel: string | null;
@@ -92,7 +86,6 @@ interface ProductInfoProps {
   displayGoldWeightGrams: number | null;
   displayNetWeightGrams: number | null;
   displayGrossWeightGrams: number | null;
-  displayDiamondWeightCarats: number | null;
 }
 
 export function ProductInfo({
@@ -106,13 +99,8 @@ export function ProductInfo({
   onSelectSize,
   selectedGoldColor,
   onSelectGoldColor,
-  isColorAvailableAtPurity,
+  isColorAvailable,
   selectedPurity,
-  onSelectPurity,
-  isPurityAvailable,
-  selectedDiamondConfigId,
-  onSelectDiamondConfigId,
-  isDiamondAvailableAtPurity,
   displayPrice,
   displayMrp,
   offerLabel,
@@ -123,25 +111,17 @@ export function ProductInfo({
   displayGoldWeightGrams,
   displayNetWeightGrams,
   displayGrossWeightGrams,
-  displayDiamondWeightCarats,
 }: ProductInfoProps) {
   const sizeFieldLabel = product.sizeLabel?.trim() || 'Size';
   const sizeRequired = product.sizes.length > 0 && !selectedSizeId;
   const colorRequired = product.goldColorOptions.length > 0 && !selectedGoldColor;
-  const purityRequired = product.purityOptions.length > 0 && !selectedPurity;
-  const diamondRequired = product.diamondOptions.length > 0 && !selectedDiamondConfigId;
-  const variantRequired = sizeRequired || colorRequired || purityRequired || diamondRequired;
+  const variantRequired = sizeRequired || colorRequired;
 
-  // The admin's "Customer-Selectable Variations" (Gold Color / Purity /
-  // Diamond Quality / Size) — shown directly, no toggle/accordion, so the
-  // shopper sees every option immediately; the section is simply absent for
-  // the (common) products with a single fixed configuration and none of
-  // these options at all.
-  const hasCustomizations =
-    product.goldColorOptions.length > 0 ||
-    product.purityOptions.length > 0 ||
-    product.diamondOptions.length > 0 ||
-    product.sizes.length > 0;
+  // The admin's "Customer-Selectable Variations" (Gold Colour / Size) —
+  // shown directly, no toggle/accordion, so the shopper sees every option
+  // immediately; the section is simply absent for products with a single
+  // fixed configuration.
+  const hasCustomizations = product.goldColorOptions.length > 0 || product.sizes.length > 0;
 
   // Buttons stay clickable rather than disabled — a missing selection is
   // surfaced as an inline message under the relevant field only once the
@@ -149,8 +129,6 @@ export function ProductInfo({
   const [showValidation, setShowValidation] = useState(false);
 
   const colorFieldRef = useRef<HTMLDivElement>(null);
-  const purityFieldRef = useRef<HTMLDivElement>(null);
-  const diamondFieldRef = useRef<HTMLDivElement>(null);
   const sizeFieldRef = useRef<HTMLDivElement>(null);
 
   // Mobile sticky purchase bar: mirrors Add to Cart/Buy Now once the
@@ -180,15 +158,7 @@ export function ProductInfo({
   // page so the shopper actually sees why nothing happened. All fields are
   // always mounted now (no accordion to open first).
   function scrollToFirstMissingField() {
-    const target = colorRequired
-      ? colorFieldRef.current
-      : purityRequired
-        ? purityFieldRef.current
-        : diamondRequired
-          ? diamondFieldRef.current
-          : sizeRequired
-            ? sizeFieldRef.current
-            : null;
+    const target = colorRequired ? colorFieldRef.current : sizeRequired ? sizeFieldRef.current : null;
     target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
@@ -210,26 +180,17 @@ export function ProductInfo({
     onBuyNow();
   }
 
-  const metalLabel = product.metalType === 'GOLD' ? 'Gold' : 'Platinum';
-
   // Quick-glance chips (no size) — reflect whatever's currently selected,
   // falling back to the product's own base attributes for axes that aren't
   // customer-selectable at all.
   const chipGoldColor = selectedGoldColor ?? product.goldColor;
-  const chipPurity = selectedPurity ?? product.purity;
-  const metalChipText = [chipPurity, chipGoldColor ? COLOR_SWATCH[chipGoldColor].label : metalLabel]
-    .filter(Boolean)
-    .join(' ');
+  const chipPurity = selectedPurity ?? product.purity ?? '9K';
+  const metalChipText = [chipPurity, chipGoldColor ? COLOR_SWATCH[chipGoldColor].label : 'Gold'].join(' ');
 
-  const selectedDiamondOption = product.diamondOptions.find((d) => d.id === selectedDiamondConfigId) ?? null;
-  const diamondChipText = selectedDiamondOption?.name ?? product.diamondConfigName;
-
-  const hasDiamonds =
-    (product.diamondWeightCarats ?? 0) > 0 ||
-    product.diamondOptions.length > 0 ||
-    !!product.diamondConfigId ||
-    !!product.diamondConfigName;
-  const isGold = product.metalType === 'GOLD';
+  // "Ruby & Cubic Zirconia" — each stone type once, in the admin's order.
+  const stoneNames = [...new Set(product.stones.map((s) => s.stoneTypeName))];
+  const stoneChipText =
+    stoneNames.length > 1 ? `${stoneNames.slice(0, -1).join(', ')} & ${stoneNames[stoneNames.length - 1]}` : stoneNames[0];
 
   return (
     <div className={styles.info}>
@@ -325,10 +286,10 @@ export function ProductInfo({
               {metalChipText}
             </span>
           )}
-          {diamondChipText && (
+          {stoneChipText && (
             <span className={styles.specChip}>
-              <DiamondChipIcon />
-              {diamondChipText} Natural Diamond
+              <GemChipIcon />
+              {stoneChipText}
             </span>
           )}
         </div>
@@ -344,39 +305,10 @@ export function ProductInfo({
                 colors={product.goldColorOptions}
                 selectedColor={selectedGoldColor}
                 onSelect={onSelectGoldColor}
-                selectedPurity={selectedPurity}
-                isColorAvailable={isColorAvailableAtPurity}
+                isColorAvailable={isColorAvailable}
               />
               {showValidation && colorRequired && (
                 <p className={styles.fieldError}>Please select a gold color</p>
-              )}
-            </div>
-          )}
-
-          {product.purityOptions.length > 0 && (
-            <div className={styles.fieldGroup} ref={purityFieldRef}>
-              <PillSelector
-                title="Gold Purity"
-                options={product.purityOptions.map((p) => ({ value: p, label: p }))}
-                selectedValue={selectedPurity}
-                onSelect={onSelectPurity}
-                isOptionAvailable={isPurityAvailable}
-              />
-              {showValidation && purityRequired && <p className={styles.fieldError}>Please select a purity</p>}
-            </div>
-          )}
-
-          {product.diamondOptions.length > 0 && (
-            <div className={styles.fieldGroup} ref={diamondFieldRef}>
-              <PillSelector
-                title="Natural Diamond Quality"
-                options={product.diamondOptions.map((d) => ({ value: d.id, label: d.name }))}
-                selectedValue={selectedDiamondConfigId}
-                onSelect={onSelectDiamondConfigId}
-                isOptionAvailable={isDiamondAvailableAtPurity}
-              />
-              {showValidation && diamondRequired && (
-                <p className={styles.fieldError}>Please select a diamond quality</p>
               )}
             </div>
           )}
@@ -414,11 +346,11 @@ export function ProductInfo({
         </button>
       </div>
 
-      <ProductAssuranceGrid hasDiamonds={hasDiamonds} isGold={isGold} />
+      <ProductAssuranceGrid hasStones={product.stones.length > 0} />
 
       <div className={styles.detailsStack}>
         <DetailsCard title="Price Breakup" className={styles.detailsCardHeading}>
-          <PriceBreakupTable breakup={displayBreakup} metalType={product.metalType} diamondTypeName={product.diamondType} />
+          <PriceBreakupTable breakup={displayBreakup} purity={product.purity} />
         </DetailsCard>
 
         <DetailsCard title="Product Details" className={styles.detailsCardHeading}>
@@ -426,11 +358,9 @@ export function ProductInfo({
             product={product}
             livePurity={selectedPurity}
             liveGoldColor={selectedGoldColor}
-            liveDiamondConfigName={selectedDiamondOption?.name}
             liveGoldWeightGrams={displayGoldWeightGrams}
             liveNetWeightGrams={displayNetWeightGrams}
             liveGrossWeightGrams={displayGrossWeightGrams}
-            liveDiamondWeightCarats={displayDiamondWeightCarats}
           />
         </DetailsCard>
       </div>

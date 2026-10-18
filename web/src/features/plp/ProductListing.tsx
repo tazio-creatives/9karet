@@ -24,7 +24,7 @@ interface ProductListingProps {
   collectionSlug?: string;
   // Short label (breadcrumbs, filters, "All Rings")…
   heading: string;
-  // …vs. the page's H1 / SEO wording ("Natural Diamond Rings").
+  // …vs. the page's H1 / SEO wording ("9K Gold Gemstone Rings").
   h1?: string;
   seoTitle?: string | null;
   seoDescription?: string | null;
@@ -62,8 +62,8 @@ export function ProductListing({
   const activeFilterCount = [metal, purity, goldColor, priceMin, priceMax].filter((v) => v != null).length;
 
   useHead({
-    title: seoTitle || `${h1} | BOX DIAMONDS`,
-    description: seoDescription || description || `Shop ${heading} at BOX DIAMONDS — certified, live-priced jewellery.`,
+    title: seoTitle || `${h1} | 9KARET`,
+    description: seoDescription || description || `Shop ${heading} at 9KARET — certified, live-priced jewellery.`,
     canonicalPath,
     jsonLd: [
       organizationJsonLd(),

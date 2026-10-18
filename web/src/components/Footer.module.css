@@ -1,5 +1,5 @@
 .footer {
-  background: #00363c;
+  background: #38040b;
   color: rgba(255, 255, 255, 0.7);
   margin-top: var(--space-12);
 }
@@ -164,7 +164,7 @@
   }
 
   .logo {
-    width: 104px;
+    width: 140px;
     height: auto;
     margin-bottom: 12px;
   }

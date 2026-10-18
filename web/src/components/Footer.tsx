@@ -49,12 +49,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
   {
     title: 'About Us',
     links: [
-      { label: 'Our Story', to: '/our-story' },
-      { label: 'Why Box Diamonds', to: '/why-box-diamonds' },
       { label: 'Blog', to: '/blog' },
-      { label: 'Sustainability', to: '/sustainability' },
-      { label: 'Become a Partner', to: '/retail-partner' },
-      { label: 'Franchise Opportunity', to: '/franchise' },
     ],
   },
   {
@@ -82,28 +77,34 @@ export function Footer() {
     <footer className={styles.footer}>
       <div className={styles.top}>
         <div className={styles.brandCol}>
-          <img src="/images/logo-white.png" alt="Box Diamonds" className={styles.logo} width={260} height={166} loading="lazy" />
+          <img src="/images/logo-white.png" alt="9Karet" className={styles.logo} width={535} height={198} loading="lazy" />
           <p className={styles.tagline}>
-            Shop certified natural diamond jewellery online — fine diamond jewellery delivered across India. Because
-            every precious moment deserves a perfect sparkle.
+            Smart gold for every day — BIS hallmarked 9K gold jewellery set with genuine gemstones, with transparent
+            pricing and delivery across India.
           </p>
           {/* Same details as the Contact page — visible business identity for
               shoppers, search engines and AI assistants on every page. */}
           <address className={styles.contact}>
-            <a href="mailto:info@boxdiamonds.com">info@boxdiamonds.com</a>
+            <a href="mailto:info@9karet.com">info@9karet.com</a>
             <br />
             Goldbox Diamonds Private Limited, Mumbai, Maharashtra
           </address>
-          <div className={styles.social}>
-            <SocialIcon label="Instagram" href={SOCIAL_LINKS.instagram}>
-              <rect x="3" y="3" width="18" height="18" rx="5" />
-              <circle cx="12" cy="12" r="4" />
-              <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
-            </SocialIcon>
-            <SocialIcon label="Facebook" href={SOCIAL_LINKS.facebook}>
-              <path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z" />
-            </SocialIcon>
-          </div>
+          {(SOCIAL_LINKS.instagram || SOCIAL_LINKS.facebook) && (
+            <div className={styles.social}>
+              {SOCIAL_LINKS.instagram && (
+                <SocialIcon label="Instagram" href={SOCIAL_LINKS.instagram}>
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+                </SocialIcon>
+              )}
+              {SOCIAL_LINKS.facebook && (
+                <SocialIcon label="Facebook" href={SOCIAL_LINKS.facebook}>
+                  <path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z" />
+                </SocialIcon>
+              )}
+            </div>
+          )}
         </div>
 
         {COLUMNS.map((col) => {
@@ -135,7 +136,7 @@ export function Footer() {
 
       <div className={styles.bottom}>
         <p className={styles.copy}>
-          © {new Date().getFullYear()} BOX DIAMONDS — Certified Natural Diamond Jewellery. All rights reserved.
+          © {new Date().getFullYear()} 9KARET — Smart Gold. All rights reserved.
         </p>
         <p className={styles.secure}>100% Secure Payments</p>
       </div>
@@ -146,7 +147,7 @@ export function Footer() {
 // Opens the profile in a new tab so shoppers keep their place on the site.
 function SocialIcon({ label, href, children }: { label: string; href: string; children: ReactNode }) {
   return (
-    <a href={href} className={styles.socialIcon} aria-label={`Box Diamonds on ${label}`} target="_blank" rel="noopener noreferrer">
+    <a href={href} className={styles.socialIcon} aria-label={`9Karet on ${label}`} target="_blank" rel="noopener noreferrer">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         {children}
       </svg>

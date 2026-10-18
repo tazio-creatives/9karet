@@ -45,8 +45,8 @@ export function Header() {
       {/* Desktop/tablet header (>=768px) — unchanged markup, hidden below
           768px via CSS where the dedicated mobile bar below takes over. */}
       <div className={styles.inner}>
-        <Link to="/" className={styles.logo} aria-label="Box Diamonds — home">
-          <img src="/images/logo.png" alt="Box Diamonds" className={styles.logoImg} width={260} height={166} />
+        <Link to="/" className={styles.logo} aria-label="9Karet — home">
+          <img src="/images/logo.png" alt="9Karet" className={styles.logoImg} width={535} height={198} />
         </Link>
 
         <div className={styles.searchArea}>
@@ -111,8 +111,8 @@ export function Header() {
         </div>
 
         <div className={styles.mobileLogoWrap}>
-          <Link to="/" className={styles.mobileLogo} aria-label="Box Diamonds — home">
-            <img src="/images/logo.png" alt="Box Diamonds" className={styles.mobileLogoImg} width={260} height={166} />
+          <Link to="/" className={styles.mobileLogo} aria-label="9Karet — home">
+            <img src="/images/logo.png" alt="9Karet" className={styles.mobileLogoImg} width={535} height={198} />
           </Link>
         </div>
 

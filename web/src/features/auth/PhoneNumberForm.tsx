@@ -108,7 +108,7 @@ export function PhoneNumberForm({ mobile, onMobileChange, onSubmit, isSubmitting
         <span className={styles.dividerGem} aria-hidden="true">
           <GemOrnamentIcon />
         </span>
-        <span>New to BOX DIAMONDS?</span>
+        <span>New to 9KARET?</span>
       </div>
       <p className={styles.newCustomer}>Your account will be created automatically after verification.</p>
 

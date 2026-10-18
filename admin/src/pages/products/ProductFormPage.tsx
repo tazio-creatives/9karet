@@ -12,18 +12,14 @@ import { fetchStudioPendingReview } from '../../api/aiStudio';
 import { fetchAdminCategories } from '../../api/categories';
 import { fetchAdminCollections } from '../../api/collections';
 import { previewPricing } from '../../api/pricing';
-import { fetchDiamondConfigs } from '../../api/diamondConfigs';
 import { fetchWeightRules } from '../../api/weightRules';
-import { fetchPurityPricingRules } from '../../api/purityPricingRules';
 import { ProductSizeImagePanel } from '../../features/aiStudio/ProductSizeImagePanel';
 import type {
   GoldColor,
-  MetalType,
   PricingPreviewResult,
   ProductInput,
   ProductStatus,
   Purity,
-  PurityPricingRuleInput,
   VariantOverrideInput,
   WeightRulesInput,
 } from '../../api/types';
@@ -35,14 +31,22 @@ import { OptionChipRow } from '../../features/products/OptionChipRow';
 import { AdvancedVariantSummary } from '../../features/products/AdvancedVariantSummary';
 import { AvailabilityRules } from '../../features/products/AvailabilityRules';
 import { WeightDefaults } from '../../features/products/WeightDefaults';
-import { PurityPricingRules } from '../../features/products/PurityPricingRules';
+import {
+  StonesEditor,
+  stoneTotals,
+  toStoneInputs,
+  GRAMS_PER_CARAT,
+  type StoneDraft,
+} from '../../features/products/StonesEditor';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import pv from '../../features/products/ProductVariations.module.css';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './ProductFormPage.module.css';
 
-const METAL_TYPES: MetalType[] = ['GOLD', 'PLATINUM'];
-const PURITIES: Purity[] = ['9K', '14K', '18K', '22K', '24K'];
+// 9Karet sells 9K gold only — the backend sets metal and purity on every
+// product, and every product carries the one 9K purity value (what Weight
+// Defaults and the variant matrix key on).
+const PURITIES: Purity[] = ['9K'];
 const GOLD_COLORS: { value: GoldColor; label: string }[] = [
   { value: 'YELLOW', label: 'Yellow Gold' },
   { value: 'ROSE', label: 'Rose Gold' },
@@ -60,27 +64,14 @@ const EMPTY_FORM: ProductInput = {
   collectionId: null,
   shortDescription: '',
   fullDescription: '',
-  metalType: 'GOLD',
-  purity: '18K',
   goldColor: null,
   goldWeightGrams: null,
-  diamondWeightGrams: null,
-  diamondWeightCarats: null,
-  diamondConfigId: null,
-  diamondCount: null,
-  diamondTypeId: null,
-  diamondType: '',
-  diamondColour: '',
-  diamondClarity: '',
-  gemstone: '',
   certification: '',
   productSize: '',
   sizeLabel: '',
   careInstructions: '',
   sizes: [],
   goldColors: [],
-  purities: [],
-  diamondConfigIds: [],
   makingCharge: 0,
   gstPercent: 3,
   mrp: 0,
@@ -105,18 +96,12 @@ export function ProductFormPage() {
     queryFn: () => fetchAdminProduct(id as string),
     enabled: isEditing,
   });
-  // Hydrates the Weight Defaults / Purity Pricing Rules draft state below —
-  // these standalone GET endpoints are kept (other tooling may still read
-  // them) but are only used here to seed the controlled form on load; saving
+  // Hydrates the Weight Defaults draft state below — this standalone GET
+  // endpoint is only used here to seed the controlled form on load; saving
   // happens exclusively through the one combined Save Product action.
   const { data: weightRulesData } = useQuery({
     queryKey: ['admin-weight-rules', id],
     queryFn: () => fetchWeightRules(id as string),
-    enabled: isEditing,
-  });
-  const { data: purityPricingRulesData } = useQuery({
-    queryKey: ['admin-purity-pricing-rules', id],
-    queryFn: () => fetchPurityPricingRules(id as string),
     enabled: isEditing,
   });
   // Same query key ProductGallery uses below, so this shares its cache
@@ -140,18 +125,14 @@ export function ProductFormPage() {
   const pendingReviewJob = pendingReviewData?.job ?? null;
   const { data: categoriesData } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
   const { data: collectionsData } = useQuery({ queryKey: ['admin-collections'], queryFn: fetchAdminCollections });
-  const { data: diamondConfigsData } = useQuery({
-    queryKey: ['admin-diamond-configs-active'],
-    queryFn: () => fetchDiamondConfigs({ activeOnly: true }),
-  });
 
   const [form, setForm] = useState<ProductInput>(EMPTY_FORM);
   const [preview, setPreview] = useState<PricingPreviewResult | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Kept separate from the page-level `error` (shown far below, near Save)
-  // so a failed auto-preview — e.g. diamond carat entered before diamond
-  // quality is picked — is visible right where the admin is looking,
+  // so a failed auto-preview — e.g. no gold rate synced yet — is visible
+  // right where the admin is looking,
   // instead of silently leaving the price at ₹0 with no explanation.
   const [pricingError, setPricingError] = useState<string | null>(null);
   // Same reasoning as pricingError — "Start AI Generation" clicked with no
@@ -163,51 +144,42 @@ export function ProductFormPage() {
   // form.makingCharge (the flat figure the API actually stores/uses) is kept
   // in sync below whenever this percent or the live gold value changes.
   const [makingChargePercent, setMakingChargePercent] = useState<number | ''>(0);
+  // The piece's stone lines, edited as raw strings (see StonesEditor) and
+  // converted once on save.
+  const [stones, setStones] = useState<StoneDraft[]>([]);
   // Only populated/used on the Add Product (create) flow — lets the same
-  // save that picks Gold Colors/Purities/Diamond Qualities/Sizes also set
+  // save that picks Gold Colors/Sizes also set
   // starting stock + optional weight override per exact combination, so a
   // brand-new product can be fully configured in one step instead of a
   // separate trip into the per-product variant editor afterward.
   const [variantOverrides, setVariantOverrides] = useState<VariantOverrideInput[]>([]);
-  // Weight Defaults / Purity Pricing Rules draft state — owned here, not by
-  // the two section components, so they can render from the form's own
-  // unsaved purities/sizes and be submitted through the single Save Product
-  // action instead of each having its own save button/endpoint call.
+  // Weight Defaults draft state — owned here, not by the section component,
+  // so it can render from the form's own unsaved sizes and be submitted
+  // through the single Save Product action.
   const [weightRules, setWeightRules] = useState<WeightRulesInput>({ purityRules: [], puritySizeRules: [] });
-  const [purityPricingRules, setPurityPricingRules] = useState<PurityPricingRuleInput[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  // Removing a purity/size that the LOADED product already had saved data
-  // for (weight/pricing rules, real variants with stock) is destructive —
-  // confirmed before the draft state is actually changed, mirroring the
-  // existing "switch to Fixed Product" confirmation below.
-  const [pendingRemoval, setPendingRemoval] = useState<
-    { type: 'purity'; value: Purity } | { type: 'size'; index: number; label: string } | null
-  >(null);
+  // Removing a size that the LOADED product already had saved data for
+  // (weight rules, real variants with stock) is destructive — confirmed
+  // before the draft state is actually changed, mirroring the existing
+  // "switch to Fixed Product" confirmation below.
+  const [pendingRemoval, setPendingRemoval] = useState<{ type: 'size'; index: number; label: string } | null>(null);
   const variationsSectionRef = useRef<HTMLElement>(null);
+  const stonesSectionRef = useRef<HTMLElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
-  const diamondConfigNames = Object.fromEntries(
-    (diamondConfigsData?.diamondConfigs ?? []).map((c) => [c.id, c.name]),
-  );
-  // 'fixed' = one configuration only (no axes checked). 'selectable' = at
-  // least one axis is offered. Purely a UI framing over the same
-  // goldColors/purities/diamondConfigIds/sizes arrays the API already
-  // takes — synced from loaded product data below, defaults to
-  // 'selectable' for a brand-new product (nothing to hide yet).
+  // 'fixed' = one configuration only (no gold colours or sizes offered).
+  // 'selectable' = at least one is. Purely a UI framing over the same
+  // goldColors/sizes arrays the API already takes — synced from loaded
+  // product data below, defaults to 'selectable' for a brand-new product.
   const [variationMode, setVariationMode] = useState<'fixed' | 'selectable'>('selectable');
   const [matrixExpanded, setMatrixExpanded] = useState(false);
   const [pendingFixedSwitch, setPendingFixedSwitch] = useState(false);
 
   function hasAnyAxis(f: ProductInput) {
-    return (
-      (f.goldColors?.length ?? 0) > 0 ||
-      (f.purities?.length ?? 0) > 0 ||
-      (f.diamondConfigIds?.length ?? 0) > 0 ||
-      (f.sizes?.length ?? 0) > 0
-    );
+    return (f.goldColors?.length ?? 0) > 0 || (f.sizes?.length ?? 0) > 0;
   }
 
   function confirmSwitchToFixed() {
-    setForm((f) => ({ ...f, goldColors: [], purities: [], diamondConfigIds: [], sizes: [] }));
+    setForm((f) => ({ ...f, goldColors: [], sizes: [] }));
     setVariantOverrides([]);
     setVariationMode('fixed');
     setPendingFixedSwitch(false);
@@ -223,19 +195,8 @@ export function ProductFormPage() {
         collectionId: p.collectionId,
         shortDescription: p.shortDescription ?? '',
         fullDescription: p.fullDescription ?? '',
-        metalType: p.metalType,
-        purity: p.purity,
         goldColor: p.goldColor,
         goldWeightGrams: p.goldWeightGrams,
-        diamondWeightGrams: p.diamondWeightGrams,
-        diamondWeightCarats: p.diamondWeightCarats,
-        diamondConfigId: p.diamondConfigId,
-        diamondCount: p.diamondCount,
-        diamondTypeId: p.diamondTypeId,
-        diamondType: p.diamondType ?? '',
-        diamondColour: p.diamondColour ?? '',
-        diamondClarity: p.diamondClarity ?? '',
-        gemstone: p.gemstone ?? '',
         certification: p.certification ?? '',
         productSize: p.productSize ?? '',
         sizeLabel: p.sizeLabel ?? '',
@@ -244,24 +205,21 @@ export function ProductFormPage() {
           label: s.label,
           stockQuantity: s.stockQuantity,
           weightGrams: s.weightGrams,
-          diamondWeightCarats: s.diamondWeightCarats,
         })),
         goldColors: p.goldColorOptions,
-        purities: p.purityOptions,
-        diamondConfigIds: p.diamondOptions.map((d) => d.id),
         goldValue: p.priceBreakup.goldValue,
         // Load the pre-offer originals, not the (possibly discounted)
-        // priceBreakup.diamondValue/makingCharge/sellingPrice — otherwise
-        // re-saving a product with an active offer would bake the
-        // discounted figures in as the new base and compound the discount
-        // further on the next read.
-        diamondValue: p.priceBreakup.diamondValueOriginal,
+        // priceBreakup.makingCharge/sellingPrice — otherwise re-saving a
+        // product with an active offer would bake the discounted figures in
+        // as the new base and compound the discount further on the next read.
         makingCharge: p.priceBreakup.makingChargeOriginal,
         gstPercent: p.gstPercent,
         mrp: p.mrp,
         sellingPrice: p.sellingPriceOriginal,
-        makingChargeDiscountPercent: p.priceBreakup.makingChargeDiscountPercent || undefined,
-        diamondDiscountPercent: p.priceBreakup.diamondDiscountPercent || undefined,
+        // The admin's own typed defaults — not the resolved priceBreakup
+        // percentages, which a pricing rule may have set.
+        makingChargeDiscountPercent: p.makingChargeDiscountPercent || undefined,
+        stoneDiscountPercent: p.stoneDiscountPercent || undefined,
         stockQuantity: p.stockQuantity,
         status: p.status,
         showDeliveryChecker: p.showDeliveryChecker,
@@ -271,21 +229,21 @@ export function ProductFormPage() {
         metaKeywords: p.metaKeywords ?? '',
       });
       setMakingChargePercent(p.makingChargePercent ?? 0);
-      setVariationMode(
-        p.goldColorOptions.length || p.purityOptions.length || p.diamondOptions.length || p.sizes.length
-          ? 'selectable'
-          : 'fixed',
+      setStones(
+        p.stones.map((s) => ({
+          stoneTypeId: s.stoneTypeId,
+          count: String(s.count),
+          weightCarats: String(s.weightCarats),
+          price: String(s.price),
+        })),
       );
+      setVariationMode(p.goldColorOptions.length || p.sizes.length ? 'selectable' : 'fixed');
     }
   }, [productData]);
 
-  // Seeds the Weight Defaults / Purity Pricing Rules draft state from the
-  // saved rules once, on load — WeightDefaults/PurityPricingRules then own
-  // reconciling their own local text drafts as the admin edits purities/
-  // sizes/values (see their own axis-keyed useEffect). Only the SAVED
-  // override fields are used (not the resolved "effective" values the
-  // standalone GET endpoints also return) — editing must show what's
-  // actually stored, not a pre-resolved default.
+  // Seeds the Weight Defaults draft state from the saved rules once, on
+  // load — WeightDefaults then owns reconciling its own local text drafts
+  // as the admin edits sizes/values (see its own axis-keyed useEffect).
   useEffect(() => {
     if (!weightRulesData) return;
     setWeightRules({
@@ -297,18 +255,6 @@ export function ProductFormPage() {
         .map((r) => ({ purity: r.purity, sizeLabel: r.sizeLabel, goldWeightGrams: r.goldWeightGrams })),
     });
   }, [weightRulesData]);
-
-  useEffect(() => {
-    if (!purityPricingRulesData) return;
-    setPurityPricingRules(
-      purityPricingRulesData.rules.map((r) => ({
-        purity: r.purity,
-        makingChargePercent: r.makingChargePercent,
-        makingChargeDiscountPercent: r.makingChargeDiscountPercent,
-        diamondDiscountPercent: r.diamondDiscountPercent,
-      })),
-    );
-  }, [purityPricingRulesData]);
 
   // A bare "Validation failed" (the generic message for any Zod rejection)
   // gives no clue which field caused it — append the specific field errors
@@ -331,6 +277,8 @@ export function ProductFormPage() {
   // raw Zod "Validation failed" from the quicker "Start AI Generation" /
   // "Start Manual Upload" buttons, which used to send `form` unsanitized.
   function buildPayload(overrides: Partial<ProductInput> = {}): ProductInput {
+    const stoneInputs = toStoneInputs(stones);
+    if (stoneInputs.error) throw new Error(stoneInputs.error);
     return {
       ...form,
       name: form.name.trim(),
@@ -349,30 +297,23 @@ export function ProductFormPage() {
       // sent too, as the cached flat figure at today's gold value/purity.
       makingChargePercent: makingChargePercent === '' ? 0 : makingChargePercent,
       makingChargeDiscountPercent: form.makingChargeDiscountPercent ?? 0,
-      diamondDiscountPercent: form.diamondDiscountPercent ?? 0,
+      stoneDiscountPercent: form.stoneDiscountPercent ?? 0,
       mrp: form.mrp ?? 0,
       gstPercent: form.gstPercent ?? 3,
       shortDescription: form.shortDescription || null,
       fullDescription: form.fullDescription || null,
-      // diamondType (free text) is derived server-side from diamondTypeId now
-      // (productsService.js's syncDiamondTypeName) — no longer sent directly.
-      diamondTypeId: form.diamondTypeId || null,
-      diamondColour: form.diamondColour || null,
-      diamondClarity: form.diamondClarity || null,
-      gemstone: form.gemstone || null,
       certification: form.certification || null,
       productSize: form.productSize || null,
       sizeLabel: form.sizeLabel || null,
       careInstructions: form.careInstructions || null,
       sizes: (form.sizes ?? []).filter((s) => s.label.trim().length > 0),
+      stones: stoneInputs.stones,
       ...(!isEditing && variantOverrides.length > 0 ? { variantOverrides } : {}),
       // Always sent as the complete current draft (same "full desired
-      // state" contract as purities/sizes/goldColors above), not a delta —
-      // this form is the single source of truth for both while it's open,
-      // so every Save Product click replaces the saved rules with whatever
-      // is currently in these two sections.
+      // state" contract as sizes/goldColors/stones above), not a delta —
+      // this form is the single source of truth while it's open, so every
+      // Save Product click replaces the saved rules with what's shown.
       weightRules,
-      purityPricingRules,
       metaTitle: form.metaTitle || null,
       metaDescription: form.metaDescription || null,
       metaKeywords: form.metaKeywords || null,
@@ -383,13 +324,13 @@ export function ProductFormPage() {
   function addSizeRow() {
     setForm((f) => ({
       ...f,
-      sizes: [...(f.sizes ?? []), { label: '', stockQuantity: 0, weightGrams: null, diamondWeightCarats: null }],
+      sizes: [...(f.sizes ?? []), { label: '', stockQuantity: 0, weightGrams: null }],
     }));
   }
 
   function updateSizeRow(
     index: number,
-    patch: Partial<{ label: string; stockQuantity: number; weightGrams: number | null; diamondWeightCarats: number | null }>,
+    patch: Partial<{ label: string; stockQuantity: number; weightGrams: number | null }>,
   ) {
     setForm((f) => ({
       ...f,
@@ -397,23 +338,12 @@ export function ProductFormPage() {
     }));
   }
 
-  // A purity/size the currently-loaded (saved) product already offers may
-  // have real weight rules, purity pricing rules, and stocked variants
-  // attached — removing it here deletes all of that once Save Product is
-  // clicked. A purity/size that was only just added in this unsaved session
-  // (not in the originally-loaded product) has nothing saved to lose, so it
-  // comes off immediately with no prompt.
-  const originalPurities = productData?.product.purityOptions ?? [];
+  // A size the currently-loaded (saved) product already offers may have real
+  // weight rules and stocked variants attached — removing it here deletes
+  // all of that once Save Product is clicked. A size that was only just
+  // added in this unsaved session has nothing saved to lose, so it comes off
+  // immediately with no prompt.
   const originalSizeLabels = (productData?.product.sizes ?? []).map((s) => s.label);
-
-  function applyRemovePurity(purity: Purity) {
-    setForm((f) => ({ ...f, purities: (f.purities ?? []).filter((p) => p !== purity) }));
-    setWeightRules((wr) => ({
-      purityRules: wr.purityRules.filter((r) => r.purity !== purity),
-      puritySizeRules: wr.puritySizeRules.filter((r) => r.purity !== purity),
-    }));
-    setPurityPricingRules((rules) => rules.filter((r) => r.purity !== purity));
-  }
 
   function applyRemoveSizeRow(index: number) {
     const label = (form.sizes ?? [])[index]?.label.trim();
@@ -441,28 +371,6 @@ export function ProductFormPage() {
     }));
   }
 
-  function togglePurityOption(purity: Purity) {
-    const isSelected = (form.purities ?? []).includes(purity);
-    if (isSelected) {
-      if (isEditing && originalPurities.includes(purity)) {
-        setPendingRemoval({ type: 'purity', value: purity });
-        return;
-      }
-      applyRemovePurity(purity);
-      return;
-    }
-    setForm((f) => ({ ...f, purities: [...(f.purities ?? []), purity] }));
-  }
-
-  function toggleDiamondOption(id: string) {
-    setForm((f) => ({
-      ...f,
-      diamondConfigIds: (f.diamondConfigIds ?? []).includes(id)
-        ? (f.diamondConfigIds ?? []).filter((c) => c !== id)
-        : [...(f.diamondConfigIds ?? []), id],
-    }));
-  }
-
   // Keeps the flat form.makingCharge the API actually stores/uses in sync
   // with the % the admin enters, recomputed off the live gold value exactly
   // like the auto-preview effect below keeps goldValue itself current.
@@ -481,7 +389,7 @@ export function ProductFormPage() {
   // press, cluttering the Products list even when nobody follows through
   // with an actual upload.
   const createForStudioMutation = useMutation({
-    mutationFn: (overrides: { name: string; sku: string }) => createProduct(buildPayload(overrides)),
+    mutationFn: async (overrides: { name: string; sku: string }) => createProduct(buildPayload(overrides)),
     // replace: true — the blank Add Product page this came from is stale the
     // instant the product is created (it now exists for real elsewhere), so
     // the browser Back button shouldn't be able to land the admin back on
@@ -499,6 +407,11 @@ export function ProductFormPage() {
       setImageSourceError('Enter a product name before generating images with AI.');
       return;
     }
+    const stoneCheck = toStoneInputs(stones);
+    if (stoneCheck.error) {
+      setImageSourceError(stoneCheck.error);
+      return;
+    }
     setImageSourceError(null);
     const name = form.name.trim();
     const sku = form.sku.trim() || `DRAFT-${Date.now()}`;
@@ -512,7 +425,7 @@ export function ProductFormPage() {
   // attach images to. Mirrors handleGenerateWithAI's create flow, just
   // landing back on the edit page instead of AI Image Studio.
   const createForManualUploadMutation = useMutation({
-    mutationFn: (overrides: { name: string; sku: string }) => createProduct(buildPayload(overrides)),
+    mutationFn: async (overrides: { name: string; sku: string }) => createProduct(buildPayload(overrides)),
     // Same reasoning as the AI-studio create path above.
     onSuccess: (result) => navigate(`/products/${result.product.id}/edit`, { replace: true }),
     onError: (err) => setImageSourceError(describeError(err, 'Could not create product.')),
@@ -522,6 +435,11 @@ export function ProductFormPage() {
     if (isEditing) return;
     if (!form.name.trim()) {
       setImageSourceError('Enter a product name before uploading images.');
+      return;
+    }
+    const stoneCheck = toStoneInputs(stones);
+    if (stoneCheck.error) {
+      setImageSourceError(stoneCheck.error);
       return;
     }
     setImageSourceError(null);
@@ -557,16 +475,20 @@ export function ProductFormPage() {
     onError: (err) => {
       setSuccessMessage(null);
       setError(describeError(err, 'Could not save product.'));
-      // Field-level errors are almost always about a rule this admin just
-      // typed into Weight Defaults/Purity Pricing Rules (a purity/size not
-      // actually selected, a percent out of range, a duplicate) — jump
-      // there directly instead of leaving the admin to scroll and guess.
+      // Field-level errors are almost always about a stone line or a size
+      // weight this admin just typed — jump there directly instead of
+      // leaving the admin to scroll and guess. A stone-row problem caught
+      // client-side (toStoneInputs) arrives as a plain Error.
       const fields = err instanceof ApiError ? (err.fields ?? []) : [];
-      const isVariationError = fields.some(
-        (f) => f.path.includes('weightRules') || f.path.includes('purityPricingRules') || f.path.includes('purities') || f.path.includes('sizes'),
-      );
+      const isStoneError = !(err instanceof ApiError) || fields.some((f) => f.path.includes('stones'));
+      const isVariationError = fields.some((f) => f.path.includes('weightRules') || f.path.includes('sizes'));
+      const target = isStoneError
+        ? stonesSectionRef.current
+        : isVariationError
+          ? variationsSectionRef.current
+          : errorRef.current;
       requestAnimationFrame(() => {
-        (isVariationError ? variationsSectionRef.current : errorRef.current)?.scrollIntoView({
+        target?.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
@@ -582,20 +504,17 @@ export function ProductFormPage() {
     setIsPreviewing(true);
     try {
       const result = await previewPricing({
-        metalType: form.metalType,
-        purity: form.purity,
         goldWeightGrams: form.goldWeightGrams,
-        diamondWeightCarats: form.diamondWeightCarats,
-        diamondConfigId: form.diamondConfigId,
+        stones: stones.map((s) => ({ price: Number(s.price) || 0 })),
         makingCharge: form.makingCharge,
         gstPercent: form.gstPercent ?? 3,
       });
       setPreview(result);
       setPricingError(null);
-      // Auto-apply the computed breakdown so a saved product's Price
+      // Auto-apply the computed gold value so a saved product's Price
       // Breakup is correct immediately — sellingPrice stays admin-set
       // ("Use this price" below applies it explicitly).
-      setForm((f) => ({ ...f, goldValue: result.goldValue, diamondValue: result.diamondValue }));
+      setForm((f) => ({ ...f, goldValue: result.goldValue }));
       return true;
     } catch (err) {
       setPreview(null);
@@ -607,37 +526,29 @@ export function ProductFormPage() {
   }
 
   // Debounced auto-preview whenever the inputs that feed pricing change —
-  // only once there's something meaningful to compute (a purity for GOLD,
-  // or a diamond weight), so an empty new-product form doesn't error. Skips
+  // only once there's something meaningful to compute (a gold weight, or a
+  // priced stone), so an empty new-product form doesn't error. Skips
   // price-locked products entirely — opening the edit form shouldn't
   // silently recompute a value the admin deliberately froze.
+  const stonePriceSignature = stones.map((s) => s.price).join('|');
   useEffect(() => {
     if (productData?.product.isPriceLocked) return;
-    const hasGoldInputs = form.metalType === 'GOLD' && !!form.purity && !!form.goldWeightGrams;
-    const hasDiamondInputs = !!form.diamondWeightCarats && !!form.diamondConfigId;
-    if (!hasGoldInputs && !hasDiamondInputs) return;
+    const hasGoldInputs = !!form.goldWeightGrams;
+    const hasStoneInputs = stones.some((s) => Number(s.price) > 0);
+    if (!hasGoldInputs && !hasStoneInputs) return;
 
     const timer = setTimeout(() => {
       runPreview();
     }, 500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    form.metalType,
-    form.purity,
-    form.goldWeightGrams,
-    form.diamondWeightCarats,
-    form.diamondConfigId,
-    form.makingCharge,
-    form.gstPercent,
-  ]);
+  }, [form.goldWeightGrams, stonePriceSignature, form.makingCharge, form.gstPercent]);
 
   function applyPreview() {
     if (!preview) return;
     setForm((f) => ({
       ...f,
       goldValue: preview.goldValue,
-      diamondValue: preview.diamondValue,
       sellingPrice: preview.sellingPrice,
     }));
   }
@@ -648,14 +559,13 @@ export function ProductFormPage() {
   const collections = collectionsData?.collections ?? [];
   const isPriceLocked = productData?.product.isPriceLocked ?? false;
   // Mirrors the cartesian product syncProductVariants generates server-side
-  // — a pure client-side count for the "N combinations selected" summary,
-  // not a price/stock calculation.
+  // (the single 9K purity multiplies by 1) — a pure client-side count for
+  // the "N combinations selected" summary, not a price/stock calculation.
   const variationAxisSizes = [
     (form.goldColors ?? []).length,
-    (form.purities ?? []).length,
-    (form.diamondConfigIds ?? []).length,
     (form.sizes ?? []).filter((s) => s.label.trim().length > 0).length,
   ].filter((n) => n > 0);
+  const stoneTotal = stoneTotals(stones);
   const variationComboCount = variationAxisSizes.length === 0 ? 0 : variationAxisSizes.reduce((a, n) => a * n, 1);
 
   return (
@@ -696,6 +606,12 @@ export function ProductFormPage() {
           if (!form.name.trim()) {
             setError('Enter a product name.');
             requestAnimationFrame(() => errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+            return;
+          }
+          const stoneCheck = toStoneInputs(stones);
+          if (stoneCheck.error) {
+            setError(stoneCheck.error);
+            requestAnimationFrame(() => stonesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
             return;
           }
           if (isEditing && (imagesData?.images.length ?? 0) === 0) {
@@ -786,7 +702,7 @@ export function ProductFormPage() {
               checked={form.isNonReturnable ?? false}
               onChange={(e) => set('isNonReturnable', e.target.checked)}
             />
-            Non-returnable — no change-of-mind returns (solitaire, custom, engraved). Returns still allowed if damaged,
+            Non-returnable — no change-of-mind returns (custom, engraved). Returns still allowed if damaged,
             defective or wrong. Also applies automatically if its category is marked non-returnable.
           </label>
         </section>
@@ -848,39 +764,17 @@ export function ProductFormPage() {
         )}
 
         <section className={sharedStyles.cardPadded}>
-          <h2 className={styles.sectionHeading}>Metal, Diamond &amp; Pricing</h2>
+          <h2 className={styles.sectionHeading}>Gold &amp; Pricing</h2>
           <div className={sharedStyles.formGrid}>
             <label className={sharedStyles.field}>
-              Metal Type
-              <select value={form.metalType} onChange={(e) => set('metalType', e.target.value as MetalType)}>
-                {METAL_TYPES.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
+              Metal
+              <input value="9K Gold" disabled />
             </label>
             <label className={sharedStyles.field}>
-              Purity {form.metalType === 'PLATINUM' && '(N/A for platinum)'}
-              <select
-                value={form.purity ?? ''}
-                onChange={(e) => set('purity', (e.target.value || null) as Purity | null)}
-                disabled={form.metalType === 'PLATINUM'}
-              >
-                <option value="">—</option>
-                {PURITIES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={sharedStyles.field}>
-              Gold Color {form.metalType === 'PLATINUM' && '(N/A for platinum)'}
+              Gold Color
               <select
                 value={form.goldColor ?? ''}
                 onChange={(e) => set('goldColor', (e.target.value || null) as GoldColor | null)}
-                disabled={form.metalType === 'PLATINUM'}
               >
                 <option value="">—</option>
                 {GOLD_COLORS.map((c) => (
@@ -900,55 +794,12 @@ export function ProductFormPage() {
               />
             </label>
             <label className={sharedStyles.field}>
-              Diamond Weight (g)
+              Gross Weight (g)
               <input
-                type="number"
-                step="0.001"
-                min="0"
-                placeholder="Added into Gross Weight"
-                value={form.diamondWeightGrams ?? ''}
-                onChange={(e) => set('diamondWeightGrams', e.target.value ? Number(e.target.value) : null)}
+                value={(Number(form.goldWeightGrams ?? 0) + stoneTotal.carats * GRAMS_PER_CARAT).toFixed(3)}
+                disabled
               />
-              <span className={styles.sectionHint}>
-                Gross Weight ≈ {(Number(form.goldWeightGrams ?? 0) + Number(form.diamondWeightGrams ?? 0)).toFixed(3)} g
-                {' '}(Net Weight = Gold Weight only)
-              </span>
-            </label>
-            <label className={sharedStyles.field}>
-              Diamond Quality
-              <select
-                value={form.diamondConfigId ?? ''}
-                onChange={(e) => set('diamondConfigId', e.target.value || null)}
-              >
-                <option value="">—</option>
-                {(diamondConfigsData?.diamondConfigs ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} (₹{c.ratePerCent.toLocaleString('en-IN')}/cent)
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={sharedStyles.field}>
-              Diamond Carat (in cents) {form.diamondWeightCarats ? `— ${form.diamondWeightCarats} ct` : ''}
-              <input
-                type="number"
-                step="0.1"
-                // Entered/displayed in cents (1 carat = 100 cents) — stored as
-                // carats under the hood so the pricing engine (rate-per-carat)
-                // and everything downstream is untouched.
-                value={form.diamondWeightCarats ? Math.round(form.diamondWeightCarats * 1000) / 10 : ''}
-                onChange={(e) =>
-                  set('diamondWeightCarats', e.target.value ? Number(e.target.value) / 100 : null)
-                }
-              />
-            </label>
-            <label className={sharedStyles.field}>
-              Diamond Count
-              <input
-                type="number"
-                value={form.diamondCount ?? ''}
-                onChange={(e) => set('diamondCount', e.target.value ? Number(e.target.value) : null)}
-              />
+              <span className={styles.sectionHint}>Gold weight + stones (1 ct = 0.2 g) — calculated</span>
             </label>
             <label className={sharedStyles.field}>
               Certification
@@ -994,21 +845,21 @@ export function ProductFormPage() {
               />
             </label>
             <label className={sharedStyles.field}>
-              Default Diamond Discount (%)
+              Stone Discount (%)
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 max="100"
                 placeholder="0"
-                value={form.diamondDiscountPercent ?? ''}
-                onChange={(e) => set('diamondDiscountPercent', e.target.value ? Number(e.target.value) : undefined)}
+                value={form.stoneDiscountPercent ?? ''}
+                onChange={(e) => set('stoneDiscountPercent', e.target.value ? Number(e.target.value) : undefined)}
               />
             </label>
             <span className={styles.sectionHint}>
               Leave blank/0 for no offer. When set, this recalculates and lowers the Selling Price shown to
-              shoppers — it's a real discount, not just a label. These default values are used when a
-              purity-specific value is not configured below.
+              shoppers — it's a real discount, not just a label. A Category/Global rule on the Pricing page can
+              also apply instead.
             </span>
           </div>
 
@@ -1019,8 +870,8 @@ export function ProductFormPage() {
             {pricingError && <p className={sharedStyles.error}>{pricingError}</p>}
             {preview && (
               <div className={styles.previewResult}>
-                <span>Gold/Metal: {formatPrice(preview.goldValue)}</span>
-                <span>Diamond: {formatPrice(preview.diamondValue)}</span>
+                <span>Gold: {formatPrice(preview.goldValue)}</span>
+                <span>Stones: {formatPrice(preview.stoneValue)}</span>
                 <span className={styles.previewTotal}>Suggested Selling Price: {formatPrice(preview.sellingPrice)}</span>
                 <button type="button" className={sharedStyles.buttonLink} onClick={applyPreview}>
                   Use this price
@@ -1048,6 +899,17 @@ export function ProductFormPage() {
               Lock price (exclude from automatic gold-rate recalculation)
             </label>
           )}
+        </section>
+
+        <section ref={stonesSectionRef} className={`${sharedStyles.cardPadded} ${pv.section}`}>
+          <div className={pv.headRow}>
+            <h2 className={pv.heading}>Stones</h2>
+            <p className={pv.sub}>
+              The gemstones set in this piece — weight and price entered by hand. Stone value adds to the price before
+              GST and doesn't change with the gold rate.
+            </p>
+          </div>
+          <StonesEditor value={stones} onChange={setStones} />
         </section>
 
         <section ref={variationsSectionRef} className={`${sharedStyles.cardPadded} ${pv.section}`}>
@@ -1083,7 +945,7 @@ export function ProductFormPage() {
                 <span className={pv.modeRadioDot} />
                 Selectable Options
               </span>
-              <span className={pv.modeDesc}>Customers choose colour, purity, quality or size</span>
+              <span className={pv.modeDesc}>Customers choose gold colour or size</span>
             </button>
           </div>
 
@@ -1100,26 +962,6 @@ export function ProductFormPage() {
                   onToggle={(key) => toggleGoldColor(key as GoldColor)}
                 />
 
-                <OptionChipRow
-                  label="Purity"
-                  options={PURITIES.map((p) => ({
-                    key: p,
-                    label: p,
-                    selected: (form.purities ?? []).includes(p),
-                  }))}
-                  onToggle={(key) => togglePurityOption(key as Purity)}
-                />
-
-                <OptionChipRow
-                  label="Diamond Quality"
-                  options={(diamondConfigsData?.diamondConfigs ?? []).map((c) => ({
-                    key: c.id,
-                    label: c.name,
-                    selected: (form.diamondConfigIds ?? []).includes(c.id),
-                  }))}
-                  onToggle={toggleDiamondOption}
-                  emptyNote="No diamond quality tiers exist yet — add one on the Pricing page."
-                />
 
                 <div className={pv.attrRow}>
                   <div className={pv.attrLabelRow}>
@@ -1240,28 +1082,12 @@ export function ProductFormPage() {
               </div>
               <p className={pv.note}>New combinations inherit these values.</p>
 
-              {/* Driven entirely by the form's own unsaved purities/sizes —
-                  no productId, no saved-attributes wait. Appears the
-                  instant a purity is picked, in both Add and Edit mode, and
-                  is submitted through the single Save Product action below
-                  rather than owning its own save/API call. */}
-              <WeightDefaults
-                purities={form.purities ?? []}
-                sizes={form.sizes ?? []}
-                value={weightRules}
-                onChange={setWeightRules}
-              />
-
-              <PurityPricingRules
-                purities={form.purities ?? []}
-                productDefaults={{
-                  makingChargePercent: makingChargePercent === '' ? null : makingChargePercent,
-                  makingChargeDiscountPercent: form.makingChargeDiscountPercent ?? 0,
-                  diamondDiscountPercent: form.diamondDiscountPercent ?? 0,
-                }}
-                value={purityPricingRules}
-                onChange={setPurityPricingRules}
-              />
+              {/* Driven entirely by the form's own unsaved sizes — no
+                  productId, no saved-attributes wait. Appears the instant a
+                  size is added, in both Add and Edit mode, and is submitted
+                  through the single Save Product action below rather than
+                  owning its own save/API call. */}
+              <WeightDefaults purities={PURITIES} sizes={form.sizes ?? []} value={weightRules} onChange={setWeightRules} />
 
               {isEditing && id && productData?.product.attributes && (
                 <AvailabilityRules productId={id} attributes={productData.product.attributes} />
@@ -1281,8 +1107,8 @@ export function ProductFormPage() {
                       <span>{formatPrice(preview.goldValue)}</span>
                     </div>
                     <div className={pv.priceRow}>
-                      <span>Diamond value</span>
-                      <span>{formatPrice(preview.diamondValue)}</span>
+                      <span>Stone value</span>
+                      <span>{formatPrice(preview.stoneValue)}</span>
                     </div>
                     <div className={pv.priceRow}>
                       <span>Making charge</span>
@@ -1292,7 +1118,7 @@ export function ProductFormPage() {
                       <span>GST</span>
                       <span>
                         {formatPrice(
-                          Math.max(0, preview.sellingPrice - preview.goldValue - preview.diamondValue - preview.makingCharge),
+                          Math.max(0, preview.sellingPrice - preview.goldValue - preview.stoneValue - preview.makingCharge),
                         )}
                       </span>
                     </div>
@@ -1332,10 +1158,8 @@ export function ProductFormPage() {
                       <div className={pv.advancedBody}>
                         <VariantMatrixEditor
                           goldColors={form.goldColors ?? []}
-                          purities={form.purities ?? []}
-                          diamondConfigIds={form.diamondConfigIds ?? []}
+                          purities={PURITIES}
                           goldColorLabels={GOLD_COLOR_LABELS}
-                          diamondConfigNames={diamondConfigNames}
                           sizeLabels={(form.sizes ?? []).map((s) => s.label.trim()).filter(Boolean)}
                           value={variantOverrides}
                           onChange={setVariantOverrides}
@@ -1352,7 +1176,7 @@ export function ProductFormPage() {
         {pendingFixedSwitch && (
           <ConfirmDialog
             title="Switch to Fixed Product?"
-            message="This removes all Gold Colour, Purity, Diamond Quality and Size options from this product. Existing per-combination stock and weight data for those options will be cleared once you save — this can't be undone from here."
+            message="This removes all Gold Colour and Size options from this product. Existing per-combination stock and weight data for those options will be cleared once you save — this can't be undone from here."
             confirmLabel="Switch to Fixed"
             cancelLabel="Keep Selectable Options"
             danger
@@ -1363,14 +1187,13 @@ export function ProductFormPage() {
 
         {pendingRemoval && (
           <ConfirmDialog
-            title={pendingRemoval.type === 'purity' ? `Remove ${pendingRemoval.value}?` : `Remove size ${pendingRemoval.label}?`}
-            message="This has saved weight and/or purity pricing rules and variants attached. Removing it here deletes that saved data once you click Save Product — this can't be undone from here."
+            title={`Remove size ${pendingRemoval.label}?`}
+            message="This size has a saved weight and variants attached. Removing it here deletes that saved data once you click Save Product — this can't be undone from here."
             confirmLabel="Remove"
             cancelLabel="Keep"
             danger
             onConfirm={() => {
-              if (pendingRemoval.type === 'purity') applyRemovePurity(pendingRemoval.value);
-              else applyRemoveSizeRow(pendingRemoval.index);
+              applyRemoveSizeRow(pendingRemoval.index);
               setPendingRemoval(null);
             }}
             onCancel={() => setPendingRemoval(null)}

@@ -7,7 +7,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './Blog.module.css';
 
-const STOREFRONT_URL = import.meta.env.VITE_STOREFRONT_URL ?? 'https://boxdiamonds.com';
+const STOREFRONT_URL = import.meta.env.VITE_STOREFRONT_URL ?? 'https://9karet.com';
 
 function statusLabel(post: BlogPostSummary) {
   if (post.status === 'DRAFT') return { text: 'Draft', badge: 'badgeNeutral' };

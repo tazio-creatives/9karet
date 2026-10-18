@@ -23,7 +23,7 @@ import { RETURN_WINDOW_DAYS } from '../utils/orderStatus.js';
 // Return & Refund Policy: live photographs are required alongside the video.
 const MIN_RETURN_PHOTOS = 3;
 const MAX_RETURN_PHOTOS = 8;
-// Reasons allowed for a non-returnable product (solitaire, custom…) — the
+// Reasons allowed for a non-returnable product (custom, engraved…) — the
 // policy only excludes change-of-mind returns, never a faulty/wrong item.
 const PROBLEM_REASONS = ['DAMAGED', 'DEFECTIVE', 'WRONG_ITEM', 'NOT_AS_DESCRIBED'];
 
@@ -99,7 +99,7 @@ export async function create(req, res, next) {
     if (nonReturnable.length > 0 && !PROBLEM_REASONS.includes(reason)) {
       throw new AppError(
         400,
-        'This order contains a non-returnable item (e.g. solitaire or custom jewellery), so it can only be returned if it arrived damaged, defective, incorrect or not as described.',
+        'This order contains a non-returnable item (e.g. custom or engraved jewellery), so it can only be returned if it arrived damaged, defective, incorrect or not as described.',
       );
     }
 

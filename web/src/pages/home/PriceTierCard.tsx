@@ -13,7 +13,7 @@ export function PriceTierCard({ item }: { item: HomepageItem }) {
   const href = linkFor(item);
   const content = (
     <>
-      <DiamondIcon />
+      <GemIcon />
       {item.heading && <span className={styles.label}>{item.heading}</span>}
     </>
   );
@@ -27,7 +27,7 @@ export function PriceTierCard({ item }: { item: HomepageItem }) {
   );
 }
 
-function DiamondIcon() {
+function GemIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M6 3h12l4 6-10 12L2 9l4-6z" />

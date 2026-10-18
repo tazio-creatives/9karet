@@ -15,8 +15,7 @@ function TagIcon() {
 
 function materialFor(product: { metalType: string | null; purity: string | null }): string | null {
   if (!product.metalType) return null;
-  const metalLabel = product.metalType === 'GOLD' ? 'Gold' : 'Platinum';
-  return product.purity ? `${product.purity} ${metalLabel}` : metalLabel;
+  return `${product.purity ?? '9K'} Gold`;
 }
 
 // One category's block: an image+name tile leading the same row as its top

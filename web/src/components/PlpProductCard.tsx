@@ -9,7 +9,8 @@ import { COLOR_SWATCH } from '../features/pdp/goldColorSwatch';
 import { WishlistButton } from './WishlistButton';
 import styles from './PlpProductCard.module.css';
 
-const PLATINUM_DOT_HEX = '#9DA3A6';
+// Shown when a product has no gold colour set.
+const DEFAULT_GOLD_DOT_HEX = '#d9ad42';
 
 function TagIcon() {
   return (
@@ -20,7 +21,7 @@ function TagIcon() {
   );
 }
 
-function DiamondIcon() {
+function GemIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
       <path d="M6 3h12l4 6-10 12L2 9z" strokeLinejoin="round" />
@@ -50,15 +51,10 @@ export function PlpProductCard({ product, index = 0, onAddToCart, isAdding, just
   const stock = getStockStatus(product.availableStock);
   const strikePrice = product.strikePrice;
 
-  const metalDotColor =
-    product.metalType === 'PLATINUM'
-      ? PLATINUM_DOT_HEX
-      : product.goldColor
-        ? COLOR_SWATCH[product.goldColor].hex
-        : PLATINUM_DOT_HEX;
-  const metalLabel = product.metalType === 'PLATINUM' ? 'Platinum' : product.goldColor ? COLOR_SWATCH[product.goldColor].label : 'Gold';
-  const metalText = product.purity ? `${product.purity} ${metalLabel}` : metalLabel;
-  const diamondText = product.diamondClarity && product.diamondColour ? `${product.diamondClarity} ${product.diamondColour}` : null;
+  const metalDotColor = product.goldColor ? COLOR_SWATCH[product.goldColor].hex : DEFAULT_GOLD_DOT_HEX;
+  const metalLabel = product.goldColor ? COLOR_SWATCH[product.goldColor].label : 'Gold';
+  const metalText = `${product.purity ?? '9K'} ${metalLabel}`;
+  const stoneText = product.stoneWeightCarats ? `${product.stoneWeightCarats.toFixed(2)} ct gemstones` : null;
 
   return (
     <div className={styles.card}>
@@ -95,12 +91,12 @@ export function PlpProductCard({ product, index = 0, onAddToCart, isAdding, just
             <span className={styles.metalDot} style={{ background: metalDotColor }} />
             <span>{metalText}</span>
           </span>
-          {diamondText && (
+          {stoneText && (
             <>
               <span className={styles.specDivider} />
               <span className={styles.specItem}>
-                <DiamondIcon />
-                <span>{diamondText}</span>
+                <GemIcon />
+                <span>{stoneText}</span>
               </span>
             </>
           )}

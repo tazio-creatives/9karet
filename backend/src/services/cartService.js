@@ -37,9 +37,9 @@ function toItemDto(item, product, variant, pricing) {
   // already baked into selling_price, backed out per line so the cart can
   // show a real GST-exclusive subtotal without guessing a flat rate.
   const lineGoldValue = round2(pricing.goldValue * item.quantity);
-  const lineDiamondValue = round2(pricing.diamondValue * item.quantity);
+  const lineStoneValue = round2(pricing.stoneValue * item.quantity);
   const lineMakingCharge = round2(pricing.makingCharge * item.quantity);
-  const lineGst = round2(lineTotal - lineGoldValue - lineDiamondValue - lineMakingCharge);
+  const lineGst = round2(lineTotal - lineGoldValue - lineStoneValue - lineMakingCharge);
   // A variant's real availability is its own stock, not the product-level
   // rollup (which sums every variant together).
   const availableStock = variant.stock_quantity;
@@ -60,8 +60,6 @@ function toItemDto(item, product, variant, pricing) {
     goldColor: pricing.goldColor,
     productSize: product.product_size ?? null,
     sizeLabel,
-    diamondConfigId: pricing.diamondConfigId,
-    diamondConfigName: variant.attributes?.diamond_quality?.label ?? null,
     sellingPrice,
     // Display-only — same pre-offer figure PDP/PLP/home already expose
     // (computeVariantPricing -> applyProductOffer), so the cart row can
@@ -128,13 +126,14 @@ export async function addItem(owner, { productId, variantId, quantity }) {
 
   const variants = await findVariantsByProductId(productId);
   if (variants.length > 1 && !variantId) {
-    // More than the synthetic default variant exists — a specific
-    // combination must be chosen.
+    // More than one real combination exists — a specific one must be chosen.
     throw new AppError(400, 'Please select all product options');
   }
-  const variant = variantId
-    ? variants.find((v) => v.id === variantId)
-    : variants.find((v) => v.combination_key === '');
+  // With no variantId, the product's only variant is the one meant — on
+  // 9Karet that's the single 9K variant of a product with no colour/size
+  // options (every product carries the 9K purity axis, so it has a real
+  // combination rather than the synthetic empty-key default).
+  const variant = variantId ? variants.find((v) => v.id === variantId) : variants[0];
   if (!variant) throw new AppError(400, 'Selected combination is not available for this product');
   if (!variant.is_available) throw new AppError(409, 'Selected combination is no longer available');
 

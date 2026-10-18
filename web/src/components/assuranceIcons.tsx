@@ -5,7 +5,7 @@
 // keeps its own layout/CSS and its own title/description text — only the
 // glyphs are shared. `currentColor` stroke, no fill, so each caller controls
 // icon colour entirely from its own CSS.
-export function DiamondIcon() {
+export function GemIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
       <path d="M4.5 8l3-5h9l3 5-8.5 12.5z" strokeLinejoin="round" />

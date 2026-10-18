@@ -5,8 +5,6 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'http://localhost:5173'
 
 // Official social profiles — the footer icons and the Organization JSON-LD
 // sameAs (which tells Google these profiles belong to this site) both read
-// this one list.
-export const SOCIAL_LINKS = {
-  instagram: 'https://www.instagram.com/boxdiamonds01/',
-  facebook: 'https://www.facebook.com/profile.php?id=61594060908005',
-};
+// this one list. Empty until 9Karet's own profiles exist: a profile is only
+// shown/linked once its URL is filled in here.
+export const SOCIAL_LINKS: { instagram?: string; facebook?: string } = {};

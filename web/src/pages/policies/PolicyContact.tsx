@@ -6,12 +6,12 @@ export function PolicyContact({ assistanceWith }: { assistanceWith: string }) {
     <>
       <p>
         For {assistanceWith}, please email us at{' '}
-        <a href="mailto:info@boxdiamonds.com">info@boxdiamonds.com</a> or visit{' '}
-        <a href="https://www.boxdiamonds.com">www.boxdiamonds.com</a>. Please keep your order number available when
+        <a href="mailto:info@9karet.com">info@9karet.com</a> or visit{' '}
+        <a href="https://www.9karet.com">www.9karet.com</a>. Please keep your order number available when
         contacting our team.
       </p>
       <p>
-        Box Diamonds
+        9Karet
         <br />
         Owned by Goldbox Diamonds Private Limited (CIN: U32111MH2025PTC458218)
         <br />

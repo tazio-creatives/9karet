@@ -12,6 +12,8 @@ build/
 npm-debug.log*
 
 .DS_Store
+# macOS resource-fork files (appear when copying from a Mac)
+._*
 .vscode/*
 !.vscode/extensions.json
 

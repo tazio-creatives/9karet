@@ -4,6 +4,9 @@ import { fetchVariantPricePreview } from '../api/products';
 
 const LOW_STOCK_THRESHOLD = 3;
 
+// 1 ct = 0.2 g — a piece's stones add into its gross weight.
+const GRAMS_PER_CARAT = 0.2;
+
 function findAttributeValueId(
   product: ProductDetail,
   code: string,
@@ -12,20 +15,20 @@ function findAttributeValueId(
   return product.attributes.find((a) => a.code === code)?.values.find(matches)?.id ?? null;
 }
 
-// Resolves a {goldColor, purity, diamondConfigId, sizeId} selection to a
-// real product_variants row — every axis the product actually has configured
-// must be selected for a match to exist (variants are exact combinations,
-// not independently-priceable axes the way the old model was). Returns null
-// while the selection is still incomplete or doesn't correspond to any real
-// (offered) combination.
+// Every 9Karet product carries exactly one purity value (9K) — it's part of
+// each variant's combination, but never something the shopper picks.
+function productPurity(product: ProductDetail): string | null {
+  return product.attributes.find((a) => a.code === 'purity')?.values[0]?.value ?? null;
+}
+
+// Resolves a {goldColor, purity, sizeId} selection to a real
+// product_variants row — every axis the product actually has configured
+// must be selected for a match to exist (variants are exact combinations).
+// Returns null while the selection is still incomplete or doesn't
+// correspond to any real (offered) combination.
 function resolveVariantId(
   product: ProductDetail,
-  selection: {
-    goldColor: GoldColor | null;
-    purity: string | null;
-    diamondConfigId: string | null;
-    sizeId: string | null;
-  },
+  selection: { goldColor: GoldColor | null; purity: string | null; sizeId: string | null },
 ): string | null {
   const requiredIds: string[] = [];
   if (selection.goldColor) {
@@ -35,11 +38,6 @@ function resolveVariantId(
   }
   if (selection.purity) {
     const id = findAttributeValueId(product, 'purity', (v) => v.value === selection.purity);
-    if (!id) return null;
-    requiredIds.push(id);
-  }
-  if (selection.diamondConfigId) {
-    const id = findAttributeValueId(product, 'diamond_quality', (v) => v.refId === selection.diamondConfigId);
     if (!id) return null;
     requiredIds.push(id);
   }
@@ -57,8 +55,7 @@ function resolveVariantId(
 }
 
 // True if some currently-*available* variant carries every one of the given
-// attribute_value ids together — the shared engine behind every pairwise
-// compatibility check below. Checking v.isAvailable here is what actually
+// attribute_value ids together. Checking v.isAvailable here is what actually
 // makes an admin's Availability Rule (or a manual per-variant exclusion)
 // take effect on the storefront: a combination can have a real variant row
 // and still not be offered.
@@ -67,65 +64,21 @@ function isCombinationAvailable(product: ProductDetail, ids: string[]): boolean 
   return product.variants.some((v) => v.isAvailable && ids.every((id) => v.attributeValueIds.includes(id)));
 }
 
-// A color is "available at this purity" for this product if at least one
-// real, currently-offered (available) combination pairs them — replaces the
-// old universal hardcoded rule (9K has no Rose Gold, for every product) with
-// per-product truth driven by whatever variants actually exist, including
-// admin-defined Availability Rules.
-function colorAvailableAtPurity(product: ProductDetail, color: GoldColor, purity: string | null | undefined): boolean {
+// A colour is available if at least one real, currently-offered variant
+// carries it — e.g. an Availability Rule can switch Rose Gold off entirely.
+function colorAvailable(product: ProductDetail, color: GoldColor): boolean {
   const colorId = findAttributeValueId(product, 'gold_color', (v) => v.value === color);
   if (!colorId) return true; // axis not configured at all — nothing to conflict with
-  const purityId = purity ? findAttributeValueId(product, 'purity', (v) => v.value === purity) : null;
-  return isCombinationAvailable(product, purityId ? [colorId, purityId] : [colorId]);
+  return isCombinationAvailable(product, [colorId]);
 }
 
-// Same idea for Diamond Quality vs. Purity — the pairing an Availability
-// Rule most commonly targets (e.g. "GH isn't available in 18K").
-function diamondAvailableAtPurity(
-  product: ProductDetail,
-  diamondConfigId: string,
-  purity: string | null | undefined,
-): boolean {
-  const diamondId = findAttributeValueId(product, 'diamond_quality', (v) => v.refId === diamondConfigId);
-  if (!diamondId) return true;
-  const purityId = purity ? findAttributeValueId(product, 'purity', (v) => v.value === purity) : null;
-  return isCombinationAvailable(product, purityId ? [diamondId, purityId] : [diamondId]);
-}
-
-// And Purity itself, checked against whatever's already selected on the
-// other two axes — keeps the relationship symmetric so a purity that would
-// break the shopper's existing color/diamond choice is disabled too, not
-// just auto-corrected after the fact.
-function purityAvailable(
-  product: ProductDetail,
-  purity: string,
-  selectedGoldColor: GoldColor | null,
-  selectedDiamondConfigId: string | null,
-): boolean {
-  const purityId = findAttributeValueId(product, 'purity', (v) => v.value === purity);
-  if (!purityId) return true;
-  const ids = [purityId];
-  if (selectedGoldColor) {
-    const colorId = findAttributeValueId(product, 'gold_color', (v) => v.value === selectedGoldColor);
-    if (colorId) ids.push(colorId);
-  }
-  if (selectedDiamondConfigId) {
-    const diamondId = findAttributeValueId(product, 'diamond_quality', (v) => v.refId === selectedDiamondConfigId);
-    if (diamondId) ids.push(diamondId);
-  }
-  return isCombinationAvailable(product, ids);
-}
-
-// Owns gold color / purity / diamond quality / size selection, live
-// price-preview recompute, and admin-default selection for any surface that
-// needs to add a variant product to cart — originally inline in PDPPage.tsx,
-// extracted so the PLP quick-add sheet can share the exact same
-// defaulting/validation behavior instead of re-implementing it.
+// Owns gold color / size selection, live price-preview recompute, and
+// admin-default selection for any surface that needs to add a variant
+// product to cart — shared by the PDP and the PLP quick-add sheet so both
+// default and validate identically.
 export function useVariantSelection(product: ProductDetail | undefined) {
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
   const [selectedGoldColor, setSelectedGoldColor] = useState<GoldColor | null>(null);
-  const [selectedPurity, setSelectedPurity] = useState<string | null>(null);
-  const [selectedDiamondConfigId, setSelectedDiamondConfigId] = useState<string | null>(null);
   const [pricePreview, setPricePreview] = useState<VariantPricePreview | null>(null);
 
   // A different product's variant choices never carry over — reset them
@@ -133,25 +86,19 @@ export function useVariantSelection(product: ProductDetail | undefined) {
   useEffect(() => {
     setSelectedSizeId(null);
     setSelectedGoldColor(null);
-    setSelectedPurity(null);
-    setSelectedDiamondConfigId(null);
     setPricePreview(null);
   }, [product]);
 
+  const selectedPurity = product ? productPurity(product) : null;
   const selectedVariantId = product
-    ? resolveVariantId(product, {
-        goldColor: selectedGoldColor,
-        purity: selectedPurity,
-        diamondConfigId: selectedDiamondConfigId,
-        sizeId: selectedSizeId,
-      })
+    ? resolveVariantId(product, { goldColor: selectedGoldColor, purity: selectedPurity, sizeId: selectedSizeId })
     : null;
 
   // Only a fully-resolved, real combination can be priced — live-recomputed
   // from the same engine cart/checkout use, so what's shown here (and what
   // gets added to cart) always matches what actually gets charged. While
   // the selection is still incomplete, displayPrice below falls back to the
-  // product's own (already "cheapest available variant") base price.
+  // product's own base price.
   useEffect(() => {
     setPricePreview(null);
     if (!product || !selectedVariantId) return;
@@ -168,39 +115,24 @@ export function useVariantSelection(product: ProductDetail | undefined) {
     };
   }, [product, selectedVariantId]);
 
-  // Purity/Diamond Quality/Gold Color default to whichever value the admin
-  // themselves set as the product's own base configuration — not
-  // automatically the cheapest configured option on that axis. Falls back
-  // to the first configured option only when the admin's own value isn't
-  // actually among the configured options (data inconsistency, shouldn't
-  // normally happen). Size has no equivalent "admin default" (sizes are
-  // just a stock catalog), so it keeps defaulting to the smallest available
-  // size. Keyed on the product id (not on the selections themselves) so
-  // this only runs once per product load and never clobbers a shopper's own
-  // later choice.
+  // Gold Color defaults to whichever value the admin set as the product's
+  // own base configuration (falling back to Yellow, then the first offered
+  // colour). Size has no equivalent "admin default", so it defaults to the
+  // smallest size — the same one the backend's cached base price is computed
+  // for (productsService.js's pickSmallestSizeValue). Keyed on the product
+  // id so this only runs once per product load and never clobbers a
+  // shopper's own later choice.
   useEffect(() => {
     if (!product) return;
-    if (product.purityOptions.length > 0) {
-      const defaultPurity =
-        product.purity && product.purityOptions.includes(product.purity)
-          ? product.purity
-          : [...product.purityOptions].sort((a, b) => parseInt(a, 10) - parseInt(b, 10))[0];
-      setSelectedPurity(defaultPurity);
-    }
-    if (product.diamondOptions.length > 0) {
-      const adminDefault = product.diamondConfigId
-        ? product.diamondOptions.find((d) => d.id === product.diamondConfigId)
-        : undefined;
-      const defaultDiamond = adminDefault ?? product.diamondOptions[0];
-      setSelectedDiamondConfigId(defaultDiamond.id);
-    }
     if (product.goldColorOptions.length > 0) {
+      const offered = product.goldColorOptions.filter((c) => colorAvailable(product, c));
+      const options = offered.length > 0 ? offered : product.goldColorOptions;
       const defaultColor =
-        product.goldColor && product.goldColorOptions.includes(product.goldColor)
+        product.goldColor && options.includes(product.goldColor)
           ? product.goldColor
-          : product.goldColorOptions.includes('YELLOW')
+          : options.includes('YELLOW')
             ? 'YELLOW'
-            : product.goldColorOptions[0];
+            : options[0];
       setSelectedGoldColor(defaultColor);
     }
     if (product.sizes.length > 0) {
@@ -215,30 +147,6 @@ export function useVariantSelection(product: ProductDetail | undefined) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
-  // Some colors aren't manufactured at some purities — if the current pair
-  // ever becomes invalid, whether from the default-selection effect above
-  // landing on a conflicting admin-set default or the shopper switching
-  // purity while an unavailable color was selected, fall back to another
-  // available color rather than leaving an invalid combination silently
-  // selected. Driven by this product's real variants, not a hardcoded rule.
-  useEffect(() => {
-    if (!product || !selectedGoldColor || !selectedPurity) return;
-    if (colorAvailableAtPurity(product, selectedGoldColor, selectedPurity)) return;
-    const fallback = product.goldColorOptions.find((c) => colorAvailableAtPurity(product, c, selectedPurity));
-    if (fallback) setSelectedGoldColor(fallback);
-  }, [selectedPurity, selectedGoldColor, product]);
-
-  // Same idea for Diamond Quality — an Availability Rule (e.g. "GH isn't
-  // available in 18K") can make the currently-selected diamond quality
-  // invalid the moment purity changes; fall back to another available one
-  // rather than silently letting an unavailable combination stay selected.
-  useEffect(() => {
-    if (!product || !selectedDiamondConfigId || !selectedPurity) return;
-    if (diamondAvailableAtPurity(product, selectedDiamondConfigId, selectedPurity)) return;
-    const fallback = product.diamondOptions.find((d) => diamondAvailableAtPurity(product, d.id, selectedPurity));
-    if (fallback) setSelectedDiamondConfigId(fallback.id);
-  }, [selectedPurity, selectedDiamondConfigId, product]);
-
   const selectedSize = product?.sizes.find((s) => s.id === selectedSizeId) ?? null;
   // A product-level rollup is wrong once a specific size is picked — a
   // product with some in-stock and some out-of-stock sizes must reflect the
@@ -252,7 +160,6 @@ export function useVariantSelection(product: ProductDetail | undefined) {
     : false;
   const isLowStock = product ? !isOutOfStock && product.availableStock <= LOW_STOCK_THRESHOLD : false;
 
-  const selectedDiamondOption = product?.diamondOptions.find((d) => d.id === selectedDiamondConfigId) ?? null;
   const displayPrice = pricePreview?.sellingPrice ?? product?.sellingPrice ?? 0;
   const displaySellingPriceOriginal = pricePreview?.sellingPriceOriginal ?? product?.sellingPriceOriginal ?? 0;
   // Server-resolved (pricePreview reflects the exact selected variant;
@@ -263,63 +170,49 @@ export function useVariantSelection(product: ProductDetail | undefined) {
   const displayOfferLabel = pricePreview?.offerLabel ?? product?.offerLabel ?? null;
   const displayOfferBadges = pricePreview?.offerBadges ?? product?.offerBadges ?? [];
 
-  // The live-resolved gold weight for whatever combination is selected (may
-  // differ from the product's own base weight — see Weight Defaults, a
-  // purity or purity+size rule can give a combination a different physical
-  // weight). Net Weight mirrors Gold Weight exactly for these gold-only
-  // products (see ProductFormPage's "Net Weight = Gold Weight only" note);
-  // Gross Weight adds the diamond's own weight in grams, which never varies
-  // by combination (no per-variant/rule mechanism exists for it), so that
-  // component always comes from the product's own base value.
+  // The live-resolved gold weight for whatever combination is selected (a
+  // bigger size can weigh more — see Weight Defaults). Net Weight is the
+  // gold alone; Gross Weight adds the stones, which are the same for every
+  // combination.
   const displayGoldWeightGrams = pricePreview?.goldWeightGrams ?? product?.goldWeightGrams ?? null;
-  const displayDiamondWeightCarats = pricePreview?.diamondWeightCarats ?? product?.diamondWeightCarats ?? null;
+  const displayStoneWeightCarats = product?.stoneWeightCarats ?? null;
   const displayNetWeightGrams = displayGoldWeightGrams;
   const displayGrossWeightGrams =
-    displayGoldWeightGrams != null ? displayGoldWeightGrams + (product?.diamondWeightGrams ?? 0) : null;
+    displayGoldWeightGrams != null
+      ? Math.round((displayGoldWeightGrams + (displayStoneWeightCarats ?? 0) * GRAMS_PER_CARAT) * 1000) / 1000
+      : null;
   const displayBreakup = pricePreview
     ? {
         goldValue: pricePreview.goldValue,
-        diamondValue: pricePreview.diamondValue,
-        diamondValueOriginal: pricePreview.diamondValueOriginal,
+        stoneValue: pricePreview.stoneValue,
+        stoneValueOriginal: pricePreview.stoneValueOriginal,
         makingCharge: pricePreview.makingCharge,
         makingChargeOriginal: pricePreview.makingChargeOriginal,
         makingChargeDiscountPercent: pricePreview.makingChargeDiscountPercent,
-        diamondDiscountPercent: pricePreview.diamondDiscountPercent,
+        stoneDiscountPercent: pricePreview.stoneDiscountPercent,
         gstAmount: pricePreview.gstAmount,
         total: pricePreview.sellingPrice,
       }
     : product?.priceBreakup;
 
-  // Bound to this product so ColorSelector/PillSelector (generic, no
-  // product reference) can check real per-product combination validity
-  // without importing a hardcoded rule.
-  const isColorAvailableAtPurity = (color: GoldColor, purity: string | null | undefined) =>
-    !product ? true : colorAvailableAtPurity(product, color, purity);
-  const isDiamondAvailableAtPurity = (diamondConfigId: string) =>
-    !product ? true : diamondAvailableAtPurity(product, diamondConfigId, selectedPurity);
-  const isPurityAvailable = (purity: string) =>
-    !product ? true : purityAvailable(product, purity, selectedGoldColor, selectedDiamondConfigId);
+  // Bound to this product so ColorSelector (generic, no product reference)
+  // can check real per-product availability without a hardcoded rule.
+  const isColorAvailable = (color: GoldColor) => (!product ? true : colorAvailable(product, color));
 
   return {
     selectedSizeId,
     setSelectedSizeId,
     selectedGoldColor,
     setSelectedGoldColor,
-    isColorAvailableAtPurity,
+    isColorAvailable,
     selectedPurity,
-    setSelectedPurity,
-    isPurityAvailable,
-    selectedDiamondConfigId,
-    setSelectedDiamondConfigId,
-    isDiamondAvailableAtPurity,
     selectedVariantId,
     pricePreview,
     selectedSize,
     isOutOfStock,
     isLowStock,
-    selectedDiamondOption,
     displayGoldWeightGrams,
-    displayDiamondWeightCarats,
+    displayStoneWeightCarats,
     displayNetWeightGrams,
     displayGrossWeightGrams,
     displayPrice,

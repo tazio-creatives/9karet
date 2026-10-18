@@ -42,10 +42,10 @@ function formatGrams(value: number | null): string | null {
 function buildProductDetailRows(item: OrderItem): [string, string][] {
   const rows: [string, string][] = [
     ['SKU', item.productSku],
-    ['Certification', 'IGI, GII, GIG'],
+    ['Certification', 'BIS Hallmarked'],
   ];
 
-  const metalLabel = item.metalType === 'PLATINUM' ? 'Platinum' : item.metalType === 'GOLD' ? 'Gold' : null;
+  const metalLabel = item.metalType === 'GOLD' ? 'Gold' : null;
   const goldColorLabel = item.goldColor ? item.goldColor.charAt(0) + item.goldColor.slice(1).toLowerCase() : '';
   const metal = [item.purity, goldColorLabel, metalLabel].filter(Boolean).join(' ');
   if (metal) rows.push(['Metal', metal]);
@@ -55,16 +55,13 @@ function buildProductDetailRows(item: OrderItem): [string, string][] {
   if (goldWeight) rows.push(['Gold Weight', goldWeight]);
   const netWeight = formatGrams(item.netWeightGrams);
   if (netWeight) rows.push(['Net Weight', netWeight]);
-  const diamondWeightGrams = formatGrams(item.diamondWeightGrams);
-  if (diamondWeightGrams) rows.push(['Natural Diamond Weight', diamondWeightGrams]);
   const grossWeight = formatGrams(item.grossWeightGrams);
   if (grossWeight) rows.push(['Gross Weight', grossWeight]);
-  if (item.diamondWeightCarats != null) rows.push(['Natural Diamond Carat', `${item.diamondWeightCarats.toFixed(3)} ct`]);
-  if (item.diamondConfigName) rows.push(['Natural Diamond Quality', item.diamondConfigName]);
-  if (item.diamondCount != null) rows.push(['Natural Diamond Count', String(item.diamondCount)]);
-  if (item.diamondColour) rows.push(['Natural Diamond Colour', item.diamondColour]);
-  if (item.diamondClarity) rows.push(['Natural Diamond Clarity', item.diamondClarity]);
-  if (item.gemstone) rows.push(['Gemstone', item.gemstone]);
+  // The stones this exact piece was sold with (frozen at checkout).
+  for (const stone of item.stones) {
+    const weight = stone.weightCarats != null ? `, ${stone.weightCarats.toFixed(3)} ct` : '';
+    rows.push([stone.stoneTypeName, `${stone.count} pc${weight}`]);
+  }
 
   return rows;
 }
@@ -275,7 +272,7 @@ export function OrderDetailContent({ id, compact = false }: { id: string; compac
               <BoxIcon size={16} /> Items ({order.items.length})
             </h2>
             {order.items.map((item) => {
-              const variants = [item.sizeLabel, item.purity, item.goldColor, item.diamondConfigName].filter(
+              const variants = [item.sizeLabel, item.purity, item.goldColor].filter(
                 (v): v is string => Boolean(v),
               );
               const detailRows = buildProductDetailRows(item);

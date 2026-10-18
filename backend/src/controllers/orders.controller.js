@@ -180,7 +180,7 @@ export async function get(req, res, next) {
       };
     });
 
-    // Non-returnable items (solitaire, custom…) limit the return form to
+    // Non-returnable items (custom, engraved…) limit the return form to
     // problem reasons — see orderReturns.controller.js.
     const nonReturnableIds = new Set(await findNonReturnableProductIds(items.map((i) => i.product_id).filter(Boolean)));
     dto.hasNonReturnableItems = nonReturnableIds.size > 0;

@@ -1,7 +1,7 @@
 import { query } from '../config/db.js';
 
 const RULE_SELECT = `
-  SELECT r.id, r.purity_value_id, r.making_charge_percent, r.making_charge_discount_percent, r.diamond_discount_percent,
+  SELECT r.id, r.purity_value_id, r.making_charge_percent, r.making_charge_discount_percent, r.stone_discount_percent,
     pav.label AS purity_label, pav.value AS purity_value
   FROM product_purity_pricing_rules r
   JOIN attribute_values pav ON pav.id = r.purity_value_id
@@ -12,7 +12,7 @@ const RULE_SELECT = `
 // findWeightRuleValuesByProduct.
 export async function findPurityPricingRuleValuesByProduct(productId) {
   const { rows } = await query(
-    `SELECT purity_value_id, making_charge_percent, making_charge_discount_percent, diamond_discount_percent
+    `SELECT purity_value_id, making_charge_percent, making_charge_discount_percent, stone_discount_percent
      FROM product_purity_pricing_rules WHERE product_id = $1`,
     [productId],
   );
@@ -25,7 +25,7 @@ export async function findPurityPricingRuleValuesByProduct(productId) {
 export async function findPurityPricingRuleValuesByProductIds(productIds) {
   if (productIds.length === 0) return new Map();
   const { rows } = await query(
-    `SELECT product_id, purity_value_id, making_charge_percent, making_charge_discount_percent, diamond_discount_percent
+    `SELECT product_id, purity_value_id, making_charge_percent, making_charge_discount_percent, stone_discount_percent
      FROM product_purity_pricing_rules WHERE product_id = ANY($1)`,
     [productIds],
   );
@@ -62,18 +62,18 @@ export async function findPurityPricingRuleByProductAndPurity(productId, purityV
 export async function replacePurityPricingRules(productId, rules) {
   await query('DELETE FROM product_purity_pricing_rules WHERE product_id = $1', [productId]);
   const rowsToInsert = rules.filter(
-    (r) => r.makingChargePercent != null || r.makingChargeDiscountPercent != null || r.diamondDiscountPercent != null,
+    (r) => r.makingChargePercent != null || r.makingChargeDiscountPercent != null || r.stoneDiscountPercent != null,
   );
   if (!rowsToInsert.length) return;
   const values = [];
   const placeholders = rowsToInsert.map((r, i) => {
-    values.push(productId, r.purityValueId, r.makingChargePercent, r.makingChargeDiscountPercent, r.diamondDiscountPercent);
+    values.push(productId, r.purityValueId, r.makingChargePercent, r.makingChargeDiscountPercent, r.stoneDiscountPercent);
     const base = i * 5;
     return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`;
   });
   await query(
     `INSERT INTO product_purity_pricing_rules
-       (product_id, purity_value_id, making_charge_percent, making_charge_discount_percent, diamond_discount_percent)
+       (product_id, purity_value_id, making_charge_percent, making_charge_discount_percent, stone_discount_percent)
      VALUES ${placeholders.join(', ')}
      ON CONFLICT DO NOTHING`,
     values,

@@ -8,7 +8,7 @@ import {
   findProductIdsInRuleScope,
   replaceRuleCategories,
   replaceRuleProducts,
-  replaceRuleDiamondTypes,
+  replaceRuleStoneTypes,
   replaceRulePurities,
   replaceRuleConditions,
 } from '../repositories/pricingRules.repository.js';
@@ -37,7 +37,7 @@ const SCALAR_FIELDS = [
 ];
 
 // Applies whichever scope/condition join tables are relevant to this rule's
-// type/scope — a MAKING_CHARGE rule never gets diamond-type/condition rows,
+// type/scope — a MAKING_CHARGE rule never gets stone-type/condition rows,
 // a GLOBAL rule never gets category/product rows, etc. Only replaces a join
 // table when the caller actually passed that key, so a partial update (e.g.
 // PATCH-ing just `name`) never wipes categoryIds/productIds it didn't touch.
@@ -48,13 +48,13 @@ async function replaceScopeAndConditions(ruleId, rule, input) {
   if (rule.scope === 'PRODUCT' && Object.hasOwn(input, 'productIds')) {
     await replaceRuleProducts(ruleId, input.productIds ?? []);
   }
-  if (rule.rule_type === 'DIAMOND' && Object.hasOwn(input, 'diamondTypeIds')) {
-    await replaceRuleDiamondTypes(ruleId, input.diamondTypeIds ?? []);
+  if (rule.rule_type === 'STONE' && Object.hasOwn(input, 'stoneTypeIds')) {
+    await replaceRuleStoneTypes(ruleId, input.stoneTypeIds ?? []);
   }
   if (Object.hasOwn(input, 'purityValueIds')) {
     await replaceRulePurities(ruleId, input.purityValueIds ?? []);
   }
-  if (rule.rule_type === 'DIAMOND' && Object.hasOwn(input, 'conditions')) {
+  if (rule.rule_type === 'STONE' && Object.hasOwn(input, 'conditions')) {
     await replaceRuleConditions(ruleId, input.conditions ?? []);
   }
 }

@@ -24,7 +24,7 @@ function BannerCard({ item, index }: { item: HomepageItem; index: number }) {
 
   const content = (
     <>
-      {image && <img src={image} alt={item.heading ?? 'BOX DIAMONDS jewellery campaign'} loading="lazy" decoding="async" />}
+      {image && <img src={image} alt={item.heading ?? '9KARET jewellery campaign'} loading="lazy" decoding="async" />}
       {item.heading && (
         <div className={styles.bannerContent}>
           <p className={styles.bannerTitle}>{item.heading}</p>

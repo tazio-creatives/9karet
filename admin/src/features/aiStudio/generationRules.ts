@@ -11,7 +11,7 @@ const RING_ASSET_TYPES: AssetType[] = [
 const RING_ASSET_TYPE_SET = new Set<AssetType>(RING_ASSET_TYPES);
 
 // Best-effort keyword match from a free-text product category name (e.g.
-// "Diamond Rings", "Rose Gold Bangle") to the fixed jewellery-type
+// "Ruby Rings", "Rose Gold Bangle") to the fixed jewellery-type
 // vocabulary — categories in this app aren't constrained to that vocabulary,
 // so this is advisory only; the admin can always override via "Update
 // Product Category" regardless of what this infers.

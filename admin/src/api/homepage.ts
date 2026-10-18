@@ -17,7 +17,7 @@ export async function uploadHomepageImage(file: File) {
   const response = await fetch(`${API_BASE_URL}/admin/homepage/upload-image`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Requested-With': 'box-diamonds' },
+    headers: { 'X-Requested-With': '9karet' },
     body: formData,
   });
 
@@ -37,7 +37,7 @@ export async function uploadHomepageVideo(file: File) {
   const response = await fetch(`${API_BASE_URL}/admin/homepage/upload-video`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Requested-With': 'box-diamonds' },
+    headers: { 'X-Requested-With': '9karet' },
     body: formData,
   });
 

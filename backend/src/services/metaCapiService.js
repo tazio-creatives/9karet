@@ -73,7 +73,7 @@ export function buildPurchaseEvent(order, items) {
     event_time: Math.floor(Date.now() / 1000),
     event_id: `order_${order.id}`,
     action_source: 'website',
-    event_source_url: attribution.sourceUrl || 'https://boxdiamonds.com/checkout',
+    event_source_url: attribution.sourceUrl || 'https://9karet.com/checkout',
     user_data: userData,
     custom_data: {
       currency: 'INR',

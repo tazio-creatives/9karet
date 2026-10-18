@@ -8,8 +8,8 @@ async function getAttributeIds() {
 }
 
 // Resolves every value on one axis in a single query instead of one query
-// per value (was the main N+1 source here — a product with 4 checked
-// purities used to cost 4 round-trips just to resolve their ids).
+// per value (was the main N+1 source here — a product with 3 checked
+// gold colours used to cost 3 round-trips just to resolve their ids).
 async function globalValueIds(attributeId, values) {
   if (!values?.length) return new Map();
   const { rows } = await query(
@@ -124,7 +124,7 @@ export async function applyExclusionRules(productId) {
 // silent no-op, which read to an admin as "my save didn't work." This makes
 // it actually apply: for each size the admin typed a *different* number
 // into than what's currently there, every existing variant carrying that
-// size (any Gold Colour/Purity/Diamond Quality combo) gets set to that same
+// size (any Gold Colour combo) gets set to that same
 // number — matching the old pre-variant-model mental model of "one stock
 // count per size." Gated on an actual change (not just "a value is
 // present") so an unrelated save — editing the description, say, with the
@@ -171,8 +171,8 @@ export async function applySizeStockUpdates(productId, sizesInput) {
 }
 
 // Keeps a product's product_attribute_values + product_variants rows in
-// sync with its admin-configured Gold Colors / Purity / Diamond Quality /
-// Sizes (the same 4 arrays the admin form already sends). Existing variants
+// sync with its admin-configured Gold Colors / Purity / Sizes (Purity is
+// always just 9K on 9Karet, passed by productsService). Existing variants
 // for combinations that are still valid are left completely untouched unless
 // `variantOverrides` explicitly targets them — preserves any stock/weight/
 // availability the admin already set via the variant editor, otherwise.
@@ -183,23 +183,18 @@ export async function applySizeStockUpdates(productId, sizesInput) {
 // set stock/weight/availability per exact combination in one request — the
 // admin form's live matrix preview sends these so a brand-new product can be
 // fully configured without a separate trip back into the variant editor.
-// Each entry: { attributeValues: {goldColor?, purity?, diamondConfigId?,
-// sizeLabel?}, stockQuantity?, goldWeightGrams?, diamondWeightGrams?,
-// diamondWeightCarats?, isAvailable? } — only the axes this product actually
-// has configured need to be present.
-export async function syncProductVariants(
-  productId,
-  { goldColors, purities, diamondConfigIds, sizes, stockQuantity, variantOverrides },
-) {
+// Each entry: { attributeValues: {goldColor?, purity?, sizeLabel?},
+// stockQuantity?, goldWeightGrams?, isAvailable?, priceOverride? } — only
+// the axes this product actually has configured need to be present.
+export async function syncProductVariants(productId, { goldColors, purities, sizes, stockQuantity, variantOverrides }) {
   const attrByCode = await getAttributeIds();
   const axisLists = [];
 
   // Built alongside axisLists so variantOverrides can resolve the same
-  // value ids without re-querying — value (or diamondConfigId, or size
-  // label) -> attribute_value id.
+  // value ids without re-querying — value (or size label) ->
+  // attribute_value id.
   const goldColorValueIds = new Map();
   const purityValueIds = new Map();
-  const diamondValueIds = new Map();
   const sizeValueIds = new Map();
 
   if (goldColors?.length) {
@@ -223,19 +218,6 @@ export async function syncProductVariants(
       if (id) {
         entries.push({ attributeValueId: id });
         purityValueIds.set(purity, id);
-      }
-    }
-    if (entries.length) axisLists.push(entries);
-  }
-
-  if (diamondConfigIds?.length) {
-    const resolved = await globalValueIds(attrByCode.diamond_quality, diamondConfigIds);
-    const entries = [];
-    for (const diamondConfigId of diamondConfigIds) {
-      const id = resolved.get(diamondConfigId);
-      if (id) {
-        entries.push({ attributeValueId: id });
-        diamondValueIds.set(diamondConfigId, id);
       }
     }
     if (entries.length) axisLists.push(entries);
@@ -271,7 +253,7 @@ export async function syncProductVariants(
     );
   }
 
-  // Resolves one override's {goldColor, purity, diamondConfigId, sizeLabel}
+  // Resolves one override's {goldColor, purity, sizeLabel}
   // to the combination_key a generated variant would have — same sorted-join
   // shape used everywhere else. Returns null if any specified axis value
   // doesn't actually resolve (e.g. a stale/unconfigured value), so a bad
@@ -285,11 +267,6 @@ export async function syncProductVariants(
     }
     if (attributeValues.purity) {
       const id = purityValueIds.get(attributeValues.purity);
-      if (!id) return null;
-      ids.push(id);
-    }
-    if (attributeValues.diamondConfigId) {
-      const id = diamondValueIds.get(attributeValues.diamondConfigId);
       if (!id) return null;
       ids.push(id);
     }
@@ -317,8 +294,6 @@ export async function syncProductVariants(
       const fieldMap = {
         stockQuantity: 'stock_quantity',
         goldWeightGrams: 'gold_weight_grams',
-        diamondWeightGrams: 'diamond_weight_grams',
-        diamondWeightCarats: 'diamond_weight_carats',
         isAvailable: 'is_available',
         priceOverride: 'price_override',
       };
@@ -364,14 +339,11 @@ export async function syncProductVariants(
   const combos = cartesian(axisLists);
   const validKeys = new Set(combos.map((combo) => combo.map((c) => c.attributeValueId).sort().join('|')));
 
-  // A newly-created variant's weight must not be seeded purity-blind from
-  // the Size row's "Gold Weight (g)" field — that field has no purity
-  // dimension, so stamping it onto every purity of a size is exactly the
-  // bug that made 9K and 18K show the same weight. Weight Defaults rules
-  // (exact Purity+Size, then Purity-only) take priority at creation time
-  // too, matching computeVariantPricing's own resolution order; the Size
-  // field is only consulted as a legacy fallback when no rule covers this
-  // purity at all.
+  // Weight Defaults rules (exact Purity+Size, then Purity-only) take
+  // priority when seeding a newly-created variant's weight, matching
+  // computeVariantPricing's own resolution order; the Size row's "Gold
+  // Weight (g)" field is only consulted as a fallback when no rule covers
+  // it.
   const purityIdSet = new Set(purityValueIds.values());
   const weightRulesForSeeding = await findWeightRuleValuesByProduct(productId);
   function resolveSeedWeightFromRules(purityId, sizeId) {
@@ -406,14 +378,15 @@ export async function syncProductVariants(
     const sizeId = sizeEntry ? sizeEntry.attributeValueId : null;
     const ruleWeightGrams = resolveSeedWeightFromRules(purityId, sizeId);
     const goldWeightGrams = ruleWeightGrams ?? (sizeEntry ? (sizeEntry.size.weightGrams ?? null) : null);
-    const diamondWeightCarats = sizeEntry ? (sizeEntry.size.diamondWeightCarats ?? null) : null;
-    const seedStock = sizeEntry ? (sizeEntry.size.stockQuantity ?? 0) : 0;
+    // A size row carries its own stock; any other new combination starts
+    // at the form's Default Stock ("new combinations inherit these values").
+    const seedStock = sizeEntry ? (sizeEntry.size.stockQuantity ?? 0) : (stockQuantity ?? 0);
 
     const { rows: inserted } = await query(
       `INSERT INTO product_variants
-         (product_id, gold_weight_grams, diamond_weight_carats, stock_quantity, combination_key, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [productId, goldWeightGrams, diamondWeightCarats, seedStock, combinationKey, i],
+         (product_id, gold_weight_grams, stock_quantity, combination_key, sort_order)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [productId, goldWeightGrams, seedStock, combinationKey, i],
     );
     const newVariantId = inserted[0].id;
     existingByKey.set(combinationKey, newVariantId);
@@ -432,6 +405,14 @@ export async function syncProductVariants(
       await query('DELETE FROM product_variants WHERE id = $1', [v.id]);
       existingByKey.delete(v.combination_key);
     }
+  }
+
+  // Every 9Karet product carries the one 9K purity, so a product with no
+  // gold colours or sizes has exactly one real variant instead of the
+  // synthetic default — keep its stock in sync with the product's own
+  // stockQuantity the same way the default variant is (above).
+  if (combos.length === 1 && !sizes?.length && !goldColors?.length && stockQuantity != null) {
+    await query('UPDATE product_variants SET stock_quantity = $2 WHERE product_id = $1', [productId, stockQuantity]);
   }
 
   await applyExclusionRules(productId);

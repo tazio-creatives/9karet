@@ -39,7 +39,7 @@ export function LoginPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <img src="/images/logo.png" alt="Box Diamonds" className={styles.logo} />
+        <img src="/images/logo.png" alt="9Karet" className={styles.logo} />
         <h1 className={styles.heading}>Admin</h1>
         <form className={styles.form} onSubmit={handleSubmit}>
           <label className={styles.field}>

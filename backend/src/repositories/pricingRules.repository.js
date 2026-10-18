@@ -153,16 +153,16 @@ export async function replaceRuleProducts(ruleId, productIds) {
   );
 }
 
-export async function replaceRuleDiamondTypes(ruleId, diamondTypeIds) {
-  await query('DELETE FROM pricing_rule_diamond_types WHERE rule_id = $1', [ruleId]);
-  if (!diamondTypeIds?.length) return;
+export async function replaceRuleStoneTypes(ruleId, stoneTypeIds) {
+  await query('DELETE FROM pricing_rule_stone_types WHERE rule_id = $1', [ruleId]);
+  if (!stoneTypeIds?.length) return;
   const values = [ruleId];
-  const placeholders = diamondTypeIds.map((diamondTypeId) => {
-    values.push(diamondTypeId);
+  const placeholders = stoneTypeIds.map((stoneTypeId) => {
+    values.push(stoneTypeId);
     return `($1, $${values.length})`;
   });
   await query(
-    `INSERT INTO pricing_rule_diamond_types (rule_id, diamond_type_id) VALUES ${placeholders.join(', ')} ON CONFLICT DO NOTHING`,
+    `INSERT INTO pricing_rule_stone_types (rule_id, stone_type_id) VALUES ${placeholders.join(', ')} ON CONFLICT DO NOTHING`,
     values,
   );
 }
@@ -216,10 +216,10 @@ export async function findRuleProductLinks(ruleIds) {
   return rows;
 }
 
-export async function findRuleDiamondTypeLinks(ruleIds) {
+export async function findRuleStoneTypeLinks(ruleIds) {
   if (ruleIds.length === 0) return [];
   const { rows } = await query(
-    `SELECT rule_id, diamond_type_id FROM pricing_rule_diamond_types WHERE rule_id = ANY($1)`,
+    `SELECT rule_id, stone_type_id FROM pricing_rule_stone_types WHERE rule_id = ANY($1)`,
     [ruleIds],
   );
   return rows;
@@ -278,9 +278,8 @@ export async function findProductIdsInRuleScope(rule) {
 
 const PREVIEW_COLUMNS = `
   p.id, p.sku, p.name, p.slug, p.category_id, p.purity, p.metal_type, p.is_price_locked,
-  p.gold_value, p.diamond_value, p.making_charge, p.gst_percent, p.selling_price, p.mrp,
-  p.diamond_config_id, p.diamond_type_id, p.diamond_weight_carats, p.diamond_colour, p.diamond_clarity,
-  p.making_charge_discount_percent, p.diamond_discount_percent
+  p.gold_value, p.stone_value, p.making_charge, p.gst_percent, p.selling_price, p.mrp,
+  p.making_charge_discount_percent, p.stone_discount_percent
 `;
 
 // Same three scope shapes as findProductIdsInRuleScope, but (a) resolved

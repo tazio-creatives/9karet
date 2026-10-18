@@ -83,7 +83,7 @@ export const POLICY_ICONS = {
       <path d="m6 6 12 12" />
     </Icon>
   ),
-  diamond: (
+  gem: (
     <Icon>
       <path d="M6.5 4h11L21 9l-9 11L3 9l3.5-5Z" />
       <path d="M3 9h18M9.5 4 8 9l4 11 4-11-1.5-5" />

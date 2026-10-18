@@ -37,7 +37,6 @@ interface DisplayItem {
   sizeLabel: string | null;
   goldColor: string | null;
   purity: string | null;
-  diamondConfigName: string | null;
   isBackordered: boolean;
 }
 
@@ -340,7 +339,6 @@ export function CheckoutPage() {
           sizeLabel: buyNow.sizeLabel ?? null,
           goldColor: buyNow.goldColor ?? null,
           purity: buyNow.purity ?? null,
-          diamondConfigName: buyNow.diamondConfigName ?? null,
           isBackordered: buyNow.isBackordered ?? false,
         },
       ]
@@ -356,7 +354,6 @@ export function CheckoutPage() {
         sizeLabel: i.sizeLabel,
         goldColor: i.goldColor,
         purity: i.purity,
-        diamondConfigName: i.diamondConfigName,
         isBackordered: i.isBackordered,
       }));
 
@@ -387,7 +384,7 @@ export function CheckoutPage() {
   const deliveryEstimate = buyNow ? (buyNow.deliveryEstimate ?? null) : (cartData?.deliveryEstimate ?? null);
 
   const summaryItems = displayItems.map((item) => {
-    const variantBits = [item.sizeLabel ? `Size ${item.sizeLabel}` : null, item.diamondConfigName].filter(Boolean);
+    const variantBits = [item.sizeLabel ? `Size ${item.sizeLabel}` : null].filter(Boolean);
     return {
       id: item.variantId ?? item.productId,
       name: variantBits.length > 0 ? `${item.name} (${variantBits.join(', ')})` : item.name,
@@ -548,9 +545,9 @@ export function CheckoutPage() {
 
         <div className={styles.mainColumnBottom}>
           {/* Same visual as the Cart/PDP trust banner — checkout isn't tied
-              to one product's real metal/diamond composition either, so
+              to one product's real metal/stone composition either, so
               both flags are on to show the full, generic assurance set. */}
-          <ProductAssuranceGrid hasDiamonds isGold />
+          <ProductAssuranceGrid hasStones />
           <div className={styles.backToBagRow}>
             <Link to="/cart" className={styles.backToBagLink}>
               ← Back to Bag

@@ -71,7 +71,7 @@ export async function uploadBlogImage(file: File) {
   const response = await fetch(`${API_BASE_URL}/admin/blog/upload-image`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Requested-With': 'box-diamonds' },
+    headers: { 'X-Requested-With': '9karet' },
     body: formData,
   });
   if (!response.ok) {

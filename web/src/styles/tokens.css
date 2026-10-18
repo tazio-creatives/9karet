@@ -1,6 +1,7 @@
 /*
-  Design tokens — BOX DIAMONDS brand direction (plan: white/cream bg, deep
-  burgundy, warm gold accents).
+  Design tokens — 9Karet brand direction: warm ivory background, the logo's
+  deep maroon (#46060F) as the brand colour, warm gold accents ("Smart Gold").
+  The token is still named "burgundy" (it always meant "the brand colour").
 
   Typography: Plus Jakarta Sans (weights 400/500/600) for both headings and
   body/product details/prices/buttons/navigation — loaded via Google Fonts
@@ -12,21 +13,19 @@
 
 :root {
   /* Color */
-  --color-bg: #faf8f3;
-  --color-bg-alt: #f1f5f3;
+  --color-bg: #fbf7f2;
+  --color-bg-alt: #f6efeb;
   --color-surface: #ffffff;
-  --color-burgundy: #00515a;
-  --color-burgundy-dark: #00363c;
+  --color-burgundy: #5a0f1c;
+  --color-burgundy-dark: #46060f;
   --color-gold: #c6a15b;
   --color-gold-light: #dcc391;
-  --color-text: #17383c;
-  --color-text-muted: #5f6969;
-  --color-border: #e3e7e4;
+  --color-text: #2e1519;
+  --color-text-muted: #6f6264;
+  --color-border: #ebe2df;
   --color-white: #ffffff;
 
-  /* Brand black + logo-matched gold (sampled from the BOX DIAMONDS wordmark) —
-     used for header/footer/dark surfaces so the logo's own black backdrop
-     sits seamlessly with no visible edge. */
+  /* Brand black + warm gold — for dark surfaces and gold highlights. */
   --color-black: #0c0c0c;
   --color-black-soft: #17140f;
   --color-brand-gold: #d9ad42;

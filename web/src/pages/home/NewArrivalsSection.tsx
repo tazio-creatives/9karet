@@ -100,7 +100,7 @@ export function NewArrivalsSection({ items }: { items: HomepageItem[] }) {
             {bannerImageMobile && <source media={MOBILE_BREAKPOINT} srcSet={bannerImageMobile} />}
             <img
               src={bannerImage}
-              alt="New arrivals in diamond jewellery — BOX DIAMONDS"
+              alt="New arrivals in 9K gold jewellery — 9KARET"
               className={styles.bannerImg}
               loading="lazy"
               decoding="async"
@@ -120,7 +120,7 @@ export function NewArrivalsSection({ items }: { items: HomepageItem[] }) {
         <div className={styles.productHeader}>
           <div>
             <h2 className={styles.heading}>Latest Introductions</h2>
-            <p className={styles.description}>Discover our newest diamond designs.</p>
+            <p className={styles.description}>Discover our newest 9K gold designs.</p>
           </div>
           <Link to="/new-arrivals?sort=newest" className={styles.viewAllLink}>
             View All →

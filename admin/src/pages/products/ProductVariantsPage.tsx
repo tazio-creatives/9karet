@@ -15,8 +15,6 @@ import styles from './ProductVariantsPage.module.css';
 interface RowDraft {
   stockQuantity: string;
   goldWeightGrams: string;
-  diamondWeightGrams: string;
-  diamondWeightCarats: string;
   priceOverride: string;
   isAvailable: boolean;
 }
@@ -25,8 +23,6 @@ function toDraft(v: ProductVariantRow): RowDraft {
   return {
     stockQuantity: String(v.stockQuantity),
     goldWeightGrams: v.goldWeightGrams == null ? '' : String(v.goldWeightGrams),
-    diamondWeightGrams: v.diamondWeightGrams == null ? '' : String(v.diamondWeightGrams),
-    diamondWeightCarats: v.diamondWeightCarats == null ? '' : String(v.diamondWeightCarats),
     priceOverride: v.priceOverride == null ? '' : String(v.priceOverride),
     isAvailable: v.isAvailable,
   };
@@ -110,8 +106,6 @@ export function ProductVariantsPage() {
       input: {
         stockQuantity: Number(draft.stockQuantity) || 0,
         goldWeightGrams: draft.goldWeightGrams.trim() === '' ? null : Number(draft.goldWeightGrams),
-        diamondWeightGrams: draft.diamondWeightGrams.trim() === '' ? null : Number(draft.diamondWeightGrams),
-        diamondWeightCarats: draft.diamondWeightCarats.trim() === '' ? null : Number(draft.diamondWeightCarats),
         priceOverride: draft.priceOverride.trim() === '' ? null : Number(draft.priceOverride),
         isAvailable: draft.isAvailable,
       },
@@ -277,8 +271,6 @@ export function ProductVariantsPage() {
                 onClick={() =>
                   bulkMutation.mutate({
                     goldWeightGrams: null,
-                    diamondWeightGrams: null,
-                    diamondWeightCarats: null,
                     priceOverride: null,
                   })
                 }
@@ -297,8 +289,6 @@ export function ProductVariantsPage() {
                 <th>Combination</th>
                 <th>Stock</th>
                 <th>Gold Weight (g)</th>
-                <th>Diamond Weight (g)</th>
-                <th>Diamond Weight (ct)</th>
                 <th>Price Override (₹)</th>
                 <th>Available</th>
                 <th>Price</th>
@@ -336,28 +326,6 @@ export function ProductVariantsPage() {
                         className={styles.cellInput}
                         value={draft.goldWeightGrams}
                         onChange={(e) => updateDraft(v.id, { goldWeightGrams: e.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.001"
-                        placeholder="inherit"
-                        className={styles.cellInput}
-                        value={draft.diamondWeightGrams}
-                        onChange={(e) => updateDraft(v.id, { diamondWeightGrams: e.target.value })}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.001"
-                        placeholder="inherit"
-                        className={styles.cellInput}
-                        value={draft.diamondWeightCarats}
-                        onChange={(e) => updateDraft(v.id, { diamondWeightCarats: e.target.value })}
                       />
                     </td>
                     <td>

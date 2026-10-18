@@ -10,7 +10,7 @@ export function BlogCard({ post }: { post: BlogPostSummary }) {
         {post.coverImageUrl ? (
           <img src={post.coverImageUrl} alt={post.coverImageAlt ?? post.title} loading="lazy" />
         ) : (
-          <div className={styles.placeholder}>{POLICY_ICONS.diamond}</div>
+          <div className={styles.placeholder}>{POLICY_ICONS.gem}</div>
         )}
       </div>
       <div className={styles.cardBody}>

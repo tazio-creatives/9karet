@@ -2,9 +2,8 @@ import { query } from '../config/db.js';
 
 // One row per variant, with all its resolved attribute values folded into a
 // single `attributes` JSON object keyed by attribute code — e.g.
-// { purity: {valueId, value: '18K', label: '18K', refId: null},
+// { purity: {valueId, value: '9K', label: '9K', refId: null},
 //   gold_color: {valueId, value: 'ROSE', label: 'Rose Gold', refId: null},
-//   diamond_quality: {valueId, value: '<diamond_config_id>', label: 'VVS GH', refId: '<diamond_config_id>'},
 //   size: {valueId, value: '6', label: '6', refId: null} }
 // Only axes actually configured for that variant appear as keys.
 const VARIANT_WITH_ATTRIBUTES_SELECT = `
@@ -49,9 +48,6 @@ export function resolvedPurity(variant) {
 export function resolvedGoldColor(variant) {
   return variant?.attributes?.gold_color?.value ?? null;
 }
-export function resolvedDiamondConfigId(variant) {
-  return variant?.attributes?.diamond_quality?.refId ?? null;
-}
 export function resolvedSizeLabel(variant) {
   return variant?.attributes?.size?.label ?? null;
 }
@@ -61,7 +57,7 @@ export function attributeValueIds(variant) {
 
 // Attribute + values catalogue for a product — what's offered on each axis
 // (product_attribute_values), used to render selectors and generate the
-// admin's variant matrix. Global values (Purity/Gold Color/Diamond Quality)
+// admin's variant matrix. Global values (Purity/Gold Color)
 // and product-scoped values (Size) are both included transparently.
 export async function findProductAttributeCatalogue(productId) {
   const { rows } = await query(
@@ -108,18 +104,17 @@ export async function createOrUpdateSizeValue(productId, sizeAttrId, label, sort
 
 export async function upsertVariant(
   productId,
-  { id, attributeValueIds: valueIds, goldWeightGrams, diamondWeightGrams, diamondWeightCarats, stockQuantity, isAvailable, sortOrder, sku },
+  { id, attributeValueIds: valueIds, goldWeightGrams, stockQuantity, isAvailable, sortOrder, sku },
 ) {
   const combinationKey = [...valueIds].sort().join('|');
 
   if (id) {
     await query(
       `UPDATE product_variants
-       SET gold_weight_grams = $2, diamond_weight_grams = $3, diamond_weight_carats = $4,
-           stock_quantity = $5, is_available = $6, sort_order = $7, sku = $8,
-           combination_key = $9, updated_at = now()
-       WHERE id = $1 AND product_id = $10`,
-      [id, goldWeightGrams, diamondWeightGrams, diamondWeightCarats, stockQuantity, isAvailable, sortOrder, sku, combinationKey, productId],
+       SET gold_weight_grams = $2, stock_quantity = $3, is_available = $4, sort_order = $5, sku = $6,
+           combination_key = $7, updated_at = now()
+       WHERE id = $1 AND product_id = $8`,
+      [id, goldWeightGrams, stockQuantity, isAvailable, sortOrder, sku, combinationKey, productId],
     );
     await query('DELETE FROM variant_attribute_values WHERE variant_id = $1', [id]);
     for (const valueId of valueIds) {
@@ -130,10 +125,10 @@ export async function upsertVariant(
 
   const { rows } = await query(
     `INSERT INTO product_variants
-       (product_id, gold_weight_grams, diamond_weight_grams, diamond_weight_carats, stock_quantity, is_available, sort_order, sku, combination_key)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       (product_id, gold_weight_grams, stock_quantity, is_available, sort_order, sku, combination_key)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING id`,
-    [productId, goldWeightGrams, diamondWeightGrams, diamondWeightCarats, stockQuantity, isAvailable ?? true, sortOrder ?? 0, sku ?? null, combinationKey],
+    [productId, goldWeightGrams, stockQuantity, isAvailable ?? true, sortOrder ?? 0, sku ?? null, combinationKey],
   );
   const variantId = rows[0].id;
   for (const valueId of valueIds) {
@@ -148,8 +143,6 @@ export async function upsertVariant(
 const VARIANT_FIELD_MAP = {
   stockQuantity: 'stock_quantity',
   goldWeightGrams: 'gold_weight_grams',
-  diamondWeightGrams: 'diamond_weight_grams',
-  diamondWeightCarats: 'diamond_weight_carats',
   isAvailable: 'is_available',
   sku: 'sku',
   priceOverride: 'price_override',
@@ -187,8 +180,8 @@ export async function updateVariantFields(productId, variantId, fields) {
 
 // Same field set applied to many variants at once — the bulk-edit toolbar.
 // "Reset to inherited" is just this called with
-// { goldWeightGrams: null, diamondWeightGrams: null, diamondWeightCarats:
-// null, priceOverride: null } — no separate code path needed.
+// { goldWeightGrams: null, priceOverride: null } — no separate code path
+// needed.
 export async function bulkUpdateVariantFields(productId, variantIds, fields) {
   const { values, setClauses } = buildFieldUpdate(fields, 2);
   if (setClauses.length === 0 || variantIds.length === 0) return [];

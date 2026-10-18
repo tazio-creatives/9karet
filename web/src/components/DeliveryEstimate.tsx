@@ -2,7 +2,7 @@ import { formatDeliveryRange, deliveryFallbackDaysText, type DeliveryEstimate as
 import styles from './DeliveryEstimate.module.css';
 
 // Outline delivery-truck icon, ~14px — matches the stroke weight already
-// used by other product-card icons (DiamondIcon/TagIcon in PlpProductCard).
+// used by other product-card icons (GemIcon/TagIcon in PlpProductCard).
 // Decorative only: the adjacent text already says everything a screen
 // reader needs, so this is aria-hidden.
 function TruckIcon() {

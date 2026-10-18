@@ -1,4 +1,4 @@
-import type { MetalType, PriceBreakup } from '../../api/types';
+import type { PriceBreakup, Purity } from '../../api/types';
 import { formatPrice } from '../../utils/formatPrice';
 import styles from './PriceBreakupTable.module.css';
 
@@ -11,34 +11,25 @@ function ValueCell({ original, discounted }: { original: number; discounted: num
   );
 }
 
-export function PriceBreakupTable({
-  breakup,
-  metalType,
-  diamondTypeName,
-}: {
-  breakup: PriceBreakup;
-  metalType: MetalType;
-  diamondTypeName?: string | null;
-}) {
-  const hasOffer = breakup.makingChargeDiscountPercent > 0 || breakup.diamondDiscountPercent > 0;
-  const diamondRowLabel = diamondTypeName ? `${diamondTypeName} Diamond Value` : 'Diamond Value';
+export function PriceBreakupTable({ breakup, purity }: { breakup: PriceBreakup; purity: Purity | null }) {
+  const hasOffer = breakup.makingChargeDiscountPercent > 0 || breakup.stoneDiscountPercent > 0;
 
   return (
     <table className={styles.table}>
       <tbody>
         <tr>
-          <td>{metalType === 'GOLD' ? 'Gold Value' : 'Platinum Value'}</td>
+          <td>{purity ?? '9K'} Gold Value</td>
           <td>{formatPrice(breakup.goldValue)}</td>
         </tr>
-        {breakup.diamondValueOriginal > 0 && (
+        {breakup.stoneValueOriginal > 0 && (
           <tr>
             <td>
-              {diamondRowLabel}
-              {breakup.diamondDiscountPercent > 0 && (
-                <span className={styles.offerBadge}>{breakup.diamondDiscountPercent}% off</span>
+              Gemstone Value
+              {breakup.stoneDiscountPercent > 0 && (
+                <span className={styles.offerBadge}>{breakup.stoneDiscountPercent}% off</span>
               )}
             </td>
-            <ValueCell original={breakup.diamondValueOriginal} discounted={breakup.diamondValue} />
+            <ValueCell original={breakup.stoneValueOriginal} discounted={breakup.stoneValue} />
           </tr>
         )}
         <tr>

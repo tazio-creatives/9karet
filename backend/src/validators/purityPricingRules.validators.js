@@ -17,7 +17,7 @@ export const replacePurityPricingRulesSchema = z
           purityValueId: z.string().uuid(),
           makingChargePercent: percent,
           makingChargeDiscountPercent: percent,
-          diamondDiscountPercent: percent,
+          stoneDiscountPercent: percent,
         }),
       )
       .default([]),

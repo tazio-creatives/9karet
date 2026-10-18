@@ -214,7 +214,7 @@ export function GoldRateSettingsPanel() {
 
       <div className={styles.row}>
         <div className={sharedStyles.field}>
-          Effective Goldbox 24K Rate
+          Effective 24K Rate
           <div className={styles.readoutStrong}>{formatRate(effectiveRate)}</div>
         </div>
         <div className={sharedStyles.field}>

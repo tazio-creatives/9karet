@@ -38,17 +38,17 @@ const PAGE_COPY: Record<PricingRuleType, { title: string; subtitle: string; newR
     newRuleLabel: 'New Rule',
     emptyNoun: 'making charge rules',
   },
-  DIAMOND: {
-    title: 'Diamond Discount Rules',
-    subtitle: 'Discounts on diamond value, with optional quality/colour/clarity/carat filters.',
+  STONE: {
+    title: 'Stone Discount Rules',
+    subtitle: 'Discounts on gemstone value, optionally limited to certain stone types or a carat range.',
     newRuleLabel: 'New Rule',
-    emptyNoun: 'diamond discount rules',
+    emptyNoun: 'stone discount rules',
   },
 };
 
 const LIST_ROUTE: Record<PricingRuleType, string> = {
   MAKING_CHARGE: '/pricing/making-charge-rules',
-  DIAMOND: '/pricing/diamond-rules',
+  STONE: '/pricing/stone-rules',
 };
 
 function discountLabel(rule: PricingRule): string {
@@ -57,10 +57,9 @@ function discountLabel(rule: PricingRule): string {
   return `₹${rule.discountValue.toLocaleString('en-IN')}/ct`;
 }
 
-// Shared by both /pricing/making-charge-rules and /pricing/diamond-rules
+// Shared by both /pricing/making-charge-rules and /pricing/stone-rules
 // (same relationship RuleFormPage already has to both routes) — the two
-// rule types differ only in copy, route prefix, and an extra Diamond Types
-// column, not in structure.
+// rule types differ only in copy and route prefix, not in structure.
 export function PricingRulesListPage({ ruleType }: PricingRulesListPageProps) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<PricingRule['status'] | ''>('');

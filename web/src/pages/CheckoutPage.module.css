@@ -130,7 +130,7 @@
   padding: 12px 16px max(12px, env(safe-area-inset-bottom));
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
-  box-shadow: 0 -4px 16px rgba(23, 56, 60, 0.08);
+  box-shadow: 0 -4px 16px rgba(60, 23, 28, 0.08);
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 

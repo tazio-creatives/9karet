@@ -32,7 +32,7 @@
   margin: 0 0 6px;
   font-size: 15px;
   font-weight: 600;
-  color: #0f2a30;
+  color: #300f13;
 }
 
 .stateBody {
@@ -52,10 +52,10 @@
 .retryButton {
   height: 36px;
   padding: 0 18px;
-  border: 1px solid #075a63;
+  border: 1px solid #620814;
   border-radius: 999px;
   background: transparent;
-  color: #075a63;
+  color: #620814;
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
@@ -69,7 +69,7 @@
 }
 
 .back:hover {
-  color: #075a63;
+  color: #620814;
 }
 
 /* Tablet — the tracking/timeline sidebar moves below the main column

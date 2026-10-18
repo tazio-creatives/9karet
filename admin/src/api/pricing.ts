@@ -5,17 +5,12 @@ import type {
   GoldRateRow,
   GoldRateSettingsRow,
   GoldRateSource,
-  MetalType,
   PricingPreviewResult,
-  Purity,
 } from './types';
 
 export interface PricingPreviewInput {
-  metalType: MetalType;
-  purity?: Purity | null;
   goldWeightGrams?: number | null;
-  diamondWeightCarats?: number | null;
-  diamondConfigId?: string | null;
+  stones?: { price: number }[];
   makingCharge?: number;
   gstPercent?: number;
 }

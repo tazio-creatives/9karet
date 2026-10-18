@@ -7,7 +7,7 @@ export function AllJewelleryPage() {
   return (
     <ProductListing
       heading="All Jewellery"
-      seoDescription="Shop all certified diamond and gold jewellery at BOX DIAMONDS — rings, earrings, pendants, bangles and more, in BIS hallmarked gold."
+      seoDescription="Shop all 9K gold jewellery at 9KARET — rings, earrings, pendants, bracelets and more, in BIS hallmarked 9K gold set with genuine gemstones."
       breadcrumbs={[{ label: 'All Jewellery' }]}
       canonicalPath="/jewellery"
     />

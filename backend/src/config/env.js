@@ -10,12 +10,12 @@ export const env = {
   ),
 
   adminSessionSecret: process.env.ADMIN_SESSION_SECRET ?? 'dev-only-admin-session-secret',
-  adminSessionCookieName: process.env.ADMIN_SESSION_COOKIE_NAME ?? 'box_diamonds_admin_sid',
+  adminSessionCookieName: process.env.ADMIN_SESSION_COOKIE_NAME ?? 'ninekaret_admin_sid',
   adminSessionMaxAgeHours: Number(process.env.ADMIN_SESSION_MAX_AGE_HOURS ?? 12),
 
   customerSessionSecret: process.env.CUSTOMER_SESSION_SECRET ?? 'dev-only-customer-session-secret',
   customerSessionCookieName:
-    process.env.CUSTOMER_SESSION_COOKIE_NAME ?? 'box_diamonds_customer_sid',
+    process.env.CUSTOMER_SESSION_COOKIE_NAME ?? 'ninekaret_customer_sid',
   // Customers shouldn't be re-prompted for OTP on every visit (plan §11) — long-lived vs admin's 12h.
   customerSessionMaxAgeHours: Number(process.env.CUSTOMER_SESSION_MAX_AGE_HOURS ?? 24 * 30),
 
@@ -27,7 +27,7 @@ export const env = {
   // never send the session cookie back on cross-subdomain requests.
   cookieDomain: process.env.COOKIE_DOMAIN || undefined,
 
-  guestCartSessionCookieName: process.env.GUEST_CART_SESSION_COOKIE_NAME ?? 'box_diamonds_cart_sid',
+  guestCartSessionCookieName: process.env.GUEST_CART_SESSION_COOKIE_NAME ?? 'ninekaret_cart_sid',
   guestCartSessionMaxAgeDays: Number(process.env.GUEST_CART_SESSION_MAX_AGE_DAYS ?? 90),
 
   rateLimitWindowMinutes: Number(process.env.RATE_LIMIT_WINDOW_MINUTES ?? 15),
@@ -140,7 +140,7 @@ export const env = {
   // isConfigured). Values come from Blue Dart's API Gateway onboarding; the
   // base URL defaults to their sandbox (UAT) host until production is set.
   // Where storefront Contact Us submissions are emailed.
-  contactInboxEmail: process.env.CONTACT_INBOX_EMAIL ?? 'info@boxdiamonds.com',
+  contactInboxEmail: process.env.CONTACT_INBOX_EMAIL ?? 'info@9karet.com',
 
   bluedartBaseUrl: process.env.BLUEDART_BASE_URL ?? 'https://apigateway-sandbox.bluedart.com',
   bluedartClientId: process.env.BLUEDART_CLIENT_ID,
@@ -220,7 +220,7 @@ export const env = {
   // (an attached IAM role), same as storageProvider.s3.js.
   sesRegion: process.env.SES_REGION ?? 'ap-south-1',
   sesFromEmail: process.env.SES_FROM_EMAIL,
-  sesFromName: process.env.SES_FROM_NAME ?? 'BOX Diamonds',
+  sesFromName: process.env.SES_FROM_NAME ?? '9Karet',
 
   // Generic SMTP — real email provider, only read when EMAIL_PROVIDER=smtp.
   // No sandbox/per-recipient-verification restriction the way a brand-new
@@ -232,7 +232,7 @@ export const env = {
   smtpUser: process.env.SMTP_USER,
   smtpPass: process.env.SMTP_PASS,
   smtpFromEmail: process.env.SMTP_FROM_EMAIL ?? process.env.SMTP_USER,
-  smtpFromName: process.env.SMTP_FROM_NAME ?? 'BOX Diamonds',
+  smtpFromName: process.env.SMTP_FROM_NAME ?? '9Karet',
 };
 
 export const isProduction = env.nodeEnv === 'production';

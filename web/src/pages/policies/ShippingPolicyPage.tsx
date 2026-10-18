@@ -33,7 +33,7 @@ const SECTIONS: PolicySection[] = [
           Made-to-order, customised, engraved, resized or specially manufactured products may require additional
           processing time.
         </li>
-        <li>Box Diamonds will communicate significant delays wherever reasonably possible.</li>
+        <li>9Karet will communicate significant delays wherever reasonably possible.</li>
       </ul>
     ),
   },
@@ -50,7 +50,7 @@ const SECTIONS: PolicySection[] = [
         <ul>
           <li>Do not accept the package where possible.</li>
           <li>Take clear photographs or a video of the package.</li>
-          <li>Contact Box Diamonds customer support immediately.</li>
+          <li>Contact 9Karet customer support immediately.</li>
         </ul>
         <p>
           We strongly recommend recording a continuous unboxing video, particularly for high-value jewellery orders.
@@ -67,7 +67,7 @@ const SECTIONS: PolicySection[] = [
     content: (
       <p>
         If delivery fails because of an incorrect address, repeated customer unavailability or refusal without a valid
-        reason, any reshipping or return-to-origin charges may be deducted where legally permitted. Box Diamonds may
+        reason, any reshipping or return-to-origin charges may be deducted where legally permitted. 9Karet may
         contact the customer to verify the address or arrange another delivery attempt.
       </p>
     ),
@@ -91,8 +91,8 @@ const SECTIONS: PolicySection[] = [
     content: (
       <p>
         If you receive a damaged, defective or incorrect product, contact us as soon as possible and within seven days
-        of delivery. Please provide clear photographs and an unboxing video where available. After verification, Box
-        Diamonds may offer an appropriate remedy, including replacement, repair or refund, subject to product
+        of delivery. Please provide clear photographs and an unboxing video where available. After verification,
+        9Karet may offer an appropriate remedy, including replacement, repair or refund, subject to product
         availability and applicable law. See our <a href="/refund-policy">Return and Refund Policy</a> for full
         details.
       </p>
@@ -111,7 +111,7 @@ const SECTIONS: PolicySection[] = [
   },
   {
     id: 'contact',
-    title: 'Contact Box Diamonds',
+    title: 'Contact 9Karet',
     icon: 'mail',
     content: <PolicyContact assistanceWith="shipping assistance" />,
   },
@@ -133,7 +133,7 @@ export function ShippingPolicyPage() {
         heading: 'Delivered Safely to Your Door',
         content: (
           <p>
-            At Box Diamonds, we want every purchase to reach you safely. This Shipping Policy explains our delivery
+            At 9Karet, we want every purchase to reach you safely. This Shipping Policy explains our delivery
             process across India, order processing timelines, and what to do when your package arrives.
           </p>
         ),

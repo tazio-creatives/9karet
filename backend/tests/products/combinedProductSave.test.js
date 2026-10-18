@@ -1,29 +1,35 @@
-import { test, describe, after } from 'node:test';
+import { test, describe, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { query } from '../../src/config/db.js';
 import { adminCreateProduct, adminUpdateProduct, adminDeleteProduct } from '../../src/services/productsService.js';
 import { createProductSchema, updateProductSchema } from '../../src/validators/products.validators.js';
 
 // Real integration test against the dev DB (no mocking library exists in
-// this test suite) — proves the combined product create/edit save (Product
-// Create/Edit Architecture Report, 2026-09-07): Weight Defaults and Purity
-// Pricing Rules entered in the SAME create/update call as the main product
-// fields, resolved server-side from purity codes/size labels (never a
-// database UUID) and persisted atomically in the product's existing
-// withTransaction — no separate save-and-reopen step.
+// this test suite) — proves the combined product create/edit save: stones,
+// Weight Defaults and Purity Pricing Rules entered in the SAME create/update
+// call as the main product fields, resolved server-side from purity codes/
+// size labels (never a database UUID) and persisted atomically in the
+// product's withTransaction — no separate save-and-reopen step.
 
 async function testCategory() {
   const { rows } = await query('SELECT id, slug FROM categories LIMIT 1');
-  if (!rows[0]) throw new Error('test requires at least one category in the dev DB');
+  if (!rows[0]) throw new Error('test requires at least one category in the dev DB (npm run seed)');
   return rows[0];
 }
+
+let ruby;
+let cz;
+before(async () => {
+  const { rows } = await query(`SELECT id, slug FROM stone_types WHERE slug IN ('ruby', 'cubic-zirconia')`);
+  ruby = rows.find((r) => r.slug === 'ruby')?.id;
+  cz = rows.find((r) => r.slug === 'cubic-zirconia')?.id;
+  if (!ruby || !cz) throw new Error('test requires the Ruby and Cubic Zirconia stone types (seeded by migration)');
+});
 
 function basePayload(overrides = {}) {
   return {
     name: `Combined Save Test ${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     sku: `TEST-COMBINED-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    metalType: 'GOLD',
-    purity: '9K',
     goldWeightGrams: 1,
     makingChargePercent: 10,
     status: 'DRAFT',
@@ -38,27 +44,45 @@ after(async () => {
   }
 });
 
-describe('Combined product save — create (Test H1)', () => {
-  test('creates the product, its variants, weight rules and purity pricing rules atomically from purity/size codes', async () => {
+async function productRow(id) {
+  const { rows } = await query(
+    `SELECT metal_type, purity, gold_value, stone_value, stone_weight_carats, making_charge,
+            selling_price, gross_weight_grams, net_weight_grams
+     FROM products WHERE id = $1`,
+    [id],
+  );
+  return rows[0];
+}
+
+async function stoneRows(id) {
+  const { rows } = await query(
+    `SELECT st.slug, ps.stone_count, ps.weight_carats, ps.price
+     FROM product_stones ps JOIN stone_types st ON st.id = ps.stone_type_id
+     WHERE ps.product_id = $1 ORDER BY ps.sort_order`,
+    [id],
+  );
+  return rows;
+}
+
+describe('Combined product save — create', () => {
+  test('creates the product as 9K gold with its stones, variants, weight rules and purity pricing rules atomically', async () => {
     const category = await testCategory();
     const input = createProductSchema.parse(
       basePayload({
         categoryId: category.id,
-        purities: ['9K', '18K'],
+        goldWeightGrams: 2,
         sizes: [
           { label: '6', stockQuantity: 5 },
           { label: '12', stockQuantity: 7 },
         ],
         weightRules: {
-          purityRules: [
-            { purity: '9K', goldWeightGrams: 0.54 },
-            { purity: '18K', goldWeightGrams: 0.64 },
-          ],
+          purityRules: [{ purity: '9K', goldWeightGrams: 0.54 }],
           puritySizeRules: [{ purity: '9K', sizeLabel: '6', goldWeightGrams: 0.5 }],
         },
-        purityPricingRules: [
-          { purity: '9K', makingChargePercent: 20, makingChargeDiscountPercent: 10, diamondDiscountPercent: null },
-          { purity: '18K', makingChargePercent: 25, makingChargeDiscountPercent: 0, diamondDiscountPercent: 10 },
+        purityPricingRules: [{ purity: '9K', makingChargePercent: 20, makingChargeDiscountPercent: 10, stoneDiscountPercent: null }],
+        stones: [
+          { stoneTypeId: ruby, count: 1, weightCarats: 0.3, price: 2400 },
+          { stoneTypeId: cz, count: 12, weightCarats: 0.25, price: 360 },
         ],
       }),
     );
@@ -66,59 +90,62 @@ describe('Combined product save — create (Test H1)', () => {
     const product = await adminCreateProduct(input);
     createdProductIds.push(product.id);
 
+    const row = await productRow(product.id);
+    assert.equal(row.metal_type, 'GOLD');
+    assert.equal(row.purity, '9K', 'purity is always 9K, never chosen by the form');
+    assert.equal(Number(row.stone_value), 2760, 'stone value = sum of the stone prices');
+    assert.equal(Number(row.stone_weight_carats), 0.55);
+    assert.equal(Number(row.net_weight_grams), 2);
+    assert.equal(Number(row.gross_weight_grams), 2.11, 'gross = 2 g gold + 0.55 ct x 0.2 g');
+
+    assert.deepEqual(
+      (await stoneRows(product.id)).map((s) => [s.slug, s.stone_count, Number(s.weight_carats), Number(s.price)]),
+      [
+        ['ruby', 1, 0.3, 2400],
+        ['cubic-zirconia', 12, 0.25, 360],
+      ],
+    );
+    assert.equal(product.stones.length, 2, 'the save response carries the saved stones');
+
     const { rows: weightRows } = await query(
       `SELECT pav.value AS purity, sav.value AS size_label, r.gold_weight_grams
        FROM product_weight_rules r
        JOIN attribute_values pav ON pav.id = r.purity_value_id
        LEFT JOIN attribute_values sav ON sav.id = r.size_value_id
-       WHERE r.product_id = $1 ORDER BY pav.value, sav.value NULLS FIRST`,
+       WHERE r.product_id = $1 ORDER BY sav.value NULLS FIRST`,
       [product.id],
     );
-    assert.equal(weightRows.length, 3, 'expected 2 purity-only rules + 1 purity+size rule');
-    const nineK = weightRows.find((r) => r.purity === '9K' && r.size_label === null);
-    assert.equal(Number(nineK.gold_weight_grams), 0.54);
-    const nineKSize6 = weightRows.find((r) => r.purity === '9K' && r.size_label === '6');
-    assert.equal(Number(nineKSize6.gold_weight_grams), 0.5);
-    const eighteenK = weightRows.find((r) => r.purity === '18K' && r.size_label === null);
-    assert.equal(Number(eighteenK.gold_weight_grams), 0.64);
+    assert.equal(weightRows.length, 2, 'expected 1 purity-only rule + 1 purity+size rule');
+    assert.equal(Number(weightRows.find((r) => r.size_label === null).gold_weight_grams), 0.54);
+    assert.equal(Number(weightRows.find((r) => r.size_label === '6').gold_weight_grams), 0.5);
 
     const { rows: pricingRows } = await query(
-      `SELECT pav.value AS purity, r.making_charge_percent, r.making_charge_discount_percent, r.diamond_discount_percent
-       FROM product_purity_pricing_rules r
-       JOIN attribute_values pav ON pav.id = r.purity_value_id
-       WHERE r.product_id = $1 ORDER BY pav.value`,
+      `SELECT r.making_charge_percent, r.making_charge_discount_percent, r.stone_discount_percent
+       FROM product_purity_pricing_rules r WHERE r.product_id = $1`,
       [product.id],
     );
-    assert.equal(pricingRows.length, 2);
-    const nineKPricing = pricingRows.find((r) => r.purity === '9K');
-    assert.equal(Number(nineKPricing.making_charge_percent), 20);
-    assert.equal(Number(nineKPricing.making_charge_discount_percent), 10);
-    assert.equal(nineKPricing.diamond_discount_percent, null, 'explicit null must stay null, not fall back to 0');
-    const eighteenKPricing = pricingRows.find((r) => r.purity === '18K');
-    // Explicit 0 must survive as 0, never fall back to a product default.
-    assert.equal(Number(eighteenKPricing.making_charge_discount_percent), 0);
+    assert.equal(pricingRows.length, 1);
+    assert.equal(Number(pricingRows[0].making_charge_percent), 20);
+    assert.equal(Number(pricingRows[0].making_charge_discount_percent), 10);
+    assert.equal(pricingRows[0].stone_discount_percent, null, 'explicit null must stay null, not fall back to 0');
 
     const { rows: variantRows } = await query('SELECT id FROM product_variants WHERE product_id = $1', [product.id]);
-    assert.equal(variantRows.length, 4, '2 purities x 2 sizes = 4 variants');
+    assert.equal(variantRows.length, 2, '9K x 2 sizes = 2 variants');
   });
 
-  test('an internal failure (unresolvable purity) rolls back the ENTIRE create — no orphaned product row', async () => {
+  test('an internal failure (unresolvable size) rolls back the ENTIRE create — no orphaned product or stones', async () => {
     const category = await testCategory();
     const name = `Combined Save Rollback Test ${Date.now()}`;
-    // `purities` is deliberately omitted from this request — the schema's
-    // checkAxisMembership refine only cross-checks weightRules against
-    // `purities` when `purities` is actually present in the same request,
-    // so this reaches adminCreateProduct unrejected. syncProductVariants
-    // then creates zero purity attribute values (nothing was selected), so
-    // the service-layer resolver's own 409 (buildPurityAndSizeResolver,
-    // inside the transaction) is what has to catch this — proving it rolls
-    // back everything already written (the product row, its attribute
-    // values, its variants), not just skip the weight rule.
+    // `sizes` is deliberately omitted — the schema's checkAxisMembership only
+    // cross-checks puritySizeRules against `sizes` when `sizes` is present,
+    // so this reaches adminCreateProduct unrejected and the service-layer
+    // resolver's own 409 (inside the transaction) has to catch it.
     const input = createProductSchema.parse(
       basePayload({
         name,
         categoryId: category.id,
-        weightRules: { purityRules: [{ purity: '18K', goldWeightGrams: 1 }], puritySizeRules: [] },
+        weightRules: { purityRules: [], puritySizeRules: [{ purity: '9K', sizeLabel: '99', goldWeightGrams: 1 }] },
+        stones: [{ stoneTypeId: ruby, count: 1, weightCarats: 0.1, price: 500 }],
       }),
     );
 
@@ -129,14 +156,21 @@ describe('Combined product save — create (Test H1)', () => {
   });
 });
 
-describe('Combined product save — update (Test H2)', () => {
+describe('Combined product save — update', () => {
   async function createBaseProduct(category) {
     const input = createProductSchema.parse(
       basePayload({
         categoryId: category.id,
-        purities: ['9K', '18K'],
-        weightRules: { purityRules: [{ purity: '9K', goldWeightGrams: 0.5 }], puritySizeRules: [] },
-        purityPricingRules: [{ purity: '9K', makingChargePercent: 15, makingChargeDiscountPercent: 5, diamondDiscountPercent: null }],
+        sizes: [
+          { label: '6', stockQuantity: 1 },
+          { label: '8', stockQuantity: 1 },
+        ],
+        weightRules: {
+          purityRules: [{ purity: '9K', goldWeightGrams: 0.5 }],
+          puritySizeRules: [{ purity: '9K', sizeLabel: '8', goldWeightGrams: 0.7 }],
+        },
+        purityPricingRules: [{ purity: '9K', makingChargePercent: 15, makingChargeDiscountPercent: 5, stoneDiscountPercent: null }],
+        stones: [{ stoneTypeId: ruby, count: 1, weightCarats: 0.3, price: 2400 }],
       }),
     );
     const product = await adminCreateProduct(input);
@@ -144,32 +178,60 @@ describe('Combined product save — update (Test H2)', () => {
     return product;
   }
 
-  test('omitting weightRules/purityPricingRules on an unrelated field update preserves existing saved rules', async () => {
-    const category = await testCategory();
-    const product = await createBaseProduct(category);
+  test('an unrelated field update preserves saved rules and stones', async () => {
+    const product = await createBaseProduct(await testCategory());
 
     const patch = updateProductSchema.parse({ shortDescription: 'unrelated edit, no rule fields sent' });
     assert.equal('weightRules' in patch, false);
     assert.equal('purityPricingRules' in patch, false);
+    assert.equal('stones' in patch, false);
     await adminUpdateProduct(product.id, patch);
 
     const { rows: weightRows } = await query('SELECT id FROM product_weight_rules WHERE product_id = $1', [product.id]);
-    assert.equal(weightRows.length, 1, 'weight rule must survive an unrelated update that never mentioned weightRules');
+    assert.equal(weightRows.length, 2, 'weight rules must survive an unrelated update');
     const { rows: pricingRows } = await query('SELECT id FROM product_purity_pricing_rules WHERE product_id = $1', [
       product.id,
     ]);
     assert.equal(pricingRows.length, 1, 'purity pricing rule must survive an unrelated update');
+    assert.equal((await stoneRows(product.id)).length, 1, 'stones must survive an unrelated update');
+  });
+
+  test('sending stones replaces the list and reprices; an empty list removes them', async () => {
+    const product = await createBaseProduct(await testCategory());
+
+    await adminUpdateProduct(
+      product.id,
+      updateProductSchema.parse({
+        stones: [
+          { stoneTypeId: cz, count: 20, weightCarats: 0.4, price: 600 },
+          { stoneTypeId: ruby, count: 2, weightCarats: 0.5, price: 4100 },
+        ],
+      }),
+    );
+    let row = await productRow(product.id);
+    assert.deepEqual(
+      (await stoneRows(product.id)).map((s) => s.slug),
+      ['cubic-zirconia', 'ruby'],
+    );
+    assert.equal(Number(row.stone_value), 4700);
+    assert.equal(Number(row.stone_weight_carats), 0.9);
+    assert.equal(Number(row.gross_weight_grams), 1.18, 'gross = 1 g gold + 0.9 ct x 0.2 g');
+
+    await adminUpdateProduct(product.id, updateProductSchema.parse({ stones: [] }));
+    row = await productRow(product.id);
+    assert.equal((await stoneRows(product.id)).length, 0);
+    assert.equal(Number(row.stone_value), 0);
+    assert.equal(row.stone_weight_carats, null);
+    assert.equal(Number(row.gross_weight_grams), 1);
   });
 
   test('an explicitly empty weightRules/purityPricingRules clears the saved rules', async () => {
-    const category = await testCategory();
-    const product = await createBaseProduct(category);
+    const product = await createBaseProduct(await testCategory());
 
-    const patch = updateProductSchema.parse({
-      weightRules: { purityRules: [], puritySizeRules: [] },
-      purityPricingRules: [],
-    });
-    await adminUpdateProduct(product.id, patch);
+    await adminUpdateProduct(
+      product.id,
+      updateProductSchema.parse({ weightRules: { purityRules: [], puritySizeRules: [] }, purityPricingRules: [] }),
+    );
 
     const { rows: weightRows } = await query('SELECT id FROM product_weight_rules WHERE product_id = $1', [product.id]);
     assert.equal(weightRows.length, 0, 'an explicit empty weightRules must clear the saved rules');
@@ -179,103 +241,71 @@ describe('Combined product save — update (Test H2)', () => {
     assert.equal(pricingRows.length, 0, 'an explicit empty purityPricingRules must clear the saved rules');
   });
 
-  test('removing a purity prunes its now-orphaned weight and pricing rules', async () => {
-    const category = await testCategory();
-    const product = await createBaseProduct(category);
+  test('removing a size prunes its now-orphaned purity+size weight rule', async () => {
+    const product = await createBaseProduct(await testCategory());
 
-    // Drop 18K, keep only 9K — no weightRules/purityPricingRules field sent
-    // at all, proving pruning happens purely from the axis change.
-    const patch = updateProductSchema.parse({ purities: ['9K'] });
-    await adminUpdateProduct(product.id, patch);
+    // Drop size 8, keep size 6 — no weightRules field sent at all, proving
+    // pruning happens purely from the axis change.
+    await adminUpdateProduct(product.id, updateProductSchema.parse({ sizes: [{ label: '6', stockQuantity: 1 }] }));
 
     const { rows: weightRows } = await query(
-      `SELECT pav.value AS purity FROM product_weight_rules r
-       JOIN attribute_values pav ON pav.id = r.purity_value_id WHERE r.product_id = $1`,
+      `SELECT sav.value AS size_label FROM product_weight_rules r
+       LEFT JOIN attribute_values sav ON sav.id = r.size_value_id WHERE r.product_id = $1`,
       [product.id],
     );
-    assert.ok(
-      weightRows.every((r) => r.purity === '9K'),
-      'no weight rule should remain for the removed 18K purity',
+    assert.deepEqual(
+      weightRows.map((r) => r.size_label),
+      [null],
+      'only the purity-only rule should remain once size 8 is removed',
     );
-
-    const { rows: pricingRows } = await query('SELECT id FROM product_purity_pricing_rules WHERE product_id = $1', [
-      product.id,
-    ]);
-    // The one saved rule was for 9K (still offered) — must survive pruning.
-    assert.equal(pricingRows.length, 1);
+    const { rows: variantRows } = await query('SELECT id FROM product_variants WHERE product_id = $1', [product.id]);
+    assert.equal(variantRows.length, 1);
   });
 });
 
-describe('applyBaseProductPricing — cached breakdown stays internally consistent (Test H2b)', () => {
-  // Regression for a live production bug (v Insta Diamond pendant,
-  // 2026-09-07): the admin form submits `sellingPrice`/`makingCharge` as
-  // plain fields alongside weightRules/purityPricingRules on every save.
-  // `sellingPrice` can end up correct (e.g. the admin applied a live
-  // preview) while `makingCharge` is computed client-side from the
-  // product's OWN making_charge_percent only, ignoring any Purity Pricing
-  // Rule override — so a single request can write a `making_charge` that's
-  // inconsistent with the `selling_price` it also just wrote. Because
-  // applyBaseProductPricing's "unchanged" short-circuit used to compare
-  // only sellingPriceOriginal (+ the two discount percents), it saw the
-  // freshly-recomputed total already matched what was just written and
-  // skipped correcting the wrong making_charge — leaving the stored
-  // breakdown (and therefore every list/detail priceBreakup reader)
-  // permanently wrong even though the total "looked right".
+describe('applyBaseProductPricing — cached breakdown stays internally consistent', () => {
+  // Regression: the admin form submits `sellingPrice`/`makingCharge` as
+  // plain fields alongside purityPricingRules on every save. A request can
+  // write a `making_charge` inconsistent with the `selling_price` it also
+  // writes; the "unchanged" short-circuit must still correct it rather than
+  // leave the stored breakdown permanently wrong.
   test('a request that writes an inconsistent making_charge alongside an already-correct sellingPrice still gets corrected', async () => {
-    const category = await testCategory();
-    const createInput = createProductSchema.parse(
-      basePayload({
-        purity: '18K',
-        purities: ['18K'],
-        makingChargePercent: 0, // product's own base default: no making charge
-        purityPricingRules: [
-          { purity: '18K', makingChargePercent: 20, makingChargeDiscountPercent: 0, diamondDiscountPercent: 0 },
-        ],
-      }),
+    const product = await adminCreateProduct(
+      createProductSchema.parse(
+        basePayload({
+          makingChargePercent: 0, // product's own base default: no making charge
+          purityPricingRules: [{ purity: '9K', makingChargePercent: 20, makingChargeDiscountPercent: 0, stoneDiscountPercent: 0 }],
+        }),
+      ),
     );
-    const product = await adminCreateProduct(createInput);
     createdProductIds.push(product.id);
 
-    const { rows: beforeRows } = await query(
-      'SELECT gold_value, making_charge, selling_price FROM products WHERE id = $1',
-      [product.id],
-    );
-    const correctMakingCharge = Number(beforeRows[0].making_charge);
-    const correctSellingPrice = Number(beforeRows[0].selling_price);
-    assert.ok(
-      correctMakingCharge > 0,
-      'sanity check: the 18K purity rule (20%) must have produced a non-zero making charge on create',
-    );
+    const before = await productRow(product.id);
+    const correctMakingCharge = Number(before.making_charge);
+    const correctSellingPrice = Number(before.selling_price);
+    assert.ok(correctMakingCharge > 0, 'sanity check: the 20% purity rule must have produced a non-zero making charge');
 
-    // Simulate the admin form's next save: it re-sends the already-correct
-    // sellingPrice (e.g. from "Use this price"/preview) but a makingCharge
-    // recomputed from the product's own 0% default, ignoring the purity
-    // rule — exactly the inconsistent pair the real form submitted.
-    const patch = updateProductSchema.parse({
-      sellingPrice: correctSellingPrice,
-      makingCharge: 0,
-    });
-    await adminUpdateProduct(product.id, patch);
+    await adminUpdateProduct(product.id, updateProductSchema.parse({ sellingPrice: correctSellingPrice, makingCharge: 0 }));
 
-    const { rows: afterRows } = await query(
-      'SELECT making_charge, selling_price FROM products WHERE id = $1',
-      [product.id],
-    );
-    assert.equal(
-      Number(afterRows[0].making_charge),
-      correctMakingCharge,
-      'making_charge must be corrected back to the purity-rule-resolved value, not left at the inconsistent 0 the request sent',
-    );
-    assert.equal(Number(afterRows[0].selling_price), correctSellingPrice);
+    const afterRow = await productRow(product.id);
+    assert.equal(Number(afterRow.making_charge), correctMakingCharge, 'making_charge must be corrected back');
+    assert.equal(Number(afterRow.selling_price), correctSellingPrice);
   });
 });
 
-describe('Combined product save — validator-level checks (Test H3)', () => {
+describe('Combined product save — validator-level checks', () => {
+  test('rejects any purity other than 9K', () => {
+    assert.throws(() =>
+      createProductSchema.parse(
+        basePayload({ weightRules: { purityRules: [{ purity: '18K', goldWeightGrams: 1 }], puritySizeRules: [] } }),
+      ),
+    );
+  });
+
   test('rejects duplicate purities within weightRules.purityRules', () => {
     assert.throws(() =>
       createProductSchema.parse(
         basePayload({
-          purities: ['9K'],
           weightRules: {
             purityRules: [
               { purity: '9K', goldWeightGrams: 1 },
@@ -292,10 +322,9 @@ describe('Combined product save — validator-level checks (Test H3)', () => {
     assert.throws(() =>
       createProductSchema.parse(
         basePayload({
-          purities: ['9K'],
           purityPricingRules: [
-            { purity: '9K', makingChargePercent: 10, makingChargeDiscountPercent: null, diamondDiscountPercent: null },
-            { purity: '9K', makingChargePercent: 20, makingChargeDiscountPercent: null, diamondDiscountPercent: null },
+            { purity: '9K', makingChargePercent: 10, makingChargeDiscountPercent: null, stoneDiscountPercent: null },
+            { purity: '9K', makingChargePercent: 20, makingChargeDiscountPercent: null, stoneDiscountPercent: null },
           ],
         }),
       ),
@@ -306,21 +335,18 @@ describe('Combined product save — validator-level checks (Test H3)', () => {
     assert.throws(() =>
       createProductSchema.parse(
         basePayload({
-          purities: ['9K'],
-          purityPricingRules: [
-            { purity: '9K', makingChargePercent: 150, makingChargeDiscountPercent: null, diamondDiscountPercent: null },
-          ],
+          purityPricingRules: [{ purity: '9K', makingChargePercent: 150, makingChargeDiscountPercent: null, stoneDiscountPercent: null }],
         }),
       ),
     );
   });
 
-  test('rejects a weight rule whose purity is not in the same request\'s purities', () => {
+  test('rejects a purity+size weight rule whose size is not in the same request\'s sizes', () => {
     assert.throws(() =>
       createProductSchema.parse(
         basePayload({
-          purities: ['9K'],
-          weightRules: { purityRules: [{ purity: '18K', goldWeightGrams: 1 }], puritySizeRules: [] },
+          sizes: [{ label: '6', stockQuantity: 1 }],
+          weightRules: { purityRules: [], puritySizeRules: [{ purity: '9K', sizeLabel: '8', goldWeightGrams: 1 }] },
         }),
       ),
     );
@@ -329,30 +355,36 @@ describe('Combined product save — validator-level checks (Test H3)', () => {
   test('rejects a gold weight of zero', () => {
     assert.throws(() =>
       createProductSchema.parse(
-        basePayload({
-          purities: ['9K'],
-          weightRules: { purityRules: [{ purity: '9K', goldWeightGrams: 0 }], puritySizeRules: [] },
-        }),
+        basePayload({ weightRules: { purityRules: [{ purity: '9K', goldWeightGrams: 0 }], puritySizeRules: [] } }),
       ),
     );
+  });
+
+  test('rejects a stone line with zero weight, zero count or a negative price', () => {
+    const stoneTypeId = '00000000-0000-4000-8000-000000000000';
+    for (const bad of [
+      { stoneTypeId, count: 1, weightCarats: 0, price: 100 },
+      { stoneTypeId, count: 0, weightCarats: 0.1, price: 100 },
+      { stoneTypeId, count: 1, weightCarats: 0.1, price: -1 },
+    ]) {
+      assert.throws(() => createProductSchema.parse(basePayload({ stones: [bad] })), JSON.stringify(bad));
+    }
   });
 
   test('accepts an explicit 0 for makingChargeDiscountPercent (distinct from omitted/null)', () => {
     const parsed = createProductSchema.parse(
       basePayload({
-        purities: ['9K'],
-        purityPricingRules: [
-          { purity: '9K', makingChargePercent: 10, makingChargeDiscountPercent: 0, diamondDiscountPercent: null },
-        ],
+        purityPricingRules: [{ purity: '9K', makingChargePercent: 10, makingChargeDiscountPercent: 0, stoneDiscountPercent: null }],
       }),
     );
     assert.equal(parsed.purityPricingRules[0].makingChargeDiscountPercent, 0);
-    assert.equal(parsed.purityPricingRules[0].diamondDiscountPercent, null);
+    assert.equal(parsed.purityPricingRules[0].stoneDiscountPercent, null);
   });
 
-  test('updateProductSchema.partial() still allows omitting weightRules/purityPricingRules entirely', () => {
+  test('updateProductSchema.partial() still allows omitting weightRules/purityPricingRules/stones entirely', () => {
     const parsed = updateProductSchema.parse({ shortDescription: 'no rule fields at all' });
     assert.equal('weightRules' in parsed, false);
     assert.equal('purityPricingRules' in parsed, false);
+    assert.equal('stones' in parsed, false);
   });
 });

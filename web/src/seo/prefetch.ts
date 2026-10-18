@@ -2,6 +2,7 @@ import { matchPath } from 'react-router-dom';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { ApiError } from '../api/client';
 import { fetchHomepage } from '../api/homepage';
+import { fetchFilterOptions } from '../api/categories';
 import { fetchCategories } from '../api/categories';
 import { fetchCollectionBySlug } from '../api/collections';
 import { fetchProductBySlug } from '../api/products';
@@ -66,10 +67,6 @@ export async function prefetchForRoute(
     await safePrefetchProducts(queryClient, filters);
     return { notFound: false };
   }
-
-  // Static landing pages that share the one-segment URL shape with
-  // categories — server-rendered, nothing to prefetch, never a 404.
-  if (pathname === '/retail-partner' || pathname === '/franchise') return { notFound: false };
 
   const pdpMatch = matchPath('/:categorySlug/:productSlug', pathname);
   if (pdpMatch) {
@@ -138,6 +135,8 @@ async function safePrefetch<T>(
 // page 1 is fetched server-side (the `pages: 1` default) — scrolling further
 // is a client-only concern.
 async function safePrefetchProducts(queryClient: QueryClient, filters: ProductsQueryFilters): Promise<void> {
+  // Every product listing shows the filter sidebar — its options too.
+  await safePrefetch(queryClient, ['filter-options'], fetchFilterOptions);
   try {
     await queryClient.prefetchInfiniteQuery({
       queryKey: productsQueryKey(filters),

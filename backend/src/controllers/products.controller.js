@@ -39,7 +39,7 @@ export function discountPercent(mrp, sellingPrice) {
 // The server-computed "was" price for every card's strikethrough/badge: two
 // independent things can make a card's charged price lower than its "full"
 // price — an admin-set static MRP, and a live, purity-rule-aware
-// making-charge/diamond offer (sellingPriceOriginal, recomputed from the
+// making-charge/gemstone offer (sellingPriceOriginal, recomputed from the
 // current gold rate) — this picks whichever is actually higher than the
 // final sellingPrice, so every surface (PLP, homepage, search, wishlist,
 // PDP) shows the identical badge/percentage without re-deriving it
@@ -55,31 +55,25 @@ export function strikePriceInfo(mrp, sellingPrice, sellingPriceOriginal) {
 }
 
 // Distinct from the MRP-vs-sellingPrice discount badge — this is the
-// specific "X% off Making Charge / Diamond" promotional offer an admin can
-// set per product (plan: "give offer making charge and diamonds"), shown on
-// both the listing card and the detail page.
-export function offerLabel(makingChargeDiscountPercent, diamondDiscountPercent) {
+// specific "X% off Making Charge / Gemstones" promotional offer an admin can
+// set per product, shown on both the listing card and the detail page.
+export function offerLabel(makingChargeDiscountPercent, stoneDiscountPercent) {
   const parts = [];
   if (makingChargeDiscountPercent > 0) parts.push(`${makingChargeDiscountPercent}% off Making Charge`);
-  if (diamondDiscountPercent > 0) parts.push(`${diamondDiscountPercent}% off Diamond`);
+  if (stoneDiscountPercent > 0) parts.push(`${stoneDiscountPercent}% off Gemstones`);
   return parts.length ? parts.join(' + ') : null;
 }
 
 // Separate badges, per Pricing Rule Management's storefront requirement:
-// "20% off Making Charges" and "15% off Natural Diamond Value" render as
-// two distinct badges, never combined into one string the way the legacy
-// offerLabel above does (kept as-is for whatever still reads it). The
-// diamond badge names the diamond type when known, since a Natural-only
-// discount and a Lab-Grown-only discount are meaningfully different offers,
-// not one generic "Diamond" badge.
-export function offerBadges(makingChargeDiscountPercent, diamondDiscountPercent, diamondTypeName) {
+// "20% off Making Charges" and "15% off Gemstones" render as two distinct
+// badges, never combined into one string the way offerLabel above does.
+export function offerBadges(makingChargeDiscountPercent, stoneDiscountPercent) {
   const badges = [];
   if (makingChargeDiscountPercent > 0) {
     badges.push({ type: 'MAKING_CHARGE', percent: makingChargeDiscountPercent, label: `${makingChargeDiscountPercent}% off Making Charges` });
   }
-  if (diamondDiscountPercent > 0) {
-    const noun = diamondTypeName ? `${diamondTypeName} Diamond Value` : 'Diamond Value';
-    badges.push({ type: 'DIAMOND', percent: diamondDiscountPercent, label: `${diamondDiscountPercent}% off ${noun}` });
+  if (stoneDiscountPercent > 0) {
+    badges.push({ type: 'STONE', percent: stoneDiscountPercent, label: `${stoneDiscountPercent}% off Gemstones` });
   }
   return badges;
 }
@@ -93,7 +87,7 @@ export function offerBadges(makingChargeDiscountPercent, diamondDiscountPercent,
 function appliedRules(row) {
   const rules = [];
   if (row.effective_making_charge_rule_id) rules.push({ type: 'MAKING_CHARGE', ruleId: row.effective_making_charge_rule_id });
-  if (row.effective_diamond_rule_id) rules.push({ type: 'DIAMOND', ruleId: row.effective_diamond_rule_id });
+  if (row.effective_stone_rule_id) rules.push({ type: 'STONE', ruleId: row.effective_stone_rule_id });
   return rules;
 }
 
@@ -105,46 +99,46 @@ function appliedRules(row) {
 // computeSellingPrice call — GST still computed once, after discounts).
 function applyProductOfferFromAmounts({
   goldValue,
-  diamondValue,
+  stoneValue,
   makingCharge,
   gstPercent,
   sellingPrice,
   makingChargeDiscountAmount,
-  diamondDiscountAmount,
+  stoneDiscountAmount,
 }) {
   const mcAmount = makingChargeDiscountAmount ?? 0;
-  const ddAmount = diamondDiscountAmount ?? 0;
-  if (mcAmount <= 0 && ddAmount <= 0) {
+  const sdAmount = stoneDiscountAmount ?? 0;
+  if (mcAmount <= 0 && sdAmount <= 0) {
     return {
       goldValue,
-      diamondValue,
-      diamondValueOriginal: diamondValue,
+      stoneValue,
+      stoneValueOriginal: stoneValue,
       makingCharge,
       makingChargeOriginal: makingCharge,
       makingChargeDiscountPercent: 0,
-      diamondDiscountPercent: 0,
+      stoneDiscountPercent: 0,
       sellingPrice,
       sellingPriceOriginal: sellingPrice,
     };
   }
 
   const discountedMakingCharge = round2(makingCharge - mcAmount);
-  const discountedDiamondValue = round2(diamondValue - ddAmount);
+  const discountedStoneValue = round2(stoneValue - sdAmount);
   const discountedSellingPrice = computeSellingPrice({
     goldValue,
-    diamondValue: discountedDiamondValue,
+    stoneValue: discountedStoneValue,
     makingCharge: discountedMakingCharge,
     gstPercent,
   });
 
   return {
     goldValue,
-    diamondValue: discountedDiamondValue,
-    diamondValueOriginal: diamondValue,
+    stoneValue: discountedStoneValue,
+    stoneValueOriginal: stoneValue,
     makingCharge: discountedMakingCharge,
     makingChargeOriginal: makingCharge,
     makingChargeDiscountPercent: makingCharge > 0 ? round2((mcAmount / makingCharge) * 100) : 0,
-    diamondDiscountPercent: diamondValue > 0 ? round2((ddAmount / diamondValue) * 100) : 0,
+    stoneDiscountPercent: stoneValue > 0 ? round2((sdAmount / stoneValue) * 100) : 0,
     sellingPrice: discountedSellingPrice,
     sellingPriceOriginal: sellingPrice,
   };
@@ -169,32 +163,32 @@ function applyProductOfferFromAmounts({
 export function rowOffer(row) {
   const makingChargeDiscountAmount =
     row.effective_making_charge_discount_amount == null ? null : Number(row.effective_making_charge_discount_amount);
-  const diamondDiscountAmount =
-    row.effective_diamond_discount_amount == null ? null : Number(row.effective_diamond_discount_amount);
+  const stoneDiscountAmount =
+    row.effective_stone_discount_amount == null ? null : Number(row.effective_stone_discount_amount);
 
-  if (makingChargeDiscountAmount != null || diamondDiscountAmount != null) {
+  if (makingChargeDiscountAmount != null || stoneDiscountAmount != null) {
     return applyProductOfferFromAmounts({
       goldValue: Number(row.gold_value),
-      diamondValue: Number(row.diamond_value),
+      stoneValue: Number(row.stone_value),
       makingCharge: Number(row.making_charge),
       gstPercent: Number(row.gst_percent),
       sellingPrice: Number(row.selling_price),
       makingChargeDiscountAmount,
-      diamondDiscountAmount,
+      stoneDiscountAmount,
     });
   }
 
   const makingChargeDiscountPercent =
     row.effective_making_charge_discount_percent ?? row.making_charge_discount_percent ?? 0;
-  const diamondDiscountPercent = row.effective_diamond_discount_percent ?? row.diamond_discount_percent ?? 0;
+  const stoneDiscountPercent = row.effective_stone_discount_percent ?? row.stone_discount_percent ?? 0;
   return applyProductOffer({
     goldValue: Number(row.gold_value),
-    diamondValue: Number(row.diamond_value),
+    stoneValue: Number(row.stone_value),
     makingCharge: Number(row.making_charge),
     gstPercent: Number(row.gst_percent),
     sellingPrice: Number(row.selling_price),
     makingChargeDiscountPercent: Number(makingChargeDiscountPercent),
-    diamondDiscountPercent: Number(diamondDiscountPercent),
+    stoneDiscountPercent: Number(stoneDiscountPercent),
   });
 }
 
@@ -249,8 +243,7 @@ export function toListDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     metalType: row.metal_type,
     purity: row.purity,
     goldColor: row.gold_color,
-    diamondColour: row.diamond_colour,
-    diamondClarity: row.diamond_clarity,
+    stoneWeightCarats: row.stone_weight_carats == null ? null : Number(row.stone_weight_carats),
     sellingPrice: offer.sellingPrice,
     sellingPriceOriginal: offer.sellingPriceOriginal,
     mrp: Number(row.mrp),
@@ -259,9 +252,9 @@ export function toListDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     hasDiscount: priceInfo.hasDiscount,
     effectiveDiscountPercent: priceInfo.effectiveDiscountPercent,
     makingChargeDiscountPercent: offer.makingChargeDiscountPercent,
-    diamondDiscountPercent: offer.diamondDiscountPercent,
-    offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent),
-    offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent, row.diamond_type),
+    stoneDiscountPercent: offer.stoneDiscountPercent,
+    offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
+    offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
     appliedRules: appliedRules(row),
     primaryImageUrl: row.primary_image_url,
     // toListDto only feeds public endpoints (listings, search, homepage,
@@ -281,7 +274,7 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
   const offer = rowOffer(row);
   const priceInfo = strikePriceInfo(Number(row.mrp), offer.sellingPrice, offer.sellingPriceOriginal);
   const gstAmount =
-    Math.round((offer.sellingPrice - offer.goldValue - offer.diamondValue - offer.makingCharge) * 100) / 100;
+    Math.round((offer.sellingPrice - offer.goldValue - offer.stoneValue - offer.makingCharge) * 100) / 100;
 
   return {
     id: row.id,
@@ -299,21 +292,10 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     grossWeightGrams: row.gross_weight_grams == null ? null : Number(row.gross_weight_grams),
     netWeightGrams: row.net_weight_grams == null ? null : Number(row.net_weight_grams),
     goldWeightGrams: row.gold_weight_grams == null ? null : Number(row.gold_weight_grams),
-    diamondWeightGrams: row.diamond_weight_grams == null ? null : Number(row.diamond_weight_grams),
-    diamondWeightCarats:
-      row.diamond_weight_carats == null ? null : Number(row.diamond_weight_carats),
-    diamondConfigId: row.diamond_config_id,
-    diamondConfigName: row.diamondConfigName ?? null,
-    diamondCount: row.diamond_count,
-    // diamond_type_id is the source of truth going forward (Pricing Rule
-    // Management, Phase 4) — diamond_type (TEXT) is kept as a denormalized
-    // display copy, written from the same admin-form select, so any code
-    // still reading the old free-text field keeps working unchanged.
-    diamondTypeId: row.diamond_type_id ?? null,
-    diamondType: row.diamond_type,
-    diamondColour: row.diamond_colour,
-    diamondClarity: row.diamond_clarity,
-    gemstone: row.gemstone,
+    stoneWeightCarats: row.stone_weight_carats == null ? null : Number(row.stone_weight_carats),
+    // The piece's stone lines (type, count, weight, price) — attached by
+    // productsService (getPublicProductBySlug / adminGetProduct / save).
+    stones: row.stones ?? [],
     certification: row.certification,
     productSize: row.product_size,
     // Overrides the "Size" wording on the admin form and storefront (e.g.
@@ -323,19 +305,22 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
 
     priceBreakup: {
       goldValue: offer.goldValue,
-      diamondValue: offer.diamondValue,
-      diamondValueOriginal: offer.diamondValueOriginal,
+      stoneValue: offer.stoneValue,
+      stoneValueOriginal: offer.stoneValueOriginal,
       makingCharge: offer.makingCharge,
       makingChargeOriginal: offer.makingChargeOriginal,
       makingChargeDiscountPercent: offer.makingChargeDiscountPercent,
-      diamondDiscountPercent: offer.diamondDiscountPercent,
+      stoneDiscountPercent: offer.stoneDiscountPercent,
       gstAmount,
       total: offer.sellingPrice,
     },
     // Source of truth for live making-charge recalculation (null = still on
-    // the flat priceBreakup.makingChargeOriginal above — platinum, or never
-    // migrated to percent-based pricing).
+    // the flat priceBreakup.makingChargeOriginal above).
     makingChargePercent: row.making_charge_percent == null ? null : Number(row.making_charge_percent),
+    // The admin's own typed offer defaults (distinct from the resolved
+    // priceBreakup percentages above, which can come from a rule).
+    makingChargeDiscountPercent: Number(row.making_charge_discount_percent ?? 0),
+    stoneDiscountPercent: Number(row.stone_discount_percent ?? 0),
     // The admin edit form reads this to show the actually-saved GST% —
     // previously absent here entirely, so the form always displayed blank
     // regardless of what was stored, and silently reset it to a hardcoded
@@ -353,8 +338,8 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     strikePrice: priceInfo.strikePrice,
     hasDiscount: priceInfo.hasDiscount,
     effectiveDiscountPercent: priceInfo.effectiveDiscountPercent,
-    offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent),
-    offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent, row.diamond_type),
+    offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
+    offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
     appliedRules: appliedRules(row),
 
     stockQuantity: row.stock_quantity,
@@ -394,9 +379,8 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     productSizeMeasurements: row.productSizeMeasurements ?? null,
 
     // Admin-defined dimensions this product offers values on (Purity, Gold
-    // Color, Diamond Quality, Size, and whatever's added later) — replaces
-    // the old fixed goldColorOptions/purityOptions/diamondOptions/sizes
-    // fields with one generic, attribute-count-agnostic shape.
+    // Color, Size, and whatever's added later) — one generic,
+    // attribute-count-agnostic shape.
     attributes: (row.attributes ?? []).map((a) => ({
       code: a.code,
       name: a.name,
@@ -414,8 +398,6 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
       stockQuantity: v.stock_quantity,
       availableStock: v.stock_quantity,
       goldWeightGrams: v.gold_weight_grams == null ? null : Number(v.gold_weight_grams),
-      diamondWeightGrams: v.diamond_weight_grams == null ? null : Number(v.diamond_weight_grams),
-      diamondWeightCarats: v.diamond_weight_carats == null ? null : Number(v.diamond_weight_carats),
       attributeValueIds: Object.values(v.attributes ?? {}).map((a) => a.valueId),
     })),
 
@@ -425,7 +407,7 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     // reads a flat `sizes` prop directly — this keeps both working without
     // either needing to understand the generic attribute shape. A size's
     // stockQuantity/availableStock is ONE number shared uniformly across
-    // every Gold Colour × Purity × Diamond Quality combo carrying that size
+    // every Gold Colour combo carrying that size
     // — matching applySizeStockUpdates/syncProductVariants, which both write
     // the admin's typed value to every one of those combos as-is, not
     // divided (the "old pre-variant-model mental model of one stock count
@@ -443,14 +425,9 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
         const stock = (row.variants ?? [])
           .filter((variant) => Object.values(variant.attributes ?? {}).some((a) => a.valueId === v.id))
           .reduce((max, variant) => Math.max(max, variant.is_available ? variant.stock_quantity : 0), 0);
-        return { id: v.id, label: v.label, stockQuantity: stock, availableStock: stock, weightGrams: null, diamondWeightCarats: null };
+        return { id: v.id, label: v.label, stockQuantity: stock, availableStock: stock, weightGrams: null };
       }) ?? [],
     goldColorOptions: (row.attributes ?? []).find((a) => a.code === 'gold_color')?.values.map((v) => v.value) ?? [],
-    purityOptions: (row.attributes ?? []).find((a) => a.code === 'purity')?.values.map((v) => v.value) ?? [],
-    diamondOptions:
-      (row.attributes ?? [])
-        .find((a) => a.code === 'diamond_quality')
-        ?.values.map((v) => ({ id: v.refId, name: v.label })) ?? [],
   };
 }
 
@@ -507,18 +484,17 @@ export async function pricePreview(req, res, next) {
       grossMakingCharge: result.makingChargeOriginal,
       makingChargeDiscountAmount: round2(result.makingChargeOriginal - result.makingCharge),
       discountedMakingCharge: result.makingCharge,
-      grossDiamondValue: result.diamondValueOriginal,
-      diamondDiscountAmount: round2(result.diamondValueOriginal - result.diamondValue),
-      discountedDiamondValue: result.diamondValue,
-      offerLabel: offerLabel(result.makingChargeDiscountPercent, result.diamondDiscountPercent),
-      // No diamond-type name here (this live-preview path doesn't otherwise
-      // need a join to diamond_types) — badge falls back to the generic
-      // "Diamond Value" wording; toDetailDto's PDP-load badge has the real
-      // product row and names the type.
-      offerBadges: offerBadges(result.makingChargeDiscountPercent, result.diamondDiscountPercent, null),
+      grossStoneValue: result.stoneValueOriginal,
+      stoneDiscountAmount: round2(result.stoneValueOriginal - result.stoneValue),
+      discountedStoneValue: result.stoneValue,
+      offerLabel: offerLabel(result.makingChargeDiscountPercent, result.stoneDiscountPercent),
+      offerBadges: offerBadges(result.makingChargeDiscountPercent, result.stoneDiscountPercent),
       appliedRules: [
         ...(result.appliedMakingChargeRuleId ? [{ type: 'MAKING_CHARGE', ruleId: result.appliedMakingChargeRuleId }] : []),
-        ...(result.diamondComponents?.[0]?.appliedRuleId ? [{ type: 'DIAMOND', ruleId: result.diamondComponents[0].appliedRuleId }] : []),
+        ...[...new Set(result.stoneComponents.map((c) => c.appliedRuleId).filter(Boolean))].map((ruleId) => ({
+          type: 'STONE',
+          ruleId,
+        })),
       ],
       strikePrice: priceInfo.strikePrice,
       hasDiscount: priceInfo.hasDiscount,
@@ -662,9 +638,9 @@ export async function setBestSeller(req, res, next) {
 // label built from its attribute values and the exact live price a shopper
 // picking that combination would be charged.
 // Fixed order so a combination's label always reads the same way (e.g.
-// always "9K / Yellow Gold / FL. EF / 6", never scrambled) — json_object_agg
+// always "9K / Yellow Gold / 6", never scrambled) — json_object_agg
 // doesn't guarantee key order, so Object.values() alone can't be trusted.
-const ATTRIBUTE_LABEL_ORDER = ['purity', 'gold_color', 'diamond_quality', 'size'];
+const ATTRIBUTE_LABEL_ORDER = ['purity', 'gold_color', 'size'];
 
 function toVariantDto({ variant, pricing }) {
   const attributes = variant.attributes ?? {};
@@ -679,8 +655,6 @@ function toVariantDto({ variant, pricing }) {
     isAvailable: variant.is_available,
     stockQuantity: variant.stock_quantity,
     goldWeightGrams: variant.gold_weight_grams == null ? null : Number(variant.gold_weight_grams),
-    diamondWeightGrams: variant.diamond_weight_grams == null ? null : Number(variant.diamond_weight_grams),
-    diamondWeightCarats: variant.diamond_weight_carats == null ? null : Number(variant.diamond_weight_carats),
     sellingPrice: pricing.sellingPrice,
     priceOverride: variant.price_override == null ? null : Number(variant.price_override),
     isPriceOverridden: pricing.isPriceOverridden ?? false,

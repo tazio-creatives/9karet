@@ -24,13 +24,12 @@ function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 }
 
-// e.g. "18K / Yellow Gold / Size 12 / VVS EF" — only the parts this line has.
+// e.g. "9K / Yellow Gold / Size 12" — only the parts this line has.
 function variantLabel(line: CartItem): string | undefined {
   const parts = [
     line.purity,
     line.goldColor ? `${titleCase(line.goldColor)} Gold` : null,
     line.sizeLabel ? `Size ${line.sizeLabel}` : line.productSize,
-    line.diamondConfigName,
   ].filter((p): p is string => !!p && String(p).trim() !== '');
   return parts.length ? parts.join(' / ') : undefined;
 }
@@ -170,7 +169,7 @@ export function trackPurchase(order: Order) {
     item_id: i.productSku || i.productId,
     item_name: i.productName,
     item_variant:
-      [i.purity, i.goldColor, i.sizeLabel && `Size ${i.sizeLabel}`, i.diamondConfigName]
+      [i.purity, i.goldColor, i.sizeLabel && `Size ${i.sizeLabel}`]
         .filter(Boolean)
         .join(' / ') || undefined,
     price: i.unitPrice,

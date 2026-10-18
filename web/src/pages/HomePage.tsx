@@ -49,7 +49,7 @@ export function HomePage() {
       {/* The page's one H1 — the brand otherwise only appears inside the
           logo image. Visually hidden (the hero banner is the visual
           heading) but real text for search engines and screen readers. */}
-      <h1 className={styles.visuallyHidden}>BOX DIAMONDS — Certified Natural Diamond Jewellery</h1>
+      <h1 className={styles.visuallyHidden}>9KARET — Smart Gold: 9K Gold &amp; Gemstone Jewellery</h1>
       {data.sections.map((section, i) => (
         <Fragment key={section.id}>
           <HomepageSection section={section} alternate={i % 2 === 1} />

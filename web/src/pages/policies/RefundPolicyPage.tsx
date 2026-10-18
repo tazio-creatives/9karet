@@ -9,7 +9,7 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          You must raise your return request through My Account on BoxDiamonds.com within seven calendar days from
+          You must raise your return request through My Account on 9Karet.com within seven calendar days from
           the date on which your order is shown as delivered.
         </p>
         <p>A request raised after the seven-day period may not be accepted unless required under applicable law.</p>
@@ -56,7 +56,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>Before raising a return request, log in to:</p>
         <p>
-          <strong>BoxDiamonds.com → My Account → My Orders → Select Order → Request Return</strong>
+          <strong>9Karet.com → My Account → My Orders → Select Order → Request Return</strong>
         </p>
         <p>You must upload:</p>
         <ul>
@@ -92,7 +92,7 @@ const SECTIONS: PolicySection[] = [
         </p>
         <p>
           Initial approval does not guarantee a refund. Final acceptance is subject to physical inspection after the
-          product reaches the Box Diamonds quality-control facility.
+          product reaches the 9Karet quality-control facility.
         </p>
         <p>
           If additional information is required, our customer-support team may contact you before approving the
@@ -109,7 +109,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>Once your return request receives initial approval:</p>
         <ul>
-          <li>A Box Diamonds representative will contact you.</li>
+          <li>A 9Karet representative will contact you.</li>
           <li>The representative will confirm the return details and your pickup address.</li>
           <li>A suitable pickup date and time will be arranged.</li>
           <li>Our authorised logistics partner will collect the product.</li>
@@ -119,12 +119,12 @@ const SECTIONS: PolicySection[] = [
           </li>
         </ul>
         <p>
-          <strong>Free return shipping:</strong> Box Diamonds provides free reverse shipping across India for eligible
+          <strong>Free return shipping:</strong> 9Karet provides free reverse shipping across India for eligible
           products approved under this policy, subject to pickup availability at your location.
         </p>
-        <p>Please do not send jewellery independently unless Box Diamonds provides written instructions.</p>
+        <p>Please do not send jewellery independently unless 9Karet provides written instructions.</p>
         <p>
-          Box Diamonds may not be responsible for products returned through an unauthorised courier or sent without
+          9Karet may not be responsible for products returned through an unauthorised courier or sent without
           an approved return request.
         </p>
         <p>
@@ -213,7 +213,7 @@ const SECTIONS: PolicySection[] = [
           <li>Breakage</li>
           <li>Bending</li>
           <li>Distortion</li>
-          <li>A loose or missing diamond</li>
+          <li>A loose or missing stone</li>
           <li>A damaged prong or setting</li>
           <li>A stretched or damaged chain</li>
           <li>A broken clasp, lock, screw, or connecting ring</li>
@@ -267,8 +267,6 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>The following products are not eligible for return under the seven-day voluntary return policy:</p>
         <ul>
-          <li>Solitaire jewellery</li>
-          <li>Loose solitaires or loose diamonds</li>
           <li>Custom-made jewellery</li>
           <li>Personalised jewellery</li>
           <li>Engraved products</li>
@@ -292,39 +290,19 @@ const SECTIONS: PolicySection[] = [
     ),
   },
   {
-    id: 'solitaire',
-    title: 'Solitaire Jewellery',
-    icon: 'diamond',
-    content: (
-      <>
-        <p>Solitaire products are not covered by the seven-day voluntary return policy.</p>
-        <p>
-          Customers should carefully review the solitaire’s specifications, certification, design, metal details,
-          price, size, and applicable exchange or buyback conditions before completing the purchase.
-        </p>
-        <p>
-          If a solitaire product is received damaged, incorrect, incomplete, or materially different from the
-          confirmed order, contact Box Diamonds immediately with the complete unboxing video and supporting
-          photographs. The matter will be reviewed separately in accordance with the product evidence and applicable
-          law.
-        </p>
-      </>
-    ),
-  },
-  {
     id: 'quality-inspection',
     title: 'Quality Inspection',
     icon: 'search',
     content: (
       <>
-        <p>After the returned product reaches Box Diamonds, it will be examined by our quality-control team.</p>
+        <p>After the returned product reaches 9Karet, it will be examined by our quality-control team.</p>
         <p>The inspection may include:</p>
         <ul>
           <li>Product identity verification</li>
           <li>Gold-purity verification</li>
           <li>Product-weight verification</li>
-          <li>Diamond-count verification</li>
-          <li>Diamond-setting inspection</li>
+          <li>Stone-count verification</li>
+          <li>Stone-setting inspection</li>
           <li>Scratch and surface inspection</li>
           <li>Shape and structural inspection</li>
           <li>Ring-size or measurement confirmation</li>
@@ -349,7 +327,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>
           The complete inspection and refund process may take up to 14 working days from the date the returned
-          product is received at the Box Diamonds facility.
+          product is received at the 9Karet facility.
         </p>
         <p>
           Working days exclude Sundays, public holidays, bank holidays, and officially declared non-working days.
@@ -433,7 +411,7 @@ const SECTIONS: PolicySection[] = [
         <ul>
           <li>Physical damage</li>
           <li>Scratches or signs of wear</li>
-          <li>Missing diamonds or components</li>
+          <li>Missing stones or components</li>
           <li>Alteration or resizing</li>
           <li>Missing tags or certificates</li>
           <li>Missing packaging or accessories</li>
@@ -458,7 +436,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>Once pickup is approved:</p>
         <ul>
-          <li>Place the jewellery inside its original Box Diamonds jewellery box.</li>
+          <li>Place the jewellery inside its original 9Karet jewellery box.</li>
           <li>Include the certificate, invoice, tags, accessories, and supplied documents.</li>
           <li>Secure the jewellery so that it cannot move or become damaged.</li>
           <li>Place the jewellery box inside suitable protective outer packaging.</li>
@@ -482,7 +460,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>
           If the scheduled pickup cannot be completed because the customer is unavailable, the address is incorrect,
-          or the package is not ready, Box Diamonds may attempt to reschedule the collection.
+          or the package is not ready, 9Karet may attempt to reschedule the collection.
         </p>
         <p>Repeated failed pickup attempts may delay or cancel the return request.</p>
       </>
@@ -529,11 +507,11 @@ const SECTIONS: PolicySection[] = [
   },
   {
     id: 'our-responsibilities',
-    title: 'Box Diamonds’ Responsibilities',
+    title: '9Karet’ Responsibilities',
     icon: 'handshake',
     content: (
       <>
-        <p>Box Diamonds will:</p>
+        <p>9Karet will:</p>
         <ul>
           <li>Review return requests fairly</li>
           <li>Verify submitted evidence</li>
@@ -552,13 +530,13 @@ const SECTIONS: PolicySection[] = [
     icon: 'flag',
     content: (
       <>
-        <p>Box Diamonds may reject, investigate, or restrict a request where there is reasonable evidence of:</p>
+        <p>9Karet may reject, investigate, or restrict a request where there is reasonable evidence of:</p>
         <ul>
           <li>Product substitution</li>
           <li>False damage claims</li>
           <li>Manipulated photographs or videos</li>
           <li>Return of a different item</li>
-          <li>Removal or replacement of diamonds or components</li>
+          <li>Removal or replacement of stones or components</li>
           <li>Repeated misuse of the return process</li>
           <li>Fraudulent payment or account activity</li>
           <li>Misrepresentation of product condition</li>
@@ -574,7 +552,7 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          This policy describes the voluntary return process offered by Box Diamonds. Nothing in this policy is
+          This policy describes the voluntary return process offered by 9Karet. Nothing in this policy is
           intended to exclude, restrict, or override any consumer right or remedy that cannot lawfully be excluded
           under applicable Indian law.
         </p>
@@ -591,7 +569,7 @@ const SECTIONS: PolicySection[] = [
     icon: 'list',
     content: (
       <ol>
-        <li>Visit BoxDiamonds.com.</li>
+        <li>Visit 9Karet.com.</li>
         <li>Log in to My Account.</li>
         <li>Open My Orders.</li>
         <li>Select the relevant order.</li>
@@ -626,7 +604,7 @@ const SECTIONS: PolicySection[] = [
           <li>Invoice and certificate details</li>
         </ul>
         <p>
-          <strong>Box Diamonds — Timeless by Nature.</strong>
+          <strong>9Karet — Timeless by Nature.</strong>
           <br />A clear process. A careful inspection. A fair resolution.
         </p>
       </>
@@ -641,17 +619,17 @@ export function RefundPolicyPage() {
       lastUpdated="2 October 2026"
       subtitle={
         <>
-          Your complete guide to returns and refunds at Box Diamonds.
+          Your complete guide to returns and refunds at 9Karet.
           <br />
           Shop with confidence.
         </>
       }
       glance={{
-        heading: 'Shop With Confidence at Box Diamonds',
+        heading: 'Shop With Confidence at 9Karet',
         content: (
           <>
             <p>
-              At Box Diamonds, every piece of jewellery is carefully inspected before it is packed and dispatched. We
+              At 9Karet, every piece of jewellery is carefully inspected before it is packed and dispatched. We
               want you to feel confident about your purchase and understand the conditions that apply if you decide to
               return an eligible product.
             </p>

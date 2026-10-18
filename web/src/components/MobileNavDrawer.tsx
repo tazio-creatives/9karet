@@ -125,8 +125,8 @@ export function MobileNavDrawer({ categories, wishlistCount, isLoggedIn, onClose
       <div className={styles.overlay} onClick={onClose} aria-hidden="true" />
       <div id="mobile-nav-drawer" className={styles.drawer} role="dialog" aria-modal="true" aria-label="Menu">
         <div className={styles.header}>
-          <Link to="/" className={styles.logo} onClick={onClose} aria-label="Box Diamonds — home">
-            <img src="/images/logo.png" alt="Box Diamonds" className={styles.logoImg} width={260} height={166} />
+          <Link to="/" className={styles.logo} onClick={onClose} aria-label="9Karet — home">
+            <img src="/images/logo.png" alt="9Karet" className={styles.logoImg} width={535} height={198} />
           </Link>
           <div className={styles.headerActions}>
             <Link to="/wishlist" className={styles.iconBtn} onClick={onClose} aria-label="Wishlist">

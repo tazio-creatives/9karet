@@ -321,7 +321,7 @@ export function ProductsListPage() {
                   </td>
                   <td>
                     {product.purity ? `${product.purity} ` : ''}
-                    {product.metalType === 'GOLD' ? 'Gold' : 'Platinum'}
+                    {product.purity ?? '9K'} Gold
                   </td>
                   <td>{formatPrice(product.sellingPrice)}</td>
                   <td>{product.availableStock}</td>

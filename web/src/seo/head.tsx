@@ -13,9 +13,9 @@ export interface HeadData {
 }
 
 export const defaultHead: HeadData = {
-  title: 'BOX DIAMONDS | Certified Natural Diamond Jewellery Online',
+  title: '9KARET | 9K Gold & Gemstone Jewellery Online',
   description:
-    'Shop certified natural diamond rings, earrings, necklaces, bangles and fine jewellery at BOX DIAMONDS. Premium designs, transparent pricing and trusted quality.',
+    'Shop BIS hallmarked 9K gold rings, earrings, necklaces, pendants and bracelets set with genuine gemstones at 9KARET. Smart gold, transparent pricing.',
   canonicalPath: '/',
   jsonLd: [organizationJsonLd()],
 };

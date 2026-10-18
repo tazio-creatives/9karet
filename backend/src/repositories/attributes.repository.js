@@ -2,8 +2,8 @@ import { query } from '../config/db.js';
 
 // Every attribute + its GLOBAL values only (product_id IS NULL) — Size
 // values are product-scoped and managed from the product form itself, not
-// here; this screen is for the shared catalogue (Purity, Gold Color,
-// Diamond Quality, and any future attribute type).
+// here; this screen is for the shared catalogue (Purity, Gold Color, and
+// any future attribute type).
 export async function findAllAttributesWithGlobalValues() {
   const { rows } = await query(
     `SELECT a.id AS attribute_id, a.code, a.name, a.sort_order AS attribute_sort_order, a.is_active AS attribute_is_active,

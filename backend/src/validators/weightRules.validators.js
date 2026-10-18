@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const PURITIES = ['9K', '14K', '18K', '22K', '24K'];
+const PURITIES = ['9K'];
 
 export const replaceWeightRulesSchema = z.object({
   purityRules: z

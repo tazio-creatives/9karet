@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 63, 69, 0.45);
+  background: rgba(69, 18, 25, 0.45);
   z-index: 1000;
   display: flex;
   align-items: flex-end;
@@ -41,7 +41,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #123f45;
+  color: #451219;
   line-height: 1.3;
 }
 
@@ -80,7 +80,7 @@
 .price {
   font-size: 20px;
   font-weight: 600;
-  color: #075968;
+  color: #670815;
 }
 
 .mrp {
@@ -112,8 +112,8 @@
   width: 100%;
   height: 46px;
   border-radius: 8px;
-  border: 1.5px solid #075968;
-  background: #075968;
+  border: 1.5px solid #670815;
+  background: #670815;
   color: #fff;
   font-size: 15px;
   font-weight: 600;

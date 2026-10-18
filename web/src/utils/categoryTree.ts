@@ -4,7 +4,7 @@ export function findCategoryBySlug(categories: Category[], slug: string): Catego
   return categories.find((c) => c.slug === slug) ?? null;
 }
 
-// Root-first ancestor chain, e.g. Rings -> Diamond Rings -> [category itself].
+// Root-first ancestor chain, e.g. Rings -> Gemstone Rings -> [category itself].
 export function getAncestorChain(categories: Category[], category: Category): Category[] {
   const byId = new Map(categories.map((c) => [c.id, c]));
   const chain: Category[] = [category];

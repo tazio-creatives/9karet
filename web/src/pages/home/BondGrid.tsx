@@ -27,7 +27,7 @@ export function BondGrid({ items }: { items: HomepageItem[] }) {
           <>
             <span className={styles.photo} style={imageUrl ? undefined : { background: placeholderGradient(index) }}>
               {imageUrl && (
-                <img src={imageUrl} alt={label ? `Diamond jewellery gifts for ${label}` : 'Diamond jewellery gift'} loading="lazy" />
+                <img src={imageUrl} alt={label ? `9K gold jewellery gifts for ${label}` : '9K gold jewellery gift'} loading="lazy" />
               )}
             </span>
             <span className={styles.label}>{label}</span>

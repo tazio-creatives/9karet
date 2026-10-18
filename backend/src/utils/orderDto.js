@@ -79,16 +79,11 @@ export function toOrderDto(order, items = [], statusHistory = [], extra = {}, { 
     totalAmount: Number(order.total_amount),
     createdAt: order.created_at,
     items: items.map((item) => {
-      // variant_attributes_snapshot ([{attributeCode, label}]) is the
-      // source of truth going forward — captured once at order placement,
-      // attribute-count-agnostic. The old flat columns (product_size_label/
-      // gold_color/purity/diamond_config_name) are read as a fallback only
-      // for pre-cutover historical orders that never got a snapshot. The
-      // *_snapshot columns (added by the 20260918000000 migration) follow
-      // the same convention for weight/diamond data: null on any order
-      // placed before that migration, in which case diamondCount/Colour/
-      // Clarity fall back to the live product join (same drift risk that
-      // already existed for every order before this snapshot existed).
+      // variant_attributes_snapshot ([{attributeCode, label}]) and
+      // stones_snapshot ([{stoneTypeName, count, weightCarats, price}], per
+      // unit) are both captured once at order placement and never
+      // recalculated — the order shows what was actually sold even after
+      // the product is edited.
       const snapshot = item.variant_attributes_snapshot ?? [];
       const fromSnapshot = (code) => snapshot.find((s) => s.attributeCode === code)?.label ?? null;
       return {
@@ -101,7 +96,7 @@ export function toOrderDto(order, items = [], statusHistory = [], extra = {}, { 
         productImageLargeUrl: item.product_image_large_url ?? item.product_image_url ?? null,
         quantity: item.quantity,
         goldValue: Number(item.gold_value),
-        diamondValue: Number(item.diamond_value),
+        stoneValue: Number(item.stone_value),
         makingCharge: Number(item.making_charge),
         gstAmount: Number(item.gst_amount),
         unitPrice: Number(item.unit_price),
@@ -109,12 +104,13 @@ export function toOrderDto(order, items = [], statusHistory = [], extra = {}, { 
         sizeLabel: fromSnapshot('size') ?? item.product_size_label ?? null,
         goldColor: fromSnapshot('gold_color') ?? item.gold_color ?? null,
         purity: fromSnapshot('purity') ?? item.purity ?? null,
-        diamondConfigName: fromSnapshot('diamond_quality') ?? item.diamond_config_name ?? null,
         goldWeightGrams: nullableNumber(item.gold_weight_grams_snapshot),
-        diamondWeightCarats: nullableNumber(item.diamond_weight_carats_snapshot),
-        diamondCount: nullableNumber(item.diamond_count_snapshot ?? item.diamond_count),
-        diamondColour: item.diamond_colour_snapshot ?? item.diamond_colour ?? null,
-        diamondClarity: item.diamond_clarity_snapshot ?? item.diamond_clarity ?? null,
+        stones: (item.stones_snapshot ?? []).map((s) => ({
+          stoneTypeName: s.stoneTypeName,
+          count: s.count,
+          weightCarats: nullableNumber(s.weightCarats),
+          price: nullableNumber(s.price),
+        })),
         customizationNote: item.customization_note ?? null,
         isBackordered: item.is_backordered,
         // Admin "Product Details" panel only (mirrors the storefront PDP) —
@@ -122,8 +118,7 @@ export function toOrderDto(order, items = [], statusHistory = [], extra = {}, { 
         metalType: item.metal_type ?? null,
         netWeightGrams: nullableNumber(item.net_weight_grams),
         grossWeightGrams: nullableNumber(item.gross_weight_grams),
-        diamondWeightGrams: nullableNumber(item.diamond_weight_grams),
-        gemstone: item.gemstone ?? null,
+        stoneWeightCarats: nullableNumber(item.stone_weight_carats),
       };
     }),
     statusHistory: statusHistory.map((h) => ({

@@ -5,6 +5,6 @@ import { useEffect } from 'react';
 // just need a sensible tab title, not the full seo/head.tsx machinery.
 export function useDocumentTitle(title: string | null | undefined) {
   useEffect(() => {
-    document.title = title ? `${title} | BOX DIAMONDS` : 'BOX DIAMONDS';
+    document.title = title ? `${title} | 9KARET` : '9KARET';
   }, [title]);
 }

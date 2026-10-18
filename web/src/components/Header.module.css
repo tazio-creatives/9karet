@@ -30,8 +30,8 @@
 }
 
 .logoImg {
-  width: 116px;
-  height: 74px;
+  width: 160px;
+  height: 59px;
   object-fit: contain;
   display: block;
 }
@@ -122,8 +122,8 @@
   }
 
   .logoImg {
-    width: 91px;
-    height: 58px;
+    width: 130px;
+    height: 48px;
   }
 
   .actionLabel {
@@ -184,7 +184,7 @@
   }
 
   .mobileLogoImg {
-    width: 84px;
+    width: 112px;
     height: auto;
     display: block;
   }
@@ -253,7 +253,7 @@
 
 @media (max-width: 359px) {
   .mobileLogoImg {
-    width: 72px;
+    width: 96px;
   }
 
   /* Narrower still (down to 320px) — the icon boxes shrink a little further

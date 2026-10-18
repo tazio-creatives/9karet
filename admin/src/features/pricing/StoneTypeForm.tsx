@@ -1,17 +1,17 @@
 import { useState, type FormEvent } from 'react';
-import type { DiamondConfig } from '../../api/types';
+import type { StoneType } from '../../api/types';
 import { ApiError } from '../../api/client';
 import sharedStyles from '../../styles/shared.module.css';
 
-interface DiamondConfigFormProps {
-  initial?: DiamondConfig;
-  onSubmit: (input: { name: string; ratePerCent: number; isActive: boolean }) => Promise<unknown>;
+interface StoneTypeFormProps {
+  initial?: StoneType;
+  onSubmit: (input: { name: string; sortOrder: number; isActive: boolean }) => Promise<unknown>;
   onCancel: () => void;
 }
 
-export function DiamondConfigForm({ initial, onSubmit, onCancel }: DiamondConfigFormProps) {
+export function StoneTypeForm({ initial, onSubmit, onCancel }: StoneTypeFormProps) {
   const [name, setName] = useState(initial?.name ?? '');
-  const [ratePerCent, setRatePerCent] = useState(initial?.ratePerCent ?? 0);
+  const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [isActive, setIsActive] = useState(initial?.isActive ?? true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,9 +21,9 @@ export function DiamondConfigForm({ initial, onSubmit, onCancel }: DiamondConfig
     setError(null);
     setIsSubmitting(true);
     try {
-      await onSubmit({ name, ratePerCent, isActive });
+      await onSubmit({ name, sortOrder, isActive });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save diamond quality tier.');
+      setError(err instanceof ApiError ? err.message : 'Could not save stone type.');
     } finally {
       setIsSubmitting(false);
     }
@@ -34,23 +34,11 @@ export function DiamondConfigForm({ initial, onSubmit, onCancel }: DiamondConfig
       <div className={sharedStyles.formGrid}>
         <label className={sharedStyles.field}>
           Name
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. VS1 Natural"
-            required
-          />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ruby" required />
         </label>
         <label className={sharedStyles.field}>
-          Rate per cent (₹)
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={ratePerCent}
-            onChange={(e) => setRatePerCent(Number(e.target.value))}
-            required
-          />
+          Sort Order
+          <input type="number" step="1" value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} />
         </label>
         <label className={`${sharedStyles.field} ${sharedStyles.checkboxField}`}>
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />

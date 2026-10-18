@@ -1,16 +1,14 @@
 import { boss, createQueueSafe } from './queue.js';
 import { withTransaction } from '../config/db.js';
 import { runGoldRateSync } from '../services/goldRateService.js';
-import { findDiamondConfigById } from '../repositories/diamondConfigs.repository.js';
 import { insertPriceHistory } from '../repositories/productPriceHistory.repository.js';
-import { findGoldProductsForRecalculation, findDiamondProductsForRecalculation } from '../repositories/products.repository.js';
+import { findGoldProductsForRecalculation } from '../repositories/products.repository.js';
 import { applyBaseProductPricing } from '../services/productsService.js';
 import { invalidateProductsPagesBatch } from '../services/pageCacheInvalidation.js';
 import { loadActiveRuleSet } from '../services/pricingRuleResolver.js';
 
 export const JOB_GOLD_RATE_SYNC = 'gold-rate-sync';
 export const JOB_RECALCULATE_GOLD = 'recalculate-gold-prices';
-export const JOB_RECALCULATE_DIAMOND = 'recalculate-diamond-prices';
 
 // Rate sync flow (spec: OroPocket primary / GoldAPI fallback / last-known
 // rate, admin adjustment layer, Automatic/Manual mode, deviation guard —
@@ -36,7 +34,7 @@ async function goldRateSyncHandler(jobs) {
 // price-history delta.
 // Per-product try/catch (Pricing Rule Management, Phase 2) — this loop used
 // to have none, so a single product throwing (a missing gold rate for an
-// unusual purity, a data-integrity edge case) aborted recalculation for
+// purity, a data-integrity edge case) aborted recalculation for
 // every other product in the same pass. One bad product must not block a
 // gold-rate sync for the other ~2,000. The rule set is loaded once up front
 // (not once per product, which loadActiveRuleSet's own 30s cache would
@@ -75,55 +73,13 @@ async function recalculateGoldPricesHandler() {
   );
 }
 
-// pg-boss v10's work() callback receives an array of jobs, not a single job
-// (see aiImageJob.js/emailJob.js) — batchSize defaults to 1 here too.
-async function recalculateDiamondPricesHandler(jobs) {
-  const [job] = jobs;
-  const { diamondConfigId } = job.data;
-
-  const config = await findDiamondConfigById(diamondConfigId);
-  if (!config) return;
-
-  const products = await findDiamondProductsForRecalculation(diamondConfigId);
-  const ruleSet = await loadActiveRuleSet();
-  const touched = [];
-  const failures = [];
-
-  for (const product of products) {
-    try {
-      const result = await applyBaseProductPricing(product.id, false, ruleSet);
-      if (!result?.changed) continue;
-      touched.push(product);
-      await withTransaction((client) =>
-        insertPriceHistory(client, {
-          productId: product.id,
-          oldSellingPrice: result.oldSellingPrice,
-          newSellingPrice: result.newSellingPrice,
-          goldRateId: null,
-          reason: 'DIAMOND_RATE_CHANGE',
-        }),
-      );
-    } catch (err) {
-      failures.push(product.id);
-      console.error(`[DIAMOND_RATE_CHANGE] product ${product.id} failed to reprice:`, err);
-    }
-  }
-
-  await invalidateProductsPagesBatch(touched);
-  console.log(
-    `[DIAMOND_RATE_CHANGE] Products recalculated: ${touched.length}/${products.length}` +
-      (failures.length ? `, ${failures.length} failed (see logs above)` : ''),
-  );
-}
-
 export async function registerPricingWorkers() {
   // pg-boss v10 requires queues to be created explicitly before scheduling/
   // sending/working them — createQueue() is idempotent, safe on every boot.
-  for (const name of [JOB_GOLD_RATE_SYNC, JOB_RECALCULATE_GOLD, JOB_RECALCULATE_DIAMOND]) {
+  for (const name of [JOB_GOLD_RATE_SYNC, JOB_RECALCULATE_GOLD]) {
     await createQueueSafe(name);
   }
 
   await boss.work(JOB_GOLD_RATE_SYNC, goldRateSyncHandler);
   await boss.work(JOB_RECALCULATE_GOLD, recalculateGoldPricesHandler);
-  await boss.work(JOB_RECALCULATE_DIAMOND, recalculateDiamondPricesHandler);
 }

@@ -5,7 +5,7 @@ import styles from './pricing.module.css';
 
 const EXCLUDED_REASON_LABEL: Record<string, string> = {
   PRICE_LOCKED: 'Price-locked',
-  NO_MATCHING_DIAMOND_TYPE: 'No diamond on product',
+  NO_MATCHING_STONE: 'No matching stone on product',
   MISSING_PRICING_DATA: 'Missing pricing data',
 };
 
@@ -72,10 +72,10 @@ export function RulePreviewPanel({
               <span className={styles.previewStatValue}>{result.totalProductsInScope.toLocaleString('en-IN')}</span>
               <span className={styles.previewStatLabel}>Products in scope</span>
             </div>
-            {ruleType === 'DIAMOND' && result.matchingDiamondTypeCount != null && (
+            {ruleType === 'STONE' && result.matchingStoneCount != null && (
               <div className={styles.previewStat}>
-                <span className={styles.previewStatValue}>{result.matchingDiamondTypeCount.toLocaleString('en-IN')}</span>
-                <span className={styles.previewStatLabel}>Products with diamonds</span>
+                <span className={styles.previewStatValue}>{result.matchingStoneCount.toLocaleString('en-IN')}</span>
+                <span className={styles.previewStatLabel}>Products with matching stones</span>
               </div>
             )}
             <div className={styles.previewStat}>
@@ -114,7 +114,7 @@ export function RulePreviewPanel({
                   <tr>
                     <th>Product</th>
                     <th>Making Charge</th>
-                    <th>Diamond Value</th>
+                    <th>Stone Value</th>
                     <th>Selling Price</th>
                   </tr>
                 </thead>
@@ -136,11 +136,11 @@ export function RulePreviewPanel({
                         )}
                       </td>
                       <td>
-                        {formatPrice(s.before.diamondValue)}
-                        {s.after.diamondValue !== s.before.diamondValue && (
+                        {formatPrice(s.before.stoneValue)}
+                        {s.after.stoneValue !== s.before.stoneValue && (
                           <>
                             {' → '}
-                            <span className={styles.priceDelta}>{formatPrice(s.after.diamondValue)}</span>
+                            <span className={styles.priceDelta}>{formatPrice(s.after.stoneValue)}</span>
                           </>
                         )}
                       </td>

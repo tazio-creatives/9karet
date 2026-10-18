@@ -25,7 +25,7 @@ const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
   CATEGORY_PRODUCTS: 'Heading (not used for this section type — see note above)',
   SHOP_BY_BOND: 'Heading (the label shown under the photo, e.g. "Mother")',
   BANNER_TRIO:
-    'Heading (not shown — used as the image description, e.g. "Bridal diamond earrings")',
+    'Heading (not shown — used as the image description, e.g. "Emerald drop earrings")',
   COLLECTION_CAROUSEL:
     'Heading (not shown — used as the image description, e.g. "Bella collection")',
   IMAGE_MOSAIC: 'Heading (caption shown under the image, e.g. "Gold Jewellery")',
@@ -35,7 +35,7 @@ const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
 };
 
 const SUBHEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
-  PRICE_SHOWCASE: 'Subheading (not shown — image description, e.g. "Diamond flower stud earrings")',
+  PRICE_SHOWCASE: 'Subheading (not shown — image description, e.g. "Ruby flower stud earrings")',
   VIDEO_STORY: 'Subheading (small gold line above the title, e.g. "Our Manufacturing Process")',
 };
 

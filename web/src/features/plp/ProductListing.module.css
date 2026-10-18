@@ -66,7 +66,7 @@
   text-align: center;
   font-size: 18px;
   font-weight: 500;
-  color: #173c40;
+  color: #40171c;
 }
 
 .mobileDescription {
@@ -96,9 +96,9 @@
   height: 34px;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid #0f5c65;
+  border: 1px solid #650f1a;
   background: #fff;
-  color: #0f5c65;
+  color: #650f1a;
   font-size: 12px;
   font-weight: 500;
   text-decoration: none;
@@ -106,8 +106,8 @@
 }
 
 .subcategoryPillActive {
-  background: #0f5c65;
-  border-color: #0f5c65;
+  background: #650f1a;
+  border-color: #650f1a;
   color: #fff;
 }
 
@@ -128,7 +128,7 @@
 }
 
 .top > nav li:last-child span {
-  color: #124e57;
+  color: #57121b;
 }
 
 .headerRow {
@@ -144,7 +144,7 @@
 
 .heading {
   margin: 0;
-  color: #173c40;
+  color: #40171c;
   font-size: clamp(30px, 3vw, 42px);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -193,7 +193,7 @@
   height: 18px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #124e57;
+  background: #57121b;
   color: #fff;
   font-size: var(--text-xs);
   font-weight: 600;
@@ -271,7 +271,7 @@
   height: 16px;
   border-radius: 50%;
   border: 2px solid #d8d3cb;
-  border-top-color: #075968;
+  border-top-color: #670815;
   animation: loadMoreSpin 0.8s linear infinite;
 }
 
@@ -290,7 +290,7 @@
   margin: 0 0 6px;
   font-size: 18px;
   font-weight: 600;
-  color: #123f45;
+  color: #451219;
 }
 
 .message {
@@ -302,10 +302,10 @@
   margin-top: var(--space-4);
   height: 40px;
   padding: 0 20px;
-  border: 1.5px solid #075968;
+  border: 1.5px solid #670815;
   border-radius: 7px;
   background: #fff;
-  color: #075968;
+  color: #670815;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;

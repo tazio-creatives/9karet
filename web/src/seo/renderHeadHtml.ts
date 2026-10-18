@@ -27,7 +27,7 @@ export function renderHeadHtml(head: HeadData): string {
     `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
     `<meta property="og:type" content="website" />`,
     // Site name for Google's "site name" and link previews (WhatsApp, Facebook).
-    `<meta property="og:site_name" content="BOX DIAMONDS" />`,
+    `<meta property="og:site_name" content="9KARET" />`,
     `<meta property="og:image" content="${escapeHtml(imageUrl)}" />`,
     `<meta property="og:locale" content="en_IN" />`,
     // X (Twitter) falls back to og:* for anything not set here, but needs

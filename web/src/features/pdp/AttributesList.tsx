@@ -24,38 +24,33 @@ function formatDimensions(measurements: Record<string, number | string>, unit: s
 
 interface AttributesListProps {
   product: ProductDetail;
-  // Live-selection overrides — a variant picked via Purity/Gold Colour/
-  // Diamond Quality can genuinely differ from the product's own base
-  // configuration (a different weight at a different purity, say), so this
-  // panel must reflect what's actually selected/priced, not always the
-  // product's admin-set defaults. Each is optional and falls back to the
-  // matching static `product` field when not provided (e.g. the axis isn't
-  // configured at all, or nothing's been selected yet).
+  // Live-selection overrides — a variant picked via Gold Colour/Size can
+  // genuinely differ from the product's own base configuration (a bigger
+  // size weighs more, say), so this panel must reflect what's actually
+  // selected/priced, not always the product's admin-set defaults. Each is
+  // optional and falls back to the matching static `product` field when not
+  // provided (e.g. the axis isn't configured, or nothing's selected yet).
   livePurity?: string | null;
   liveGoldColor?: string | null;
-  liveDiamondConfigName?: string | null;
   liveGoldWeightGrams?: number | null;
   liveNetWeightGrams?: number | null;
   liveGrossWeightGrams?: number | null;
-  liveDiamondWeightCarats?: number | null;
 }
 
 export function AttributesList({
   product,
   livePurity,
   liveGoldColor,
-  liveDiamondConfigName,
   liveGoldWeightGrams,
   liveNetWeightGrams,
   liveGrossWeightGrams,
-  liveDiamondWeightCarats,
 }: AttributesListProps) {
   // Fixed trust line shown on every product, regardless of what (if
   // anything) is stored on product.certification — applies uniformly to
   // existing and future products alike, not sourced from per-product data.
   const rows: [string, string][] = [
     ['SKU', product.sku],
-    ['Certification', 'IGI, GII, GIG'],
+    ['Certification', 'BIS Hallmarked'],
   ];
 
   const purity = livePurity ?? product.purity;
@@ -63,22 +58,24 @@ export function AttributesList({
   const goldWeightGrams = liveGoldWeightGrams ?? product.goldWeightGrams;
   const netWeightGrams = liveNetWeightGrams ?? product.netWeightGrams;
   const grossWeightGrams = liveGrossWeightGrams ?? product.grossWeightGrams;
-  const diamondWeightCarats = liveDiamondWeightCarats ?? product.diamondWeightCarats;
-  const diamondConfigName = liveDiamondConfigName ?? product.diamondConfigName;
 
-  const metalLabel = product.metalType === 'GOLD' ? 'Gold' : 'Platinum';
   const goldColorLabel = goldColor ? goldColor.charAt(0) + goldColor.slice(1).toLowerCase() : '';
-  rows.push(['Metal', [purity, goldColorLabel, metalLabel].filter(Boolean).join(' ')]);
+  rows.push(['Metal', [purity, goldColorLabel, 'Gold'].filter(Boolean).join(' ')]);
   if (purity) rows.push(['Purity', purity]);
 
   if (goldWeightGrams != null) rows.push(['Gold Weight', `${formatWeight(goldWeightGrams)} g`]);
   if (netWeightGrams != null) rows.push(['Net Weight', `${formatWeight(netWeightGrams)} g`]);
-  if (product.diamondWeightGrams != null) rows.push(['Natural Diamond Weight', `${formatWeight(product.diamondWeightGrams)} g`]);
   if (grossWeightGrams != null) rows.push(['Gross Weight', `${formatWeight(grossWeightGrams)} g`]);
-  if (diamondWeightCarats) rows.push(['Natural Diamond Carat', `${formatWeight(diamondWeightCarats)} ct`]);
-  if (diamondConfigName) rows.push(['Natural Diamond Quality', diamondConfigName]);
-  if (product.diamondCount) rows.push(['Natural Diamond Count', String(product.diamondCount)]);
-  if (product.gemstone) rows.push(['Gemstone', product.gemstone]);
+  // One row per stone line — e.g. "Ruby: 1 stone · 0.300 ct".
+  for (const stone of product.stones) {
+    rows.push([
+      stone.stoneTypeName,
+      `${stone.count} ${stone.count === 1 ? 'stone' : 'stones'} · ${formatWeight(stone.weightCarats)} ct`,
+    ]);
+  }
+  if (product.stones.length > 1 && product.stoneWeightCarats != null) {
+    rows.push(['Total Stone Weight', `${formatWeight(product.stoneWeightCarats)} ct`]);
+  }
 
   const sizeMeasurements = product.productSizeMeasurements;
   if (sizeMeasurements) {

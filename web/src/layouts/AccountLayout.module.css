@@ -93,8 +93,8 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #e3f3f1;
-  color: #075a63;
+  background: #f3e3e5;
+  color: #620814;
   font-size: var(--text-lg);
   font-weight: 600;
   margin-bottom: var(--space-3);
@@ -166,8 +166,8 @@
 }
 
 .navLinkActive {
-  background: #e3f3f1;
-  color: #075a63;
+  background: #f3e3e5;
+  color: #620814;
   font-weight: 600;
 }
 
@@ -181,7 +181,7 @@
   border-top: 1px solid var(--color-border);
   background: none;
   border-radius: var(--radius-sm);
-  color: #075a63;
+  color: #620814;
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -191,7 +191,7 @@
 }
 
 .signOutButton:hover:not(:disabled) {
-  background: #e3f3f1;
+  background: #f3e3e5;
 }
 
 .signOutButton:disabled {

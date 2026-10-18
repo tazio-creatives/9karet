@@ -94,7 +94,7 @@ export function HeroCarousel({ items }: { items: HomepageItem[] }) {
       {item.imageUrlMobile && <source media={MOBILE_BREAKPOINT} srcSet={item.imageUrlMobile} />}
       <img
         src={item.imageUrl}
-        alt={`${label} — BOX DIAMONDS`}
+        alt={`${label} — 9KARET`}
         className={styles.bgImg}
         loading="eager"
         fetchPriority="high"

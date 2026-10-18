@@ -16,7 +16,7 @@
   margin: 0 0 10px;
   font-size: 15px;
   font-weight: 600;
-  color: #0f2a30;
+  color: #300f13;
 }
 
 .courierLine {
@@ -80,7 +80,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #075a63;
+  background: #620814;
 }
 
 .timelineBody {
@@ -118,7 +118,7 @@
   margin-top: 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #075a63;
+  color: #620814;
   text-decoration: none;
 }
 

@@ -171,7 +171,7 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
             checked={isNonReturnable}
             onChange={(e) => setIsNonReturnable(e.target.checked)}
           />
-          Non-returnable (e.g. solitaires) — applies to every product in this category and its subcategories
+          Non-returnable (e.g. custom pieces) — applies to every product in this category and its subcategories
         </label>
       </div>
 
@@ -183,11 +183,11 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
       <div className={`${sharedStyles.formSection}`}>
         <h3 style={{ margin: '0 0 var(--space-2)', fontSize: 'var(--text-base)' }}>Search engine (SEO)</h3>
         <label className={sharedStyles.field}>
-          Page heading (H1) — e.g. "Natural Diamond Rings". Empty = category name.
+          Page heading (H1) — e.g. "9K Gold Gemstone Rings". Empty = category name.
           <input value={seoHeading} onChange={(e) => setSeoHeading(e.target.value)} maxLength={120} />
         </label>
         <label className={sharedStyles.field}>
-          SEO title — e.g. "Natural Diamond Rings for Women | BOX DIAMONDS" ({seoTitle.length}/60 recommended)
+          SEO title — e.g. "9K Gold Ruby Rings for Women | 9KARET" ({seoTitle.length}/60 recommended)
           <input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} maxLength={120} />
         </label>
         <label className={sharedStyles.field}>

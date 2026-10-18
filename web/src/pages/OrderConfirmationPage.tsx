@@ -77,14 +77,13 @@ function AlertIcon() {
   );
 }
 
-function itemMetaLine(item: { purity: string | null; goldColor: string | null; sizeLabel: string | null; diamondConfigName: string | null }) {
+function itemMetaLine(item: { purity: string | null; goldColor: string | null; sizeLabel: string | null }) {
   const parts: string[] = [];
   if (item.purity || item.goldColor) {
     const color = item.goldColor ? item.goldColor.charAt(0) + item.goldColor.slice(1).toLowerCase() : '';
     parts.push([item.purity, color].filter(Boolean).join(' '));
   }
   if (item.sizeLabel) parts.push(`Size ${item.sizeLabel}`);
-  if (item.diamondConfigName) parts.push(item.diamondConfigName);
   return parts.join(' · ');
 }
 

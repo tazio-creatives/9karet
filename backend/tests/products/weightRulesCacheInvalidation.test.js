@@ -16,7 +16,18 @@ import {
 // spying on a function call, which more faithfully proves the fix: the
 // cache row genuinely disappears after each of the three edit paths.
 
-const PURITY_9K_ID = '2e59ee22-f988-40d5-9875-7c1b8b59ab02'; // global 'purity' value, seeded in every env
+// The global 9K 'purity' attribute value (seeded by the
+// 9karet_gold_and_stones migration) — looked up, since its id differs per
+// database.
+let PURITY_9K_ID;
+before(async () => {
+  const { rows } = await query(
+    `SELECT av.id FROM attribute_values av JOIN attributes a ON a.id = av.attribute_id
+     WHERE a.code = 'purity' AND av.value = '9K' AND av.product_id IS NULL`,
+  );
+  PURITY_9K_ID = rows[0]?.id;
+  if (!PURITY_9K_ID) throw new Error('test requires the global 9K purity value (run migrations)');
+});
 
 async function createTestFixture(labelSuffix) {
   const { rows: categoryRows } = await query('SELECT id, slug FROM categories LIMIT 1');

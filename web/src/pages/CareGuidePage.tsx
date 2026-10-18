@@ -8,8 +8,8 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          Diamond jewellery may be durable, but it is not indestructible. Gold can scratch, delicate structures can
-          bend, and diamond settings can loosen when exposed to repeated impact.
+          9K gold is harder-wearing than higher karats, but fine jewellery is not indestructible. Gold can scratch,
+          delicate structures can bend, and stone settings can loosen when exposed to repeated impact.
         </p>
         <p>For everyday protection:</p>
         <ul>
@@ -19,7 +19,7 @@ const SECTIONS: PolicySection[] = [
           <li>Keep jewellery away from chlorine, bleach, detergents, sanitiser, and harsh chemicals.</li>
           <li>Do not pull chains, pendants, bracelets, or earrings forcefully.</li>
           <li>Avoid dropping jewellery onto hard surfaces.</li>
-          <li>Check locks, clasps, and diamond settings regularly.</li>
+          <li>Check locks, clasps, and stone settings regularly.</li>
           <li>Handle ultra-lightweight jewellery carefully to maintain its shape.</li>
         </ul>
       </>
@@ -27,18 +27,18 @@ const SECTIONS: PolicySection[] = [
   },
   {
     id: 'cleaning-at-home',
-    title: 'How to Clean Diamond Jewellery at Home',
+    title: 'How to Clean Your Jewellery at Home',
     icon: 'drop',
     content: (
       <>
-        <p>Everyday exposure to natural skin oils, soap, lotion, and dust can reduce a diamond’s sparkle.</p>
+        <p>Everyday exposure to natural skin oils, soap, lotion, and dust can dull gold and gemstones.</p>
         <p>For gentle home cleaning:</p>
         <ol>
           <li>Fill a small bowl with lukewarm water.</li>
           <li>Add a few drops of mild liquid soap.</li>
           <li>Place the jewellery in the solution for approximately 10 to 15 minutes.</li>
           <li>Gently clean it using a very soft-bristled brush.</li>
-          <li>Pay special attention to the back and underside of the diamond setting.</li>
+          <li>Pay special attention to the back and underside of the stone setting.</li>
           <li>Rinse carefully with clean lukewarm water.</li>
           <li>Pat dry using a soft, lint-free cloth.</li>
           <li>Allow the jewellery to dry completely before storing it.</li>
@@ -46,6 +46,10 @@ const SECTIONS: PolicySection[] = [
         <p>
           <strong>Always clean jewellery inside a bowl.</strong> Do not rinse small items directly over an open sink or
           drain.
+        </p>
+        <p>
+          Pieces set with pearls or emeralds should not be soaked — wipe them gently with a soft, damp cloth instead
+          (see Caring for Gemstones below).
         </p>
       </>
     ),
@@ -83,10 +87,9 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          Box Diamonds specialises in ultra-lightweight jewellery designed for comfortable everyday wear and
-          accessible pricing.
+          Lightweight pieces are designed for comfortable everyday wear. Because they use gold efficiently, they
+          should be handled with extra care.
         </p>
-        <p>Because these pieces use gold efficiently, they should be handled with extra care.</p>
         <ul>
           <li>Do not bend, twist, squeeze, or pull the jewellery.</li>
           <li>Avoid placing heavy objects over it.</li>
@@ -102,23 +105,54 @@ const SECTIONS: PolicySection[] = [
     ),
   },
   {
-    id: 'diamond-rings',
-    title: 'Caring for Diamond Rings',
+    id: 'gemstones',
+    title: 'Caring for Gemstones',
+    icon: 'sparkle',
+    content: (
+      <>
+        <p>
+          Gemstones differ in hardness, so each needs a little different care. Sapphires and rubies are very hard and
+          wear well every day; softer or treated stones need more gentleness.
+        </p>
+        <ul>
+          <li>
+            <strong>Ruby and sapphire:</strong> clean with mild soap and lukewarm water and a soft brush.
+          </li>
+          <li>
+            <strong>Emerald:</strong> often treated to enhance clarity — wipe with a soft, damp cloth only. Avoid
+            soaking, heat, and ultrasonic or steam cleaning.
+          </li>
+          <li>
+            <strong>Pearl:</strong> put pearls on last and take them off first. Wipe with a soft cloth after wearing;
+            keep them away from perfume, cosmetics, and water.
+          </li>
+          <li>
+            <strong>Cubic zirconia:</strong> clean like ruby and sapphire, and store separately so harder stones do not
+            scratch it.
+          </li>
+        </ul>
+        <p>Store stone-set pieces separately so harder stones and gold do not scratch softer gemstones.</p>
+      </>
+    ),
+  },
+  {
+    id: 'rings',
+    title: 'Caring for Rings',
     icon: 'ring',
     content: (
       <>
         <p>Rings experience more daily contact than most jewellery.</p>
-        <p>To protect your diamond ring:</p>
+        <p>To protect your ring:</p>
         <ul>
           <li>Remove it before washing dishes, cleaning, exercising, or lifting heavy objects.</li>
           <li>Avoid striking the ring against walls, tables, gym equipment, or hard surfaces.</li>
-          <li>Hold the ring by the band instead of touching the diamond.</li>
-          <li>Check that the diamond does not move inside its setting.</li>
+          <li>Hold the ring by the band instead of touching the stone.</li>
+          <li>Check that the stone does not move inside its setting.</li>
           <li>Do not force a tight ring onto or off your finger.</li>
           <li>Have frequently worn rings inspected periodically.</li>
         </ul>
         <p>
-          If you notice movement, unusual sound, a bent prong, or a loose diamond, stop wearing the ring and contact a
+          If you notice movement, unusual sound, a bent prong, or a loose stone, stop wearing the ring and contact a
           jewellery professional.
         </p>
       </>
@@ -176,7 +210,7 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>Bracelets are frequently exposed to friction from tables, watches, clothing, and daily activities.</p>
         <ul>
-          <li>Keep diamond bracelets separate from watches and hard bangles.</li>
+          <li>Keep stone-set bracelets separate from watches and hard bangles.</li>
           <li>Check the clasp before every use.</li>
           <li>Do not wear bracelets during exercise or physical work.</li>
           <li>Avoid pulling flexible sections beyond their intended movement.</li>
@@ -219,7 +253,7 @@ const SECTIONS: PolicySection[] = [
         <ul>
           <li>Clean it gently with mild soap and lukewarm water.</li>
           <li>Wipe it using a soft, lint-free cloth.</li>
-          <li>Store it separately from diamonds and harder jewellery.</li>
+          <li>Store it separately from stone-set and harder jewellery.</li>
           <li>Avoid abrasive polishing materials.</li>
           <li>Use professional polishing only when necessary, as polishing removes a small amount of metal.</li>
         </ul>
@@ -269,12 +303,12 @@ const SECTIONS: PolicySection[] = [
         <p>Correct storage helps prevent scratching, tangling, bending, and accidental loss.</p>
         <p>We recommend:</p>
         <ul>
-          <li>Using the original Box Diamonds jewellery box or a soft-lined organiser.</li>
+          <li>Using the original 9Karet jewellery box or a soft-lined organiser.</li>
           <li>Storing each item in a separate compartment.</li>
           <li>Fastening chains and bracelets before storage.</li>
           <li>Keeping jewellery in a cool, dry location.</li>
           <li>Avoiding prolonged exposure to direct sunlight, heat, or humidity.</li>
-          <li>Keeping diamonds separate from other jewellery because diamonds can scratch gold and gemstones.</li>
+          <li>Keeping stone-set pieces separate from other jewellery, because hard stones can scratch gold and softer gemstones.</li>
           <li>Placing small earrings and backs in secure compartments.</li>
           <li>Keeping jewellery away from bathrooms and other damp environments.</li>
         </ul>
@@ -315,7 +349,7 @@ const SECTIONS: PolicySection[] = [
         </p>
         <p>A professional inspection may include:</p>
         <ul>
-          <li>Checking diamond settings</li>
+          <li>Checking stone settings</li>
           <li>Examining prongs and claws</li>
           <li>Testing clasps and locks</li>
           <li>Inspecting chains and connecting rings</li>
@@ -339,8 +373,8 @@ const SECTIONS: PolicySection[] = [
       <>
         <p>Stop wearing the product and seek professional assistance if you notice:</p>
         <ul>
-          <li>A loose or moving diamond</li>
-          <li>A missing diamond</li>
+          <li>A loose or moving stone</li>
+          <li>A missing stone</li>
           <li>A bent or broken prong</li>
           <li>A damaged clasp or lock</li>
           <li>A stretched or broken chain</li>
@@ -352,7 +386,7 @@ const SECTIONS: PolicySection[] = [
           <li>Skin irritation</li>
         </ul>
         <p>
-          Continuing to wear damaged jewellery may make the problem worse or lead to the loss of a diamond or
+          Continuing to wear damaged jewellery may make the problem worse or lead to the loss of a stone or
           component.
         </p>
       </>
@@ -367,7 +401,8 @@ const SECTIONS: PolicySection[] = [
         <p>Ultrasonic and steam cleaners are not suitable for every type of jewellery.</p>
         <p>
           They may affect delicate, lightweight, damaged, pavé-set, enamelled, treated, or multi-material jewellery.
-          They may also cause an already loose diamond to fall from its setting.
+          They can damage treated stones such as emeralds, and may cause an already loose stone to fall from its
+          setting.
         </p>
         <p>
           Do not use ultrasonic or steam-cleaning equipment unless a qualified jewellery professional has confirmed
@@ -391,7 +426,7 @@ const SECTIONS: PolicySection[] = [
         </ul>
         <h3>Every Few Weeks</h3>
         <ul>
-          <li>Clean regularly worn diamond jewellery using a gentle method.</li>
+          <li>Clean regularly worn jewellery using a gentle method.</li>
           <li>Inspect the setting for movement or damage.</li>
           <li>Check chains and connecting rings.</li>
           <li>Examine frequently used clasps and earring backs.</li>
@@ -413,12 +448,12 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          Care requirements may vary according to the product’s design, construction, gold purity, diamond setting,
+          Care requirements may vary according to the product’s design, construction, gemstones, stone setting,
           enamel, and other materials.
         </p>
         <p>
           Home cleaning and care are performed at the customer’s discretion. If you are unsure about the correct
-          method, contact Box Diamonds before cleaning or attempting to repair the product.
+          method, contact 9Karet before cleaning or attempting to repair the product.
         </p>
         <p>
           Repairs, alterations, resizing, polishing, or servicing performed by an unauthorised third party may affect
@@ -434,18 +469,18 @@ const SECTIONS: PolicySection[] = [
     content: (
       <>
         <p>
-          If your jewellery requires inspection, cleaning, repair, resizing, or care guidance, please contact the Box
-          Diamonds customer-support team before sending the product.
+          If your jewellery requires inspection, cleaning, repair, resizing, or care guidance, please contact the
+          9Karet customer-support team before sending the product.
         </p>
         <p>
           Keep your invoice, certificate, packaging, and relevant product information available when requesting
           assistance.
         </p>
         <p>
-          Email <a href="mailto:info@boxdiamonds.com">info@boxdiamonds.com</a> for support and additional information.
+          Email <a href="mailto:info@9karet.com">info@9karet.com</a> for support and additional information.
         </p>
         <p>
-          <strong>Box Diamonds — Timeless by Nature.</strong>
+          <strong>9Karet — Timeless by Nature.</strong>
           <br />
           Care for every detail. Protect every memory.
         </p>
@@ -462,7 +497,7 @@ export function CareGuidePage() {
       lastUpdated="2 October 2026"
       subtitle={
         <>
-          Keep your Box Diamonds jewellery beautiful for years.
+          Keep your 9Karet jewellery beautiful for years.
           <br />
           Simple care for lasting shine and brilliance.
         </>
@@ -473,10 +508,10 @@ export function CareGuidePage() {
           <>
             <p>
               Fine jewellery is designed to last, but it still requires thoughtful care. Regular cleaning, proper
-              storage, and careful handling can protect the shine of your gold, preserve the brilliance of your
-              diamonds, and reduce the risk of damage.
+              storage, and careful handling can protect the shine of your gold, preserve the colour of your
+              gemstones, and reduce the risk of damage.
             </p>
-            <p>Follow this guide to keep your Box Diamonds jewellery looking its best.</p>
+            <p>Follow this guide to keep your 9Karet jewellery looking its best.</p>
           </>
         ),
       }}

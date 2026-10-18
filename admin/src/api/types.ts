@@ -5,8 +5,9 @@ export interface Admin {
   role: { id: string; name: string; permissions: string[] };
 }
 
-export type MetalType = 'GOLD' | 'PLATINUM';
-export type Purity = '9K' | '14K' | '18K' | '22K' | '24K';
+// 9Karet sells 9K gold only — the backend fixes both on every product.
+export type MetalType = 'GOLD';
+export type Purity = '9K';
 export type GoldColor = 'YELLOW' | 'ROSE' | 'WHITE';
 export type ProductStatus = 'DRAFT' | 'AI_PROCESSING' | 'AI_READY' | 'PUBLISHED' | 'FAILED';
 
@@ -47,14 +48,30 @@ export interface ProductSize {
   stockQuantity: number;
   availableStock: number;
   weightGrams: number | null;
-  diamondWeightCarats: number | null;
 }
 
 export interface ProductSizeInput {
   label: string;
   stockQuantity: number;
   weightGrams: number | null;
-  diamondWeightCarats: number | null;
+}
+
+// One stone line on a product — a stone type from Stone Types with its
+// count, total weight (carats) and price, all entered by hand.
+export interface ProductStone {
+  id: string;
+  stoneTypeId: string;
+  stoneTypeName: string;
+  count: number;
+  weightCarats: number;
+  price: number;
+}
+
+export interface ProductStoneInput {
+  stoneTypeId: string;
+  count: number;
+  weightCarats: number;
+  price: number;
 }
 
 export interface ProductDetail {
@@ -72,15 +89,8 @@ export interface ProductDetail {
   grossWeightGrams: number | null;
   netWeightGrams: number | null;
   goldWeightGrams: number | null;
-  diamondWeightGrams: number | null;
-  diamondWeightCarats: number | null;
-  diamondConfigId: string | null;
-  diamondCount: number | null;
-  diamondTypeId: string | null;
-  diamondType: string | null;
-  diamondColour: string | null;
-  diamondClarity: string | null;
-  gemstone: string | null;
+  stoneWeightCarats: number | null;
+  stones: ProductStone[];
   certification: string | null;
   productSize: string | null;
   // Overrides the "Size" wording on the admin form and storefront (e.g.
@@ -89,21 +99,24 @@ export interface ProductDetail {
   careInstructions: string | null;
   priceBreakup: {
     goldValue: number;
-    diamondValue: number;
-    diamondValueOriginal: number;
+    stoneValue: number;
+    stoneValueOriginal: number;
     makingCharge: number;
     makingChargeOriginal: number;
     makingChargeDiscountPercent: number;
-    diamondDiscountPercent: number;
+    stoneDiscountPercent: number;
     gstAmount: number;
     total: number;
   };
   // Admin-set % of gold value this product's making charge is computed from
-  // (null for products still on a flat making-charge, e.g. platinum, or
-  // never migrated to percent-based pricing) — the source of truth for live
-  // recalculation; priceBreakup.makingCharge above is just its computed
-  // result at the current gold rate/purity/size.
+  // (null for products on a flat making-charge) — the source of truth for
+  // live recalculation; priceBreakup.makingCharge above is just its computed
+  // result at the current gold rate/size.
   makingChargePercent: number | null;
+  // The admin's own typed offer defaults (priceBreakup's percentages above
+  // are the resolved ones, which a pricing rule can override).
+  makingChargeDiscountPercent: number;
+  stoneDiscountPercent: number;
   gstPercent: number;
   mrp: number;
   sellingPrice: number;
@@ -127,13 +140,10 @@ export interface ProductDetail {
   sizes: ProductSize[];
 
   goldColorOptions: GoldColor[];
-  purityOptions: Purity[];
-  diamondOptions: { id: string; name: string }[];
 
   // Generic attribute+value catalogue this product currently offers —
   // what Availability Rules picks its two sides from. Same data as
-  // goldColorOptions/purityOptions/diamondOptions/sizes above, just
-  // attribute-count-agnostic.
+  // goldColorOptions/sizes above, just attribute-count-agnostic.
   attributes: ProductAttributeGroup[];
 }
 
@@ -150,33 +160,20 @@ export interface ProductInput {
   collectionId?: string | null;
   shortDescription?: string | null;
   fullDescription?: string | null;
-  metalType: MetalType;
-  purity?: Purity | null;
   goldColor?: GoldColor | null;
   goldWeightGrams?: number | null;
-  diamondWeightGrams?: number | null;
-  diamondWeightCarats?: number | null;
-  diamondConfigId?: string | null;
-  diamondCount?: number | null;
-  diamondTypeId?: string | null;
-  diamondType?: string | null;
-  diamondColour?: string | null;
-  diamondClarity?: string | null;
-  gemstone?: string | null;
   certification?: string | null;
   productSize?: string | null;
   sizeLabel?: string | null;
   careInstructions?: string | null;
   goldValue?: number;
-  diamondValue?: number;
-  diamondValueIsManual?: boolean;
   makingCharge?: number;
   makingChargePercent?: number | null;
   gstPercent?: number;
   mrp?: number;
   sellingPrice?: number;
   makingChargeDiscountPercent?: number;
-  diamondDiscountPercent?: number;
+  stoneDiscountPercent?: number;
   stockQuantity?: number;
   status?: ProductStatus;
   showDeliveryChecker?: boolean;
@@ -186,10 +183,10 @@ export interface ProductInput {
   metaDescription?: string | null;
   metaKeywords?: string | null;
   sizes?: ProductSizeInput[];
+  // Full stone list (replaces what's saved); omit to leave stones untouched.
+  stones?: ProductStoneInput[];
 
   goldColors?: GoldColor[];
-  purities?: Purity[];
-  diamondConfigIds?: string[];
 
   // Per-exact-combination overrides applied in the same save that sets up
   // the axes above — lets a brand-new product be fully configured (stock/
@@ -200,7 +197,7 @@ export interface ProductInput {
   // Weight Defaults / Purity Pricing Rules, entered in the same continuous
   // product form and saved by the one Save Product action — keyed by purity
   // code / size label (never a database UUID; the backend resolves those
-  // itself from `purities`/`sizes` above). Omitting a field entirely on an
+  // itself). Omitting a field entirely on an
   // update means "leave the saved rules untouched"; sending an explicit
   // empty array/collection means "clear them" — see
   // productsService.js's applyWeightAndPricingRulesInTx.
@@ -219,20 +216,17 @@ export interface PurityPricingRuleInput {
   // (including 0) is an explicit override — never coerced to 0 on omission.
   makingChargePercent: number | null;
   makingChargeDiscountPercent: number | null;
-  diamondDiscountPercent: number | null;
+  stoneDiscountPercent: number | null;
 }
 
 export interface VariantOverrideInput {
   attributeValues: {
     goldColor?: GoldColor;
     purity?: Purity;
-    diamondConfigId?: string;
     sizeLabel?: string;
   };
   stockQuantity?: number;
   goldWeightGrams?: number | null;
-  diamondWeightGrams?: number | null;
-  diamondWeightCarats?: number | null;
   isAvailable?: boolean;
 }
 
@@ -306,7 +300,7 @@ export interface Collection {
 
 export interface PricingPreviewResult {
   goldValue: number;
-  diamondValue: number;
+  stoneValue: number;
   makingCharge: number;
   gstPercent: number;
   sellingPrice: number;
@@ -316,7 +310,8 @@ export interface PricingPreviewResult {
 // (snake_case, NUMERIC as string) rather than mapping to a camelCase DTO.
 export interface GoldRateRow {
   id: string;
-  purity: Purity;
+  // 24K is the market reference rate the feed quotes; 9K is what's sold.
+  purity: '9K' | '24K';
   rate_per_gram: string;
   source: string;
   fetched_at: string;
@@ -363,16 +358,7 @@ export interface GoldRateOverview {
   latestSyncRun: GoldRateSyncRunRow | null;
 }
 
-export interface DiamondConfig {
-  id: string;
-  name: string;
-  ratePerCent: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface DiamondType {
+export interface StoneType {
   id: string;
   name: string;
   slug: string;
@@ -382,7 +368,7 @@ export interface DiamondType {
   updatedAt: string;
 }
 
-export interface DiamondTypeInput {
+export interface StoneTypeInput {
   name: string;
   sortOrder?: number;
   isActive?: boolean;
@@ -390,12 +376,12 @@ export interface DiamondTypeInput {
 
 // --- Pricing Rule Management ---
 
-export type PricingRuleType = 'MAKING_CHARGE' | 'DIAMOND';
+export type PricingRuleType = 'MAKING_CHARGE' | 'STONE';
 export type PricingRuleScope = 'GLOBAL' | 'CATEGORY' | 'PRODUCT';
 export type PricingDiscountType = 'PERCENT' | 'FIXED_AMOUNT' | 'FIXED_AMOUNT_PER_CARAT';
 export type PricingRuleStatus = 'DRAFT' | 'SCHEDULED' | 'ACTIVE' | 'EXPIRED' | 'DISABLED';
 export type PricingOverrideMode = 'PRESERVE' | 'SUPPRESS';
-export type PricingConditionType = 'DIAMOND_QUALITY' | 'DIAMOND_COLOUR' | 'DIAMOND_CLARITY' | 'CARAT_RANGE';
+export type PricingConditionType = 'CARAT_RANGE';
 
 export interface PricingRuleCondition {
   conditionType: PricingConditionType;
@@ -423,7 +409,7 @@ export interface PricingRule {
   updatedAt: string;
   categoryIds: string[];
   productIds: string[];
-  diamondTypeIds: string[];
+  stoneTypeIds: string[];
   conditions: PricingRuleCondition[];
 }
 
@@ -445,13 +431,13 @@ export interface PricingRuleInput {
   notes?: string | null;
   categoryIds?: string[];
   productIds?: string[];
-  diamondTypeIds?: string[];
+  stoneTypeIds?: string[];
   conditions?: PricingRuleCondition[];
 }
 
 export interface RulePreviewPriceBreakdown {
   makingCharge: number;
-  diamondValue: number;
+  stoneValue: number;
   gst: number;
   sellingPrice: number;
 }
@@ -467,7 +453,7 @@ export interface RulePreviewSample {
 export interface RulePreviewResult {
   totalProductsInScope: number;
   eligibleCount: number;
-  matchingDiamondTypeCount: number | null;
+  matchingStoneCount: number | null;
   withExistingOverrides: number;
   willReceiveRule: number;
   clampedCount: number;
@@ -505,22 +491,20 @@ export interface ProductOverride {
   slug: string;
   categoryId: string | null;
   categoryName: string | null;
-  diamondTypeId: string | null;
-  diamondTypeName: string | null;
   flatMakingChargeDiscountPercent: number;
-  flatDiamondDiscountPercent: number;
+  flatStoneDiscountPercent: number;
   effectiveMakingChargeDiscountPercent: number | null;
-  effectiveDiamondDiscountPercent: number | null;
+  effectiveStoneDiscountPercent: number | null;
   effectiveMakingChargeRuleId: string | null;
-  effectiveDiamondRuleId: string | null;
+  effectiveStoneRuleId: string | null;
   hasMakingOverride: boolean;
-  hasDiamondOverride: boolean;
+  hasStoneOverride: boolean;
   hasRestorableOverride: boolean;
 }
 
 export type ProductOverrideBulkAction =
   | 'REMOVE_MAKING_OVERRIDE'
-  | 'REMOVE_DIAMOND_OVERRIDE'
+  | 'REMOVE_STONE_OVERRIDE'
   | 'DISABLE_OVERRIDES'
   | 'RESTORE_PREVIOUS_OVERRIDES';
 
@@ -630,10 +614,9 @@ export interface OrderItem {
   categoryName: string | null;
   productImageUrl: string | null;
   productImageLargeUrl: string | null;
-  diamondCount: number | null;
   quantity: number;
   goldValue: number;
-  diamondValue: number;
+  stoneValue: number;
   makingCharge: number;
   gstAmount: number;
   unitPrice: number;
@@ -641,18 +624,22 @@ export interface OrderItem {
   sizeLabel: string | null;
   goldColor: string | null;
   purity: string | null;
-  diamondConfigName: string | null;
   goldWeightGrams: number | null;
-  diamondWeightCarats: number | null;
-  diamondColour: string | null;
-  diamondClarity: string | null;
+  // The stones this piece was sold with (per unit), frozen at checkout.
+  stones: OrderItemStone[];
   customizationNote: string | null;
   isBackordered: boolean;
-  metalType: 'GOLD' | 'PLATINUM' | null;
+  metalType: 'GOLD' | null;
   netWeightGrams: number | null;
   grossWeightGrams: number | null;
-  diamondWeightGrams: number | null;
-  gemstone: string | null;
+  stoneWeightCarats: number | null;
+}
+
+export interface OrderItemStone {
+  stoneTypeName: string;
+  count: number;
+  weightCarats: number | null;
+  price: number | null;
 }
 
 export interface OrderStatusHistoryEntry {

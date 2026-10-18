@@ -5,7 +5,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(18, 63, 69, 0.5);
+  background: rgba(69, 18, 25, 0.5);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -22,7 +22,7 @@
   overflow-y: auto;
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 24px 60px -20px rgba(0, 81, 90, 0.35), var(--shadow-md);
+  box-shadow: 0 24px 60px -20px rgba(83, 7, 17, 0.35), var(--shadow-md);
   padding: var(--space-6);
   animation: riseIn 0.2s ease-out;
 }
@@ -43,7 +43,7 @@
   margin: 0;
   font-size: var(--text-lg);
   font-weight: 500;
-  color: #0f2a30;
+  color: #300f13;
 }
 
 .productName {
@@ -67,12 +67,12 @@
 }
 
 .closeButton:hover {
-  background: #e3f3f1;
-  color: #075a63;
+  background: #f3e3e5;
+  color: #620814;
 }
 
 .closeButton:focus-visible {
-  outline: 2px solid #075a63;
+  outline: 2px solid #620814;
   outline-offset: 2px;
 }
 
@@ -142,7 +142,7 @@
 .input:focus,
 .textarea:focus {
   outline: none;
-  border-color: #075a63;
+  border-color: #620814;
 }
 
 .photoGrid {
@@ -176,7 +176,7 @@
   height: 18px;
   border: none;
   border-radius: 50%;
-  background: rgba(15, 42, 48, 0.75);
+  background: rgba(48, 15, 19, 0.75);
   color: #ffffff;
   cursor: pointer;
 }
@@ -203,8 +203,8 @@
 }
 
 .photoAdd:hover {
-  border-color: #075a63;
-  color: #075a63;
+  border-color: #620814;
+  color: #620814;
 }
 
 .error {
@@ -224,7 +224,7 @@
   height: 44px;
   border: none;
   border-radius: 999px;
-  background: #075a63;
+  background: #620814;
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
@@ -232,7 +232,7 @@
 }
 
 .submitButton:hover:not(:disabled) {
-  background: #0a6f7a;
+  background: #7a0a19;
 }
 
 .submitButton:disabled {

@@ -64,7 +64,7 @@
   overflow: hidden;
   border-radius: 18px;
   background: var(--color-bg-alt);
-  box-shadow: 0 10px 30px rgba(23, 56, 60, 0.12);
+  box-shadow: 0 10px 30px rgba(60, 23, 28, 0.12);
 }
 
 .card img,

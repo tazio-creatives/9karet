@@ -77,7 +77,7 @@ export function OrderAlerts() {
           setToasts((prev) => [...res.orders, ...prev].slice(0, 3));
           if (soundOnRef.current) playOrderChime();
           if (document.hidden) res.orders.forEach(showDesktopNotification);
-          document.title = `(${res.orders.length}) New order — Box Diamonds Admin`;
+          document.title = `(${res.orders.length}) New order — 9Karet Admin`;
         }
       } catch {
         // Network blip or logged out — try again next tick.
@@ -124,7 +124,7 @@ export function OrderAlerts() {
   function openPanel() {
     setOpen((v) => !v);
     setUnread(0);
-    document.title = 'Box Diamonds Admin';
+    document.title = '9Karet Admin';
   }
 
   return (

@@ -63,7 +63,7 @@ export function AdminLayout() {
         <div className={styles.brandRow}>
           {!isCollapsed && (
             <div className={styles.brand}>
-              <img src="/images/logo-sidebar.png" alt="Box Diamonds" className={styles.brandLogo} />
+              <img src="/images/logo-sidebar.png" alt="9Karet" className={styles.brandLogo} />
             </div>
           )}
           <button

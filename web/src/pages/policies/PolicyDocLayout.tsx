@@ -111,7 +111,7 @@ export function PolicyDocLayout({
         <h1 className={styles.title}>{title}</h1>
         <div className={styles.divider} aria-hidden="true">
           <span />
-          {POLICY_ICONS.diamond}
+          {POLICY_ICONS.gem}
           <span />
         </div>
         <p className={styles.subtitle}>{subtitle}</p>

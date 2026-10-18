@@ -31,9 +31,8 @@ function toDto(row) {
   };
 }
 
-// Every attribute type + its shared/global values (Purity, Gold Color,
-// Diamond Quality, and any future type added here) — the one place an
-// admin can introduce a genuinely new variation axis without a developer
+// Every attribute type + its shared/global values (Purity, Gold Color, and
+// any future type added here) — the one place an admin can introduce a genuinely new variation axis without a developer
 // running a migration. Size is deliberately excluded (product-scoped
 // values, managed from the product form itself).
 export async function list(req, res, next) {

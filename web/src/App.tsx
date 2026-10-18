@@ -10,8 +10,6 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PLPPage } from './pages/PLPPage';
 import { NewArrivalsPage } from './pages/NewArrivalsPage';
 import { AllJewelleryPage } from './pages/AllJewelleryPage';
-import { RetailPartnerPage } from './pages/RetailPartnerPage';
-import { FranchisePage } from './pages/FranchisePage';
 import { CollectionPage } from './pages/CollectionPage';
 import { PDPPage } from './pages/PDPPage';
 
@@ -44,16 +42,9 @@ const ShippingPolicyPage = lazy(() =>
 const RefundPolicyPage = lazy(() =>
   import('./pages/policies/RefundPolicyPage').then((m) => ({ default: m.RefundPolicyPage })),
 );
-const OurStoryPage = lazy(() => import('./pages/OurStoryPage').then((m) => ({ default: m.OurStoryPage })));
 const BlogListPage = lazy(() => import('./pages/blog/BlogListPage').then((m) => ({ default: m.BlogListPage })));
 const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage').then((m) => ({ default: m.BlogPostPage })));
 const ContactPage = lazy(() => import('./pages/ContactPage').then((m) => ({ default: m.ContactPage })));
-const WhyBoxDiamondsPage = lazy(() =>
-  import('./pages/WhyBoxDiamondsPage').then((m) => ({ default: m.WhyBoxDiamondsPage })),
-);
-const SustainabilityPage = lazy(() =>
-  import('./pages/SustainabilityPage').then((m) => ({ default: m.SustainabilityPage })),
-);
 const CareGuidePage = lazy(() => import('./pages/CareGuidePage').then((m) => ({ default: m.CareGuidePage })));
 const PrivacyPolicyPage = lazy(() =>
   import('./pages/policies/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })),
@@ -97,8 +88,6 @@ export function App() {
           <Route path="/collections/:collectionSlug" element={<CollectionPage />} />
           <Route path="/new-arrivals" element={<NewArrivalsPage />} />
           <Route path="/jewellery" element={<AllJewelleryPage />} />
-          <Route path="/retail-partner" element={<RetailPartnerPage />} />
-          <Route path="/franchise" element={<FranchisePage />} />
           <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           {/* Same combined Return and Refund Policy page under its other name. */}
@@ -119,13 +108,10 @@ export function App() {
           <Route path="/faqs" element={<Navigate to="/" replace />} />
           <Route path="/size-guide" element={<Navigate to="/" replace />} />
           <Route path="/care-guide" element={<CareGuidePage />} />
-          <Route path="/our-story" element={<OurStoryPage />} />
-          <Route path="/why-box-diamonds" element={<WhyBoxDiamondsPage />} />
           <Route path="/blog" element={<BlogListPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/careers" element={<Navigate to="/" replace />} />
           <Route path="/press" element={<Navigate to="/" replace />} />
-          <Route path="/sustainability" element={<SustainabilityPage />} />
           <Route path="/:categorySlug" element={<PLPPage />} />
           <Route path="/:categorySlug/:productSlug" element={<PDPPage />} />
           <Route path="*" element={<PlaceholderPage title="Coming Soon" />} />

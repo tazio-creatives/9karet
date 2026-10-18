@@ -1,6 +1,6 @@
-// pm2 process file for production (/home/ubuntu/boxdiamonds-project).
+// pm2 process file for production (/home/ubuntu/ninekaret-project).
 // Start or apply changes with:
-//   pm2 delete boxdiamonds-backend boxdiamonds-web; pm2 start ecosystem.config.cjs; pm2 save
+//   pm2 delete ninekaret-backend ninekaret-web; pm2 start ecosystem.config.cjs; pm2 save
 //
 // Cluster mode runs several copies of each server so every CPU core is used
 // (size BACKEND_INSTANCES / WEB_INSTANCES to the machine: 3 + 3 on 4 vCPUs —
@@ -35,7 +35,7 @@ const backendPort = readEnv(backendEnvFile, 'PORT') ?? '6000';
 module.exports = {
   apps: [
     {
-      name: 'boxdiamonds-backend',
+      name: 'ninekaret-backend',
       cwd: path.join(__dirname, 'backend'),
       script: 'src/server.js',
       exec_mode: execMode,
@@ -45,7 +45,7 @@ module.exports = {
       env: { NODE_ENV: 'production' },
     },
     {
-      name: 'boxdiamonds-web',
+      name: 'ninekaret-web',
       cwd: path.join(__dirname, 'web/server'),
       script: 'index.js',
       exec_mode: execMode,

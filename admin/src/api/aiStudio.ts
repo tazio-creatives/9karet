@@ -194,7 +194,7 @@ export async function createStudioJob(productId: string, files: File[]) {
   const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/ai-studio`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-Requested-With': 'box-diamonds' },
+    headers: { 'X-Requested-With': '9karet' },
     body: formData,
   });
 

@@ -93,21 +93,14 @@ export function PDPPage() {
     selectedGoldColor,
     setSelectedGoldColor,
     selectedPurity,
-    setSelectedPurity,
-    selectedDiamondConfigId,
-    setSelectedDiamondConfigId,
     selectedVariantId,
-    isColorAvailableAtPurity,
-    isPurityAvailable,
-    isDiamondAvailableAtPurity,
+    isColorAvailable,
     selectedSize,
     isOutOfStock,
     isLowStock,
-    selectedDiamondOption,
     displayGoldWeightGrams,
     displayNetWeightGrams,
     displayGrossWeightGrams,
-    displayDiamondWeightCarats,
     displayPrice,
     displayMrp,
     displayGstAmount,
@@ -277,13 +270,8 @@ export function PDPPage() {
               onSelectSize={setSelectedSizeId}
               selectedGoldColor={selectedGoldColor}
               onSelectGoldColor={setSelectedGoldColor}
-              isColorAvailableAtPurity={isColorAvailableAtPurity}
+              isColorAvailable={isColorAvailable}
               selectedPurity={selectedPurity}
-              onSelectPurity={setSelectedPurity}
-              isPurityAvailable={isPurityAvailable}
-              selectedDiamondConfigId={selectedDiamondConfigId}
-              onSelectDiamondConfigId={setSelectedDiamondConfigId}
-              isDiamondAvailableAtPurity={isDiamondAvailableAtPurity}
               displayPrice={displayPrice}
               displayMrp={displayMrp}
               offerLabel={displayOfferLabel}
@@ -292,7 +280,6 @@ export function PDPPage() {
               displayGoldWeightGrams={displayGoldWeightGrams}
               displayNetWeightGrams={displayNetWeightGrams}
               displayGrossWeightGrams={displayGrossWeightGrams}
-              displayDiamondWeightCarats={displayDiamondWeightCarats}
               onAddToCart={() =>
                 addToCartMutation.mutate({
                   productId: product.id,
@@ -318,7 +305,6 @@ export function PDPPage() {
                       sizeLabel: selectedSize?.label ?? null,
                       goldColor: selectedGoldColor ?? null,
                       purity: selectedPurity ?? null,
-                      diamondConfigName: selectedDiamondOption?.name ?? null,
                       isBackordered: isOutOfStock,
                       deliveryEstimate: product.deliveryEstimate,
                     },

@@ -46,9 +46,8 @@ import {
   getCategoryAndDescendantIds,
 } from '../repositories/categories.repository.js';
 import { findCollectionBySlug, findCollectionById } from '../repositories/collections.repository.js';
-import { findDiamondConfigById } from '../repositories/diamondConfigs.repository.js';
-import { findDiamondTypeById } from '../repositories/diamondTypes.repository.js';
-import { computeVariantPricing, resolvePurityPricingFields } from './pricingService.js';
+import { findStonesByProductId, replaceProductStones } from '../repositories/productStones.repository.js';
+import { computeVariantPricing, computeStoneWeightCarats, resolvePurityPricingFields } from './pricingService.js';
 import { loadActiveRuleSet } from './pricingRuleResolver.js';
 import { invalidateProductPages, invalidateProductsPagesBatch, invalidateCollectionPages } from './pageCacheInvalidation.js';
 
@@ -68,35 +67,38 @@ async function safeInvalidateProductPages(product, operationName, previousCatego
   }
 }
 
-// Both net_weight_grams and gross_weight_grams are derived, not
-// admin-entered directly. Net weight is the precious-metal-only weight
-// (what pricingService.computeGoldValue actually prices against); gross
-// weight is the total finished-piece weight (gold + diamond) shown to
-// customers alongside it.
+// 9Karet sells 9K gold only — every product is gold at 9K, and carries the
+// single 9K Purity attribute value so the Purity-keyed Weight Defaults and
+// Purity Pricing Rules keep working unchanged.
+const PURITY = '9K';
+
+// Gemstone weight is entered in carats; 1 ct = 0.2 g.
+const GRAMS_PER_CARAT = 0.2;
+
+// net_weight_grams and gross_weight_grams are derived, never admin-entered
+// directly. Net weight is the gold-only weight (what
+// pricingService.computeGoldValue actually prices against); gross weight is
+// the total finished-piece weight (gold + stones) shown to customers
+// alongside it.
 function deriveNetWeightGrams(goldWeightGrams) {
   return goldWeightGrams ?? null;
 }
 
-function deriveGrossWeightGrams(goldWeightGrams, diamondWeightGrams) {
-  if (goldWeightGrams == null && diamondWeightGrams == null) return null;
-  return Math.round(((goldWeightGrams ?? 0) + (diamondWeightGrams ?? 0)) * 1000) / 1000;
+function deriveGrossWeightGrams(goldWeightGrams, stoneWeightCarats) {
+  if (goldWeightGrams == null && stoneWeightCarats == null) return null;
+  return Math.round(((goldWeightGrams ?? 0) + (stoneWeightCarats ?? 0) * GRAMS_PER_CARAT) * 1000) / 1000;
 }
 
-// products.diamond_type (free TEXT) is being retired in favor of
-// diamond_type_id (Pricing Rule Management, Phase 4) — whenever the admin
-// form sends a diamondTypeId, this keeps the legacy text column in sync
-// with it automatically (never independently editable anymore), so the two
-// can never drift apart the way the plan's "denormalized display copy"
-// promise requires. Mutates `fields` in place, mirroring
-// deriveNetWeightGrams/deriveGrossWeightGrams's own call style above.
-async function syncDiamondTypeName(fields) {
-  if (!Object.hasOwn(fields, 'diamondTypeId')) return;
-  if (!fields.diamondTypeId) {
-    fields.diamondType = null;
-    return;
-  }
-  const diamondType = await findDiamondTypeById(fields.diamondTypeId);
-  fields.diamondType = diamondType?.name ?? null;
+// Public/admin DTO shape for a product's stone lines.
+function toStoneDtos(rows) {
+  return rows.map((r) => ({
+    id: r.id,
+    stoneTypeId: r.stone_type_id,
+    stoneTypeName: r.stone_type_name,
+    count: r.stone_count,
+    weightCarats: Number(r.weight_carats),
+    price: Number(r.price),
+  }));
 }
 
 // Mirrors web/src/hooks/useVariantSelection.ts's own default-size effect
@@ -124,8 +126,8 @@ function pickSmallestSizeValue(sizeValues) {
 // auto-select — not any real product_variants row), purely so
 // computeVariantPricing takes its live-recompute path (every branch there
 // keys off `variant != null`) instead of trusting the (possibly stale, e.g.
-// after a gold-rate sync) cached gold_value/diamond_value columns. Carries
-// no weight/diamond overrides of its own, so weight resolution still falls
+// after a gold-rate sync) cached gold_value column. Carries no weight
+// overrides of its own, so weight resolution still falls
 // through the normal rule-then-base-weight chain, and no price_override, so
 // a manual override never leaks in here.
 async function buildBaseConfigVariant(product) {
@@ -144,7 +146,6 @@ async function buildBaseConfigVariant(product) {
   }
   return {
     gold_weight_grams: null,
-    diamond_weight_carats: null,
     price_override: null,
     combination_key: 'base-config',
     attributes,
@@ -153,8 +154,8 @@ async function buildBaseConfigVariant(product) {
 
 // A product's listing/base price — and the PDP's price before the shopper
 // touches anything — reflects the product's own base configuration (the
-// Metal/Diamond/Pricing section on the admin form: its own Purity, Gold
-// Weight, Diamond Weight, Making Charge %), not whichever variant happens to
+// Metal/Stones/Pricing sections on the admin form: its own Gold Weight,
+// Stones, Making Charge %), not whichever variant happens to
 // be cheapest. Deliberately does NOT scan product_variants at all — every
 // real variant is still priced live at read time by computeVariantPricing
 // itself (PDP price-preview, cart, checkout, admin variant list), this only
@@ -200,13 +201,13 @@ function stableStringify(value) {
 // The return value used to be undefined; every one of this function's ~8
 // call sites in this file ignored it, so returning a value is non-breaking.
 // It exists so the Phase 2 background repricing job (and, as a smaller
-// side-benefit, the existing gold/diamond recalculation jobs) can tell
+// side-benefit, the gold-rate recalculation job) can tell
 // whether a price actually changed without a second findProductById just to
 // diff before/after.
 //
 // `ruleSet` is optional — omitted, this loads the current live rule set
 // itself (cheap: pricingRuleResolver caches it for 30s), so every existing
-// caller (admin product save, gold/diamond recalculation jobs) automatically
+// caller (admin product save, gold-rate recalculation job) automatically
 // resolves through Pricing Rule Management once rules exist, with zero call
 // site changes needed. A caller repricing many products in one pass (the
 // Phase 2 job) should load the rule set once and pass it explicitly instead,
@@ -223,30 +224,34 @@ export async function applyBaseProductPricing(productId, isPriceLocked, ruleSet 
   const effectiveRuleSet = ruleSet ?? (await loadActiveRuleSet());
   const pricing = await computeVariantPricing(product, baseVariant, weightRules, purityPricingRules, effectiveRuleSet);
 
-  // effective_making_charge_discount_percent / effective_diamond_discount_percent
+  // effective_making_charge_discount_percent / effective_stone_discount_percent
   // are what list-view cards (rowOffer/toListDto) actually read for the offer
   // badge/discounted price — resolved through the same Purity Pricing Rule as
   // the PDP, so a purity-specific discount shows up in listings too, not just
   // on the detail page. Deliberately separate columns from
-  // making_charge_discount_percent/diamond_discount_percent (the admin's own
+  // making_charge_discount_percent/stone_discount_percent (the admin's own
   // typed default) so editing a purity rule never silently overwrites that
   // default field.
   const currentEffectiveMakingDiscount =
     product.effective_making_charge_discount_percent == null ? null : Number(product.effective_making_charge_discount_percent);
-  const currentEffectiveDiamondDiscount =
-    product.effective_diamond_discount_percent == null ? null : Number(product.effective_diamond_discount_percent);
+  const currentEffectiveStoneDiscount =
+    product.effective_stone_discount_percent == null ? null : Number(product.effective_stone_discount_percent);
   const currentEffectiveMakingAmount =
     product.effective_making_charge_discount_amount == null ? null : Number(product.effective_making_charge_discount_amount);
-  const currentEffectiveDiamondAmount =
-    product.effective_diamond_discount_amount == null ? null : Number(product.effective_diamond_discount_amount);
+  const currentEffectiveStoneAmount =
+    product.effective_stone_discount_amount == null ? null : Number(product.effective_stone_discount_amount);
   const currentEffectiveMakingRuleId = product.effective_making_charge_rule_id ?? null;
-  const currentEffectiveDiamondRuleId = product.effective_diamond_rule_id ?? null;
-  const currentBreakdownStable = stableStringify(product.effective_diamond_breakdown ?? []);
+  const currentEffectiveStoneRuleId = product.effective_stone_rule_id ?? null;
+  const currentBreakdownStable = stableStringify(product.effective_stone_breakdown ?? []);
+  const currentStoneWeight = product.stone_weight_carats == null ? null : Number(product.stone_weight_carats);
 
   const newMakingRuleId = pricing.appliedMakingChargeRuleId ?? null;
-  const newDiamondRuleId = pricing.diamondComponents[0]?.appliedRuleId ?? null;
-  const newBreakdownJson = JSON.stringify(pricing.diamondComponents);
-  const newBreakdownStable = stableStringify(pricing.diamondComponents);
+  // A product can have several stone lines, each resolving its own rule —
+  // the cached rule id is the first one that applied (enough for the list
+  // card's offer badge; the full per-line detail is in the breakdown).
+  const newStoneRuleId = pricing.stoneComponents.find((c) => c.appliedRuleId)?.appliedRuleId ?? null;
+  const newBreakdownJson = JSON.stringify(pricing.stoneComponents);
+  const newBreakdownStable = stableStringify(pricing.stoneComponents);
 
   // Every field compared here is a field the write below actually sets —
   // comparing only the aggregate sellingPriceOriginal let a prior bug through:
@@ -259,30 +264,32 @@ export async function applyBaseProductPricing(productId, isPriceLocked, ruleSet 
   // "coincidentally" looks right).
   const unchanged =
     Math.abs(pricing.goldValue - Number(product.gold_value)) < 1e-9 &&
-    Math.abs(pricing.diamondValueOriginal - Number(product.diamond_value)) < 1e-9 &&
+    Math.abs(pricing.stoneValueOriginal - Number(product.stone_value)) < 1e-9 &&
     Math.abs(pricing.makingChargeOriginal - Number(product.making_charge)) < 1e-9 &&
     Math.abs(pricing.sellingPriceOriginal - Number(product.selling_price)) < 1e-9 &&
+    !amountDiffers(pricing.stoneWeightCarats, currentStoneWeight) &&
     !percentDiffers(pricing.makingChargeDiscountPercent, currentEffectiveMakingDiscount) &&
-    !percentDiffers(pricing.diamondDiscountPercent, currentEffectiveDiamondDiscount) &&
+    !percentDiffers(pricing.stoneDiscountPercent, currentEffectiveStoneDiscount) &&
     !amountDiffers(pricing.makingChargeDiscountAmount, currentEffectiveMakingAmount) &&
-    !amountDiffers(pricing.diamondDiscountAmount, currentEffectiveDiamondAmount) &&
+    !amountDiffers(pricing.stoneDiscountAmount, currentEffectiveStoneAmount) &&
     !idDiffers(newMakingRuleId, currentEffectiveMakingRuleId) &&
-    !idDiffers(newDiamondRuleId, currentEffectiveDiamondRuleId) &&
+    !idDiffers(newStoneRuleId, currentEffectiveStoneRuleId) &&
     newBreakdownStable === currentBreakdownStable;
   if (unchanged) return { changed: false, oldSellingPrice, newSellingPrice: oldSellingPrice };
 
   await updateProductRow(productId, {
     goldValue: pricing.goldValue,
-    diamondValue: pricing.diamondValueOriginal,
+    stoneValue: pricing.stoneValueOriginal,
+    stoneWeightCarats: pricing.stoneWeightCarats,
     makingCharge: pricing.makingChargeOriginal,
     sellingPrice: pricing.sellingPriceOriginal,
     effectiveMakingChargeDiscountPercent: pricing.makingChargeDiscountPercent,
-    effectiveDiamondDiscountPercent: pricing.diamondDiscountPercent,
+    effectiveStoneDiscountPercent: pricing.stoneDiscountPercent,
     effectiveMakingChargeDiscountAmount: pricing.makingChargeDiscountAmount,
-    effectiveDiamondDiscountAmount: pricing.diamondDiscountAmount,
+    effectiveStoneDiscountAmount: pricing.stoneDiscountAmount,
     effectiveMakingChargeRuleId: newMakingRuleId,
-    effectiveDiamondRuleId: newDiamondRuleId,
-    effectiveDiamondBreakdown: newBreakdownJson,
+    effectiveStoneRuleId: newStoneRuleId,
+    effectiveStoneBreakdown: newBreakdownJson,
   });
 
   return { changed: true, oldSellingPrice, newSellingPrice: pricing.sellingPriceOriginal };
@@ -357,7 +364,7 @@ async function applyWeightAndPricingRulesInTx(productId, { weightRules, purityPr
         purityValueId,
         makingChargePercent: r.makingChargePercent ?? null,
         makingChargeDiscountPercent: r.makingChargeDiscountPercent ?? null,
-        diamondDiscountPercent: r.diamondDiscountPercent ?? null,
+        stoneDiscountPercent: r.stoneDiscountPercent ?? null,
       };
     });
     await replacePurityPricingRules(productId, resolved);
@@ -475,10 +482,8 @@ export async function getPublicProductBySlug(slug) {
   const { images, productSizeMeasurements } = await attachProductSizeImage(product, rawImages);
   const attributes = await findProductAttributeCatalogue(product.id);
   const variants = await findAvailableVariantsByProductId(product.id);
-  const diamondConfigName = product.diamond_config_id
-    ? ((await findDiamondConfigById(product.diamond_config_id))?.name ?? null)
-    : null;
-  return { ...product, images, attributes, variants, diamondConfigName, productSizeMeasurements };
+  const stones = toStoneDtos(await findStonesByProductId(product.id));
+  return { ...product, images, attributes, variants, stones, productSizeMeasurements };
 }
 
 export async function getRelatedProducts(slug, limit = 4) {
@@ -517,7 +522,8 @@ export async function adminGetProduct(id) {
   const images = await findProductImages(id);
   const attributes = await findProductAttributeCatalogue(id);
   const variants = await findVariantsByProductId(id);
-  return { ...product, images, attributes, variants };
+  const stones = toStoneDtos(await findStonesByProductId(id));
+  return { ...product, images, attributes, variants, stones };
 }
 
 export async function adminCreateProduct(input) {
@@ -525,16 +531,16 @@ export async function adminCreateProduct(input) {
   const {
     sizes: sizesInput,
     goldColors,
-    purities,
-    diamondConfigIds,
+    stones = [],
     variantOverrides,
     weightRules,
     purityPricingRules,
     ...fields
   } = input;
+  fields.metalType = 'GOLD';
+  fields.purity = PURITY;
   fields.netWeightGrams = deriveNetWeightGrams(fields.goldWeightGrams);
-  fields.grossWeightGrams = deriveGrossWeightGrams(fields.goldWeightGrams, fields.diamondWeightGrams);
-  await syncDiamondTypeName(fields);
+  fields.grossWeightGrams = deriveGrossWeightGrams(fields.goldWeightGrams, computeStoneWeightCarats(stones));
 
   // The row insert, variant-matrix generation, weight/purity-pricing rule
   // application, and cheapest-price cache refresh all succeed or fail
@@ -547,15 +553,15 @@ export async function adminCreateProduct(input) {
   // the admin to reopen the product afterward.
   const product = await withTransaction(async () => {
     const created = await createProductRow({ ...fields, slug, status: input.status ?? 'DRAFT' });
+    await replaceProductStones(created.id, stones);
     await syncProductVariants(created.id, {
       goldColors,
-      purities,
-      diamondConfigIds,
+      purities: [PURITY],
       sizes: sizesInput,
       stockQuantity: fields.stockQuantity ?? created.stock_quantity,
       variantOverrides,
     });
-    // Resolved against the purities/sizes syncProductVariants just created —
+    // Resolved against the purity/sizes syncProductVariants just created —
     // must run after it, never before.
     await applyWeightAndPricingRulesInTx(created.id, { weightRules, purityPricingRules });
     await applyBaseProductPricing(created.id, fields.isPriceLocked ?? created.is_price_locked);
@@ -569,7 +575,8 @@ export async function adminCreateProduct(input) {
   await invalidateProductPages(product);
   const attributes = await findProductAttributeCatalogue(product.id);
   const variants = await findVariantsByProductId(product.id);
-  return { ...product, attributes, variants };
+  const savedStones = toStoneDtos(await findStonesByProductId(product.id));
+  return { ...product, attributes, variants, stones: savedStones };
 }
 
 // Bulk "Add to collection" / "Remove from collection" from the admin product
@@ -607,8 +614,7 @@ export async function adminUpdateProduct(id, input) {
   const {
     sizes: sizesInput,
     goldColors,
-    purities,
-    diamondConfigIds,
+    stones,
     variantOverrides,
     weightRules,
     purityPricingRules,
@@ -617,35 +623,33 @@ export async function adminUpdateProduct(id, input) {
   if (Object.hasOwn(fields, 'slug') && fields.slug) {
     fields.slug = slugify(fields.slug);
   }
-  if (Object.hasOwn(fields, 'goldWeightGrams') || Object.hasOwn(fields, 'diamondWeightGrams')) {
+  if (Object.hasOwn(fields, 'goldWeightGrams') || stones !== undefined) {
     const goldWeightGrams = Object.hasOwn(fields, 'goldWeightGrams')
       ? fields.goldWeightGrams
       : existing.gold_weight_grams == null
         ? null
         : Number(existing.gold_weight_grams);
-    const diamondWeightGrams = Object.hasOwn(fields, 'diamondWeightGrams')
-      ? fields.diamondWeightGrams
-      : existing.diamond_weight_grams == null
-        ? null
-        : Number(existing.diamond_weight_grams);
+    const stoneWeightCarats =
+      stones !== undefined
+        ? computeStoneWeightCarats(stones)
+        : existing.stone_weight_carats == null
+          ? null
+          : Number(existing.stone_weight_carats);
     fields.netWeightGrams = deriveNetWeightGrams(goldWeightGrams);
-    fields.grossWeightGrams = deriveGrossWeightGrams(goldWeightGrams, diamondWeightGrams);
+    fields.grossWeightGrams = deriveGrossWeightGrams(goldWeightGrams, stoneWeightCarats);
   }
-  await syncDiamondTypeName(fields);
-  const axesChanged =
-    sizesInput !== undefined ||
-    goldColors !== undefined ||
-    purities !== undefined ||
-    diamondConfigIds !== undefined ||
-    variantOverrides !== undefined;
+  const axesChanged = sizesInput !== undefined || goldColors !== undefined || variantOverrides !== undefined;
 
   // Same all-or-nothing guarantee as adminCreateProduct — the row update,
   // variant-matrix regeneration, rule re-application, and price-cache
   // refresh either all land or none do.
   const product = await withTransaction(async () => {
     await updateProductRow(id, fields);
+    if (stones !== undefined) {
+      await replaceProductStones(id, stones);
+    }
     if (axesChanged) {
-      // A PATCH-style update that only touches one axis (e.g. just Purity)
+      // A PATCH-style update that only touches one axis (e.g. just Gold Color)
       // shouldn't wipe out the others — fall back to what's currently
       // configured for any axis this request didn't include.
       const currentCatalogue = await findProductAttributeCatalogue(id);
@@ -660,12 +664,10 @@ export async function adminUpdateProduct(id, input) {
         label: v.value,
         stockQuantity: 0,
         weightGrams: null,
-        diamondWeightCarats: null,
       }));
       await syncProductVariants(id, {
         goldColors: goldColors ?? currentValues('gold_color', (v) => v.value),
-        purities: purities ?? currentValues('purity', (v) => v.value),
-        diamondConfigIds: diamondConfigIds ?? currentValues('diamond_quality', (v) => v.refId),
+        purities: [PURITY],
         sizes: sizesInput ?? preservedSizes,
         stockQuantity: fields.stockQuantity ?? existing.stock_quantity,
         variantOverrides,
@@ -678,7 +680,7 @@ export async function adminUpdateProduct(id, input) {
       if (sizesInput !== undefined) {
         await applySizeStockUpdates(id, sizesInput);
       }
-      // A removed purity/size can leave orphaned product_weight_rules/
+      // A removed size can leave orphaned product_weight_rules/
       // product_purity_pricing_rules rows behind — both FK the attribute_value
       // directly, not the product_attribute_values join syncProductVariants
       // just resynced, so they don't cascade on their own. Runs regardless of
@@ -688,7 +690,7 @@ export async function adminUpdateProduct(id, input) {
       // WITHOUT touching the rule sections still cleans up correctly.
       await pruneOrphanedPurityRules(id);
     }
-    // Resolved against this product's current purities/sizes — whatever
+    // Resolved against this product's current purity/sizes — whatever
     // syncProductVariants above just left in place, or (if axesChanged was
     // false) whatever was already saved.
     await applyWeightAndPricingRulesInTx(id, { weightRules, purityPricingRules });
@@ -699,7 +701,8 @@ export async function adminUpdateProduct(id, input) {
   await invalidateProductPages(product, existing.category_id);
   const attributes = await findProductAttributeCatalogue(id);
   const variants = await findVariantsByProductId(id);
-  return { ...product, attributes, variants };
+  const savedStones = toStoneDtos(await findStonesByProductId(id));
+  return { ...product, attributes, variants, stones: savedStones };
 }
 
 // Public/customer-facing price preview for a specific variant — reuses the
@@ -721,8 +724,8 @@ export async function previewProductVariantPricing(id, { variantId }) {
   }
 
   // This is the storefront PDP's live variant-price-preview endpoint
-  // (public route, hit every time a shopper changes purity/size/diamond
-  // quality) — it must resolve through the same ruleSet the cached PLP/
+  // (public route, hit every time a shopper changes gold colour/size) — it
+  // must resolve through the same ruleSet the cached PLP/
   // homepage price already does (applyBaseProductPricing), or a shopper
   // sees one price on the listing card and a DIFFERENT one the moment they
   // pick a variant on the PDP.
@@ -849,7 +852,7 @@ export async function adminReplaceWeightRules(productId, { purityRules = [], pur
 }
 
 // Purity Pricing Rules — Product+Purity overrides for making charge %,
-// making charge discount %, and diamond discount %, all otherwise flat
+// making charge discount %, and stone discount %, all otherwise flat
 // product-level fields (see product_purity_pricing_rules migration). Same
 // "whole-set replace" shape as Weight Defaults, but resolved per-field with
 // `??` rather than requiring every field to be set — a rule can override
@@ -876,14 +879,14 @@ export async function adminGetPurityPricingRules(productId) {
           ? null
           : Number(rule.making_charge_discount_percent)
         : null,
-      diamondDiscountPercent: rule
-        ? rule.diamond_discount_percent == null
+      stoneDiscountPercent: rule
+        ? rule.stone_discount_percent == null
           ? null
-          : Number(rule.diamond_discount_percent)
+          : Number(rule.stone_discount_percent)
         : null,
       effectiveMakingChargePercent: effective.makingChargePercent,
       effectiveMakingChargeDiscountPercent: effective.makingChargeDiscountPercent,
-      effectiveDiamondDiscountPercent: effective.diamondDiscountPercent,
+      effectiveStoneDiscountPercent: effective.stoneDiscountPercent,
     };
   });
 }
@@ -904,7 +907,7 @@ export async function adminReplacePurityPricingRules(productId, { purityPricingR
     purityValueId: r.purityValueId,
     makingChargePercent: r.makingChargePercent ?? null,
     makingChargeDiscountPercent: r.makingChargeDiscountPercent ?? null,
-    diamondDiscountPercent: r.diamondDiscountPercent ?? null,
+    stoneDiscountPercent: r.stoneDiscountPercent ?? null,
   }));
 
   await withTransaction(async () => {
@@ -917,10 +920,10 @@ export async function adminReplacePurityPricingRules(productId, { purityPricingR
 }
 
 // Availability Rules — per-product pairwise exclusions ("this product's Rose
-// Gold isn't offered in 9K"), replacing the old universal hardcoded rule.
+// Gold isn't offered in size 14"), replacing the old universal hardcoded rule.
 // Values must both actually be offered by this product (in its
 // product_attribute_values) and come from two different attributes — a rule
-// within one attribute (e.g. two purities) has no meaning here.
+// within one attribute (e.g. two sizes) has no meaning here.
 export async function adminListExclusionRules(productId) {
   const product = await findProductById(productId);
   if (!product) throw new NotFoundError('Product not found');

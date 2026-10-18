@@ -1,6 +1,6 @@
 // Two independent things can make a product's charged price lower than its
 // "full" price: an admin-set MRP (a static, manually entered reference
-// price) and a live making-charge/diamond offer (`sellingPriceOriginal`,
+// price) and a live making-charge/gemstone offer (`sellingPriceOriginal`,
 // recomputed from the current gold rate every time). Either can be the
 // higher, more truthful "was" price to strike through — this picks whichever
 // one is actually higher than the current sellingPrice, so the % shown

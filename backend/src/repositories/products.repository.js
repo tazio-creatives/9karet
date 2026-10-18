@@ -41,15 +41,14 @@ const CATEGORY_JOIN = `LEFT JOIN categories cat ON cat.id = p.category_id`;
 
 const LIST_COLUMNS = `
   p.id, p.name, p.slug, p.sku, p.category_id, p.collection_id,
-  p.metal_type, p.purity, p.gold_color, p.gold_value, p.diamond_value, p.making_charge,
+  p.metal_type, p.purity, p.gold_color, p.gold_value, p.stone_value, p.making_charge,
   p.gst_percent, p.product_size, p.mrp, p.selling_price, p.status, p.stock_quantity,
   p.rating_avg, p.rating_count, p.created_at, p.is_featured, p.is_best_seller,
-  p.net_weight_grams, p.gold_weight_grams, p.diamond_weight_grams, p.diamond_weight_carats, p.diamond_config_id,
-  p.making_charge_discount_percent, p.diamond_discount_percent,
-  p.effective_making_charge_discount_percent, p.effective_diamond_discount_percent,
-  p.effective_making_charge_discount_amount, p.effective_diamond_discount_amount,
-  p.diamond_colour, p.diamond_clarity, p.diamond_type,
-  p.effective_making_charge_rule_id, p.effective_diamond_rule_id,
+  p.net_weight_grams, p.gross_weight_grams, p.gold_weight_grams, p.stone_weight_carats,
+  p.making_charge_discount_percent, p.stone_discount_percent,
+  p.effective_making_charge_discount_percent, p.effective_stone_discount_percent,
+  p.effective_making_charge_discount_amount, p.effective_stone_discount_amount,
+  p.effective_making_charge_rule_id, p.effective_stone_rule_id,
   primary_image.url AS primary_image_url,
   cat.slug AS category_slug,
   cat.name AS category_name,
@@ -229,7 +228,7 @@ export async function countPublishedProducts(categoryIds) {
 }
 
 // Trigram-indexed substring match on name/sku, plus an exact metal_type
-// match so "gold" surfaces gold products too (plan §28).
+// match so "gold" surfaces every product (plan §28).
 export async function searchProducts(term, limit = 8) {
   const { rows } = await query(
     `SELECT ${LIST_COLUMNS} FROM products p
@@ -298,36 +297,27 @@ const INSERT_COLUMNS = [
   'gross_weight_grams',
   'net_weight_grams',
   'gold_weight_grams',
-  'diamond_weight_grams',
-  'diamond_weight_carats',
-  'diamond_config_id',
-  'diamond_count',
-  'diamond_type_id',
-  'diamond_type',
-  'diamond_colour',
-  'diamond_clarity',
-  'gemstone',
+  'stone_weight_carats',
   'certification',
   'product_size',
   'size_label',
   'care_instructions',
   'gold_value',
-  'diamond_value',
-  'diamond_value_is_manual',
+  'stone_value',
   'making_charge',
   'making_charge_percent',
   'gst_percent',
   'mrp',
   'selling_price',
   'making_charge_discount_percent',
-  'diamond_discount_percent',
+  'stone_discount_percent',
   'effective_making_charge_discount_percent',
-  'effective_diamond_discount_percent',
+  'effective_stone_discount_percent',
   'effective_making_charge_discount_amount',
-  'effective_diamond_discount_amount',
+  'effective_stone_discount_amount',
   'effective_making_charge_rule_id',
-  'effective_diamond_rule_id',
-  'effective_diamond_breakdown',
+  'effective_stone_rule_id',
+  'effective_stone_breakdown',
   'is_price_locked',
   'is_featured',
   'is_best_seller',
@@ -395,7 +385,7 @@ export async function deleteProduct(id) {
 //
 // Only the product's own cached base price needs proactive recalculation
 // here — every product_variants row is priced live via computeVariantPricing
-// at read time (always querying the current gold/diamond rate), so there's
+// at read time (always querying the current gold rate), so there's
 // no per-variant cache to go stale. pricingJobs.js re-derives the product's
 // own base-configuration price via productsService.applyBaseProductPricing
 // after this.
@@ -412,11 +402,10 @@ export async function deleteProduct(id) {
 // products here is safe.
 export async function findGoldProductsForRecalculation() {
   const { rows } = await query(
-    `SELECT id, slug, category_id, gold_weight_grams, purity, diamond_value, making_charge,
+    `SELECT id, slug, category_id, gold_weight_grams, purity, stone_value, making_charge,
             making_charge_percent, gst_percent, selling_price
      FROM products
-     WHERE metal_type = 'GOLD' AND purity IS NOT NULL
-       AND is_price_locked = false`,
+     WHERE is_price_locked = false`,
   );
   return rows;
 }
@@ -436,42 +425,29 @@ export async function findProductsForRepricing(ids) {
   return rows;
 }
 
-export async function findDiamondProductsForRecalculation(diamondConfigId) {
-  const { rows } = await query(
-    `SELECT id, slug, category_id, gold_value, diamond_weight_carats, making_charge,
-            gst_percent, selling_price
-     FROM products
-     WHERE diamond_config_id = $1 AND diamond_weight_carats IS NOT NULL AND diamond_weight_carats > 0
-       AND diamond_value_is_manual = false AND is_price_locked = false`,
-    [diamondConfigId],
-  );
-  return rows;
-}
-
 // Transaction-scoped — always called from within withTransaction alongside
 // a product_price_history insert (plan §9a rate-sync flow).
 export async function updateProductPricingTx(
   client,
   id,
-  { goldValue, diamondValue, sellingPrice, makingCharge },
+  { goldValue, stoneValue, sellingPrice, makingCharge },
 ) {
-  // makingCharge is only passed when the gold-rate recalculation job also
-  // refreshed it (percent-based products — see recalculateGoldPricesHandler)
-  // — the diamond-rate job never touches gold value, so it never needs to.
+  // makingCharge is only passed when the caller also refreshed it
+  // (percent-based products).
   if (makingCharge != null) {
     await client.query(
       `UPDATE products
-       SET gold_value = $2, diamond_value = $3, selling_price = $4, making_charge = $5, updated_at = now()
+       SET gold_value = $2, stone_value = $3, selling_price = $4, making_charge = $5, updated_at = now()
        WHERE id = $1`,
-      [id, goldValue, diamondValue, sellingPrice, makingCharge],
+      [id, goldValue, stoneValue, sellingPrice, makingCharge],
     );
     return;
   }
   await client.query(
     `UPDATE products
-     SET gold_value = $2, diamond_value = $3, selling_price = $4, updated_at = now()
+     SET gold_value = $2, stone_value = $3, selling_price = $4, updated_at = now()
      WHERE id = $1`,
-    [id, goldValue, diamondValue, sellingPrice],
+    [id, goldValue, stoneValue, sellingPrice],
   );
 }
 

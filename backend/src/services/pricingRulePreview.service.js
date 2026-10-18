@@ -2,19 +2,21 @@ import { findScopeProductRowsForPreview } from '../repositories/pricingRules.rep
 import { findPurityPricingRuleValuesByProductIds } from '../repositories/purityPricingRules.repository.js';
 import { findAllAttributesWithGlobalValues } from '../repositories/attributes.repository.js';
 import { getCategoryAndAncestorIds } from '../repositories/categories.repository.js';
+import { findStonesByProductIds } from '../repositories/productStones.repository.js';
 import {
   loadActiveRuleSet,
   buildSyntheticRule,
   injectSyntheticRule,
   resolveMakingChargeDiscount,
-  resolveDiamondDiscount,
+  resolveStoneDiscount,
+  stoneMatches,
   PREVIEW_RULE_ID,
 } from './pricingRuleResolver.js';
-import { computeSellingPrice, round2 } from './pricingService.js';
+import { computeSellingPrice, buildStoneComponents, round2 } from './pricingService.js';
 
 const SAMPLE_LIMIT = 10;
 
-// products.purity is a TEXT code ('18K'); pricing_rule_purities stores a
+// products.purity is a TEXT code ('9K'); pricing_rule_purities stores a
 // UUID (attribute_values.id, the global Purity attribute's values) — same
 // mapping product_purity_pricing_rules already relies on. Built once per
 // preview call, not per product.
@@ -45,6 +47,8 @@ export async function previewPricingRule(input) {
 
   const purityValueIdByCode = await buildPurityValueIdByCode();
   const purityRulesByProduct = await findPurityPricingRuleValuesByProductIds(eligibleRows.map((r) => r.id));
+  const stonesByProduct =
+    input.ruleType === 'STONE' ? await findStonesByProductIds(eligibleRows.map((r) => r.id)) : new Map();
 
   const ancestorCache = new Map();
   async function ancestorsFor(categoryId) {
@@ -57,25 +61,25 @@ export async function previewPricingRule(input) {
   const syntheticRule = buildSyntheticRule(input);
   const ruleSet = injectSyntheticRule(baseRuleSet, syntheticRule, { categoryIds, productIds });
 
-  let matchingDiamondTypeCount = 0;
+  let matchingStoneCount = 0;
   let withExistingOverrides = 0;
   let willReceiveRule = 0;
   let clampedCount = 0;
   let suppressedCount = 0;
-  let noMatchingDiamondType = 0;
+  let noMatchingStone = 0;
   const missingPricingData = [];
   const sampleCandidates = [];
 
-  function gstOf(row, makingCharge, diamondValue) {
+  function gstOf(row, makingCharge, stoneValue) {
     return round2(
       computeSellingPrice({
         goldValue: Number(row.gold_value),
-        diamondValue,
+        stoneValue,
         makingCharge,
         gstPercent: Number(row.gst_percent),
       }) -
         Number(row.gold_value) -
-        diamondValue -
+        stoneValue -
         makingCharge,
     );
   }
@@ -106,24 +110,24 @@ export async function previewPricingRule(input) {
         if (syntheticRule.override_mode === 'SUPPRESS' && hadOverride) suppressedCount++;
         {
           const afterMakingCharge = round2(makingCharge - result.amount);
-          const diamondValue = Number(row.diamond_value);
+          const stoneValue = Number(row.stone_value);
           sampleCandidates.push({
             productId: row.id,
             sku: row.sku,
             name: row.name,
             before: {
               makingCharge,
-              diamondValue,
-              gst: gstOf(row, makingCharge, diamondValue),
+              stoneValue,
+              gst: gstOf(row, makingCharge, stoneValue),
               sellingPrice: Number(row.selling_price),
             },
             after: {
               makingCharge: afterMakingCharge,
-              diamondValue,
-              gst: gstOf(row, afterMakingCharge, diamondValue),
+              stoneValue,
+              gst: gstOf(row, afterMakingCharge, stoneValue),
               sellingPrice: computeSellingPrice({
                 goldValue: Number(row.gold_value),
-                diamondValue,
+                stoneValue,
                 makingCharge: afterMakingCharge,
                 gstPercent: Number(row.gst_percent),
               }),
@@ -132,59 +136,59 @@ export async function previewPricingRule(input) {
         }
       }
     } else {
-      // DIAMOND rule — no diamond component at all on this product is not
-      // "missing data", it's simply out of scope for a diamond rule. Diamond
-      // type is no longer gated on (see pricingRuleResolver.js's
-      // diamondMatches), so every product with a diamond counts.
-      const hasDiamond = row.diamond_config_id != null && Number(row.diamond_weight_carats ?? 0) > 0;
-      if (!hasDiamond) {
-        noMatchingDiamondType++;
+      // STONE rule — a product with no stone line in the rule's scope (no
+      // stones at all, or none of the selected stone types / carat range)
+      // is simply out of scope for it, not "missing data".
+      const components = buildStoneComponents(stonesByProduct.get(row.id) ?? []);
+      if (!components.some((c) => stoneMatches(syntheticRule, c))) {
+        noMatchingStone++;
         continue;
       }
-      matchingDiamondTypeCount++;
+      matchingStoneCount++;
 
-      const component = {
-        diamondTypeId: row.diamond_type_id,
-        diamondConfigId: row.diamond_config_id,
-        carats: Number(row.diamond_weight_carats),
-        value: Number(row.diamond_value),
-        colour: row.diamond_colour,
-        clarity: row.diamond_clarity,
-      };
       const hadOverride =
-        purityRuleRow?.diamond_discount_percent != null || Number(row.diamond_discount_percent ?? 0) > 0;
-      const result = resolveDiamondDiscount({ product: row, categoryAncestorIds, purityRuleRow, ruleSet, component });
+        purityRuleRow?.stone_discount_percent != null || Number(row.stone_discount_percent ?? 0) > 0;
       if (hadOverride) withExistingOverrides++;
-      if (result.ruleId === PREVIEW_RULE_ID) {
+
+      const results = components.map((component) =>
+        resolveStoneDiscount({ product: row, categoryAncestorIds, purityRuleRow, ruleSet, component }),
+      );
+      const fromThisRule = results.filter((r) => r.ruleId === PREVIEW_RULE_ID);
+      if (fromThisRule.length > 0) {
         willReceiveRule++;
-        if (result.clamped) clampedCount++;
+        if (fromThisRule.some((r) => r.clamped)) clampedCount++;
         if (syntheticRule.override_mode === 'SUPPRESS' && hadOverride) suppressedCount++;
-        {
-          const afterDiamondValue = round2(component.value - result.amount);
-          const makingCharge = Number(row.making_charge);
-          sampleCandidates.push({
-            productId: row.id,
-            sku: row.sku,
-            name: row.name,
-            before: {
+
+        const stoneValue = round2(components.reduce((sum, c) => sum + c.value, 0));
+        const afterStoneValue = round2(
+          components.reduce(
+            (sum, c, i) => sum + (results[i].ruleId === PREVIEW_RULE_ID ? c.value - results[i].amount : c.value),
+            0,
+          ),
+        );
+        const makingCharge = Number(row.making_charge);
+        sampleCandidates.push({
+          productId: row.id,
+          sku: row.sku,
+          name: row.name,
+          before: {
+            makingCharge,
+            stoneValue,
+            gst: gstOf(row, makingCharge, stoneValue),
+            sellingPrice: Number(row.selling_price),
+          },
+          after: {
+            makingCharge,
+            stoneValue: afterStoneValue,
+            gst: gstOf(row, makingCharge, afterStoneValue),
+            sellingPrice: computeSellingPrice({
+              goldValue: Number(row.gold_value),
+              stoneValue: afterStoneValue,
               makingCharge,
-              diamondValue: component.value,
-              gst: gstOf(row, makingCharge, component.value),
-              sellingPrice: Number(row.selling_price),
-            },
-            after: {
-              makingCharge,
-              diamondValue: afterDiamondValue,
-              gst: gstOf(row, makingCharge, afterDiamondValue),
-              sellingPrice: computeSellingPrice({
-                goldValue: Number(row.gold_value),
-                diamondValue: afterDiamondValue,
-                makingCharge,
-                gstPercent: Number(row.gst_percent),
-              }),
-            },
-          });
-        }
+              gstPercent: Number(row.gst_percent),
+            }),
+          },
+        });
       }
     }
   }
@@ -203,14 +207,14 @@ export async function previewPricingRule(input) {
   return {
     totalProductsInScope,
     eligibleCount: eligibleRows.length,
-    matchingDiamondTypeCount: input.ruleType === 'DIAMOND' ? matchingDiamondTypeCount : null,
+    matchingStoneCount: input.ruleType === 'STONE' ? matchingStoneCount : null,
     withExistingOverrides,
     willReceiveRule,
     clampedCount,
     suppressedCount: syntheticRule.override_mode === 'SUPPRESS' ? suppressedCount : 0,
     excluded: [
       { reason: 'PRICE_LOCKED', count: priceLockedCount },
-      { reason: 'NO_MATCHING_DIAMOND_TYPE', count: noMatchingDiamondType },
+      { reason: 'NO_MATCHING_STONE', count: noMatchingStone },
       { reason: 'MISSING_PRICING_DATA', count: missingPricingData.length },
     ].filter((e) => e.count > 0),
     missingPricingData: missingPricingData.slice(0, 20),

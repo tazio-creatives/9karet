@@ -87,8 +87,6 @@ export interface ProductVariantRow {
   isAvailable: boolean;
   stockQuantity: number;
   goldWeightGrams: number | null;
-  diamondWeightGrams: number | null;
-  diamondWeightCarats: number | null;
   sellingPrice: number;
   priceOverride: number | null;
   isPriceOverridden: boolean;
@@ -99,8 +97,6 @@ export interface ProductVariantRow {
 export interface ProductVariantInput {
   stockQuantity?: number;
   goldWeightGrams?: number | null;
-  diamondWeightGrams?: number | null;
-  diamondWeightCarats?: number | null;
   isAvailable?: boolean;
   priceOverride?: number | null;
 }

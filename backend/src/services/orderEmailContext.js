@@ -1,7 +1,7 @@
 // Builds the data an order-status email needs to render — reuses the exact
 // same repository functions and toOrderDto/toShipmentDto shaping every
 // other order surface (customer API, admin API) already uses, rather than
-// re-deriving purity/gold-color/size/diamond snapshot-fallback logic a
+// re-deriving purity/gold-color/size/stone snapshot-fallback logic a
 // second time. Templates only ever see this shape, never raw DB rows.
 import { findOrderById, findOrderItems } from '../repositories/orders.repository.js';
 import { findShipmentByOrderId } from '../repositories/shipments.repository.js';
@@ -28,7 +28,7 @@ export async function buildOrderEmailContext(orderId) {
       purity: item.purity,
       goldColor: item.goldColor,
       sizeLabel: item.sizeLabel,
-      diamondWeightCarats: item.diamondWeightCarats,
+      stones: item.stones,
       quantity: item.quantity,
       lineTotal: item.lineTotal,
     })),

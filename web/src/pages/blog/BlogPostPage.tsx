@@ -21,7 +21,7 @@ export function BlogPostPage() {
   useHead(
     post
       ? {
-          title: post.seoTitle || `${post.title} | BOX DIAMONDS Blog`,
+          title: post.seoTitle || `${post.title} | 9KARET Blog`,
           description: post.seoDescription || post.excerpt || post.title,
           canonicalPath,
           jsonLd: [
@@ -39,8 +39,8 @@ export function BlogPostPage() {
               image: post.coverImageUrl ? [post.coverImageUrl] : undefined,
               datePublished: post.publishedAt ?? undefined,
               dateModified: post.updatedAt,
-              author: { '@type': post.authorName ? 'Person' : 'Organization', name: post.authorName || 'BOX DIAMONDS' },
-              publisher: { '@type': 'Organization', name: 'BOX DIAMONDS', url: SITE_URL },
+              author: { '@type': post.authorName ? 'Person' : 'Organization', name: post.authorName || '9KARET' },
+              publisher: { '@type': 'Organization', name: '9KARET', url: SITE_URL },
               mainEntityOfPage: `${SITE_URL}${canonicalPath}`,
             },
           ],

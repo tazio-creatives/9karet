@@ -1,7 +1,7 @@
 // Minimal hand-drawn line icons for the sidebar nav — no icon library
 // dependency, consistent with the rest of the codebase's "no heavy
 // libraries" approach (see web/src/pages/home/HeroCarousel.tsx's inline
-// DiamondIcon/ExchangeIcon/ShippingIcon for the same pattern).
+// GemIcon/ExchangeIcon/ShippingIcon for the same pattern).
 const common = {
   width: 18,
   height: 18,

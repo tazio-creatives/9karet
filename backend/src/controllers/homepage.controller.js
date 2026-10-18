@@ -34,14 +34,16 @@ function toItemDto(row, deliveryEstimate) {
   if (row.product_id) {
     const offer = rowOffer({
       gold_value: row.product_gold_value,
-      diamond_value: row.product_diamond_value,
+      stone_value: row.product_stone_value,
       making_charge: row.product_making_charge,
       gst_percent: row.product_gst_percent,
       selling_price: row.product_selling_price,
       making_charge_discount_percent: row.product_making_charge_discount_percent,
-      diamond_discount_percent: row.product_diamond_discount_percent,
+      stone_discount_percent: row.product_stone_discount_percent,
       effective_making_charge_discount_percent: row.product_effective_making_charge_discount_percent,
-      effective_diamond_discount_percent: row.product_effective_diamond_discount_percent,
+      effective_stone_discount_percent: row.product_effective_stone_discount_percent,
+      effective_making_charge_discount_amount: row.product_effective_making_charge_discount_amount,
+      effective_stone_discount_amount: row.product_effective_stone_discount_amount,
     });
     const priceInfo = strikePriceInfo(Number(row.product_mrp), offer.sellingPrice, offer.sellingPriceOriginal);
     product = {
@@ -55,11 +57,8 @@ function toItemDto(row, deliveryEstimate) {
       strikePrice: priceInfo.strikePrice,
       hasDiscount: priceInfo.hasDiscount,
       effectiveDiscountPercent: priceInfo.effectiveDiscountPercent,
-      offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent),
-      // No diamond-type name here — this hand-built row doesn't select
-      // product_diamond_type, unlike toListDto's LIST_COLUMNS — badge falls
-      // back to the generic "Diamond Value" wording.
-      offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.diamondDiscountPercent, null),
+      offerLabel: offerLabel(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
+      offerBadges: offerBadges(offer.makingChargeDiscountPercent, offer.stoneDiscountPercent),
       imageUrl: row.product_image_url,
       metalType: row.product_metal_type,
       purity: row.product_purity,

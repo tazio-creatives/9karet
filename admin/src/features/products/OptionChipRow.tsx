@@ -13,7 +13,7 @@ interface OptionChipRowProps {
   emptyNote?: string;
 }
 
-// One compact row per attribute (Gold Colour / Purity / Diamond Quality) —
+// One compact row per attribute (e.g. Gold Colour) —
 // a plain toggle list of what this product offers on that axis. No
 // combination logic lives here; it's purely "which values are checked."
 export function OptionChipRow({ label, options, onToggle, emptyNote }: OptionChipRowProps) {

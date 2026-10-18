@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
-const METAL_TYPES = ['GOLD', 'PLATINUM'];
-const PURITIES = ['9K', '14K', '18K', '22K', '24K'];
+// 9Karet sells 9K gold only — metal type and purity are fixed server-side
+// (productsService.js), never chosen on the form.
+const METAL_TYPES = ['GOLD'];
+const PURITIES = ['9K'];
 const GOLD_COLORS = ['YELLOW', 'ROSE', 'WHITE'];
 const STATUSES = ['DRAFT', 'AI_PROCESSING', 'AI_READY', 'PUBLISHED', 'FAILED'];
 
@@ -68,7 +70,7 @@ const purityPricingRulesInputSchema = z
       purity: z.enum(PURITIES),
       makingChargePercent: percent,
       makingChargeDiscountPercent: percent,
-      diamondDiscountPercent: percent,
+      stoneDiscountPercent: percent,
     }),
   )
   .refine(
@@ -122,23 +124,8 @@ const productObjectSchema = z.object({
   shortDescription: z.string().trim().max(500).nullable().optional(),
   fullDescription: z.string().trim().max(10000).nullable().optional(),
 
-  metalType: z.enum(METAL_TYPES),
-  purity: z.enum(PURITIES).nullable().optional(),
   goldColor: z.enum(GOLD_COLORS).nullable().optional(),
   goldWeightGrams: z.coerce.number().positive().nullable().optional(),
-  diamondWeightGrams: z.coerce.number().nonnegative().nullable().optional(),
-  diamondWeightCarats: z.coerce.number().nonnegative().nullable().optional(),
-  diamondConfigId: z.string().uuid().nullable().optional(),
-  diamondCount: z.coerce.number().int().nonnegative().nullable().optional(),
-  // diamondType (free text) is no longer accepted directly from the form —
-  // it's derived server-side from diamondTypeId (productsService.js's
-  // syncDiamondTypeName) so the two can never drift apart. Still present on
-  // the read DTO (toDetailDto) for anything that hasn't migrated off it.
-  diamondTypeId: z.string().uuid().nullable().optional(),
-  diamondType: z.string().trim().max(100).nullable().optional(),
-  diamondColour: z.string().trim().max(50).nullable().optional(),
-  diamondClarity: z.string().trim().max(50).nullable().optional(),
-  gemstone: z.string().trim().max(100).nullable().optional(),
   certification: z.string().trim().max(200).nullable().optional(),
   productSize: z.string().trim().max(100).nullable().optional(),
   // Overrides the storefront/admin wording for the Size axis (e.g. "Length"
@@ -147,15 +134,13 @@ const productObjectSchema = z.object({
   careInstructions: z.string().trim().max(2000).nullable().optional(),
 
   goldValue: z.coerce.number().nonnegative().optional(),
-  diamondValue: z.coerce.number().nonnegative().optional(),
-  diamondValueIsManual: z.boolean().optional(),
   makingCharge: z.coerce.number().nonnegative().optional(),
   makingChargePercent: z.coerce.number().min(0).max(100).nullable().optional(),
   gstPercent: z.coerce.number().nonnegative().optional(),
   mrp: z.coerce.number().nonnegative().optional(),
   sellingPrice: z.coerce.number().nonnegative().optional(),
   makingChargeDiscountPercent: z.coerce.number().min(0).max(100).optional(),
-  diamondDiscountPercent: z.coerce.number().min(0).max(100).optional(),
+  stoneDiscountPercent: z.coerce.number().min(0).max(100).optional(),
 
   stockQuantity: z.coerce.number().int().nonnegative().optional(),
   status: z.enum(STATUSES).optional(),
@@ -174,14 +159,27 @@ const productObjectSchema = z.object({
         label: z.string().trim().min(1).max(50),
         stockQuantity: z.coerce.number().int().nonnegative(),
         weightGrams: z.coerce.number().positive().nullable().optional(),
-        diamondWeightCarats: z.coerce.number().nonnegative().nullable().optional(),
       }),
     )
     .optional(),
 
   goldColors: z.array(z.enum(GOLD_COLORS)).optional(),
-  purities: z.array(z.enum(PURITIES)).optional(),
-  diamondConfigIds: z.array(z.string().uuid()).optional(),
+
+  // The piece's stones — each line a stone type from Admin → Stone Types
+  // with its count, total weight (carats) and price, all entered by hand.
+  // Sent as the full list (replaces whatever was saved); absent on an
+  // update = leave the saved stones untouched.
+  stones: z
+    .array(
+      z.object({
+        stoneTypeId: z.string().uuid(),
+        count: z.coerce.number().int().positive(),
+        weightCarats: z.coerce.number().positive(),
+        price: z.coerce.number().nonnegative(),
+      }),
+    )
+    .max(50)
+    .optional(),
 
   // Per-exact-combination overrides, applied in the same save that sets up
   // the axes above — lets a brand-new product be fully configured (stock/
@@ -193,13 +191,10 @@ const productObjectSchema = z.object({
         attributeValues: z.object({
           goldColor: z.enum(GOLD_COLORS).optional(),
           purity: z.enum(PURITIES).optional(),
-          diamondConfigId: z.string().uuid().optional(),
           sizeLabel: z.string().optional(),
         }),
         stockQuantity: z.coerce.number().int().nonnegative().optional(),
         goldWeightGrams: z.coerce.number().positive().nullable().optional(),
-        diamondWeightGrams: z.coerce.number().nonnegative().nullable().optional(),
-        diamondWeightCarats: z.coerce.number().nonnegative().nullable().optional(),
         isAvailable: z.boolean().optional(),
         priceOverride: z.coerce.number().nonnegative().nullable().optional(),
       }),
@@ -218,37 +213,17 @@ const productObjectSchema = z.object({
   purityPricingRules: purityPricingRulesInputSchema.optional(),
 });
 
-// A purity/size referenced by weightRules or purityPricingRules must be one
-// of the purities/sizes this same request is selecting — but only checked
-// when `purities`/`sizes` are actually present in this request. A partial
-// update that edits only weightRules without touching purities/sizes has
-// nothing here to check against; the service layer's own resolver
-// (productsService.js's buildPurityAndSizeResolver) throws a 409 against the
-// product's actual saved attribute catalogue in that case instead.
+// A size referenced by weightRules must be one of the sizes this same
+// request is selecting — but only checked when `sizes` is actually present
+// in this request. A partial update that edits only weightRules without
+// touching sizes has nothing here to check against; the service layer's own
+// resolver (productsService.js's buildPurityAndSizeResolver) throws a 409
+// against the product's actual saved attribute catalogue in that case
+// instead. (Purity needs no check: the PURITIES enum only admits 9K, which
+// every product carries.)
 function checkAxisMembership(input, ctx) {
-  const purities = input.purities;
   const sizeLabels = input.sizes?.map((s) => s.label);
 
-  if (input.weightRules && purities) {
-    input.weightRules.purityRules.forEach((r, i) => {
-      if (!purities.includes(r.purity)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Purity ${r.purity} is not in the selected purities`,
-          path: ['weightRules', 'purityRules', i, 'purity'],
-        });
-      }
-    });
-    input.weightRules.puritySizeRules.forEach((r, i) => {
-      if (!purities.includes(r.purity)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Purity ${r.purity} is not in the selected purities`,
-          path: ['weightRules', 'puritySizeRules', i, 'purity'],
-        });
-      }
-    });
-  }
   if (input.weightRules && sizeLabels) {
     input.weightRules.puritySizeRules.forEach((r, i) => {
       if (!sizeLabels.includes(r.sizeLabel)) {
@@ -256,17 +231,6 @@ function checkAxisMembership(input, ctx) {
           code: z.ZodIssueCode.custom,
           message: `Size ${r.sizeLabel} is not in the selected sizes`,
           path: ['weightRules', 'puritySizeRules', i, 'sizeLabel'],
-        });
-      }
-    });
-  }
-  if (input.purityPricingRules && purities) {
-    input.purityPricingRules.forEach((r, i) => {
-      if (!purities.includes(r.purity)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Purity ${r.purity} is not in the selected purities`,
-          path: ['purityPricingRules', i, 'purity'],
         });
       }
     });
@@ -298,8 +262,6 @@ export const variantPricePreviewQuerySchema = z.object({
 export const updateVariantSchema = z.object({
   stockQuantity: z.coerce.number().int().nonnegative().optional(),
   goldWeightGrams: z.coerce.number().positive().nullable().optional(),
-  diamondWeightGrams: z.coerce.number().nonnegative().nullable().optional(),
-  diamondWeightCarats: z.coerce.number().nonnegative().nullable().optional(),
   isAvailable: z.boolean().optional(),
   sku: z.string().trim().max(100).nullable().optional(),
   priceOverride: z.coerce.number().nonnegative().nullable().optional(),

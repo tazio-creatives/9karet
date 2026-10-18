@@ -11,20 +11,20 @@ import { buildOrderEmailContext } from '../orderEmailContext.js';
 import { env } from '../../config/env.js';
 
 const BRAND = {
-  green: '#00515a',
-  greenDark: '#00363c',
+  green: '#530711',
+  greenDark: '#38040b',
   gold: '#c6a15b',
   goldBright: '#d9ad42',
   bg: '#faf8f3',
   surface: '#ffffff',
-  text: '#17383c',
+  text: '#3c171c',
   textMuted: '#5f6969',
   border: '#e3e7e4',
   danger: '#b3261e',
 };
 
 const FONT_STACK = "Arial, Helvetica, 'Segoe UI', sans-serif";
-const SUPPORT_EMAIL = 'info@boxdiamonds.com';
+const SUPPORT_EMAIL = 'info@9karet.com';
 const LOGO_URL = `${env.webAppBaseUrl}/images/logo.png`;
 
 // Order in which every step appears in the tracker — deliberately only the
@@ -45,9 +45,9 @@ const PROGRESS_STEPS = [
 const ORDER_STATUS_EMAIL_CONFIG = {
   ORDER_CONFIRMED: {
     stepKey: 'CONFIRMED',
-    subject: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} is confirmed`,
+    subject: (ctx) => `Your 9KARET order ${ctx.orderNumber} is confirmed`,
     heading: 'Thank you for your order',
-    subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} has been confirmed and is being prepared.`,
+    subtext: (ctx) => `Your 9KARET order ${ctx.orderNumber} has been confirmed and is being prepared.`,
     ctaLabel: 'View Order',
     unboxing: 'heads-up',
   },
@@ -55,28 +55,28 @@ const ORDER_STATUS_EMAIL_CONFIG = {
     stepKey: 'PROCESSING',
     subject: (ctx) => `Order ${ctx.orderNumber} is being prepared`,
     heading: 'Your order is being prepared',
-    subtext: (ctx) => `Our team is now preparing your BOX DIAMONDS order ${ctx.orderNumber}.`,
+    subtext: (ctx) => `Our team is now preparing your 9KARET order ${ctx.orderNumber}.`,
     ctaLabel: 'View Order Status',
   },
   ORDER_READY_TO_SHIP: {
     stepKey: 'READY_TO_SHIP',
     subject: (ctx) => `Order ${ctx.orderNumber} is ready to ship`,
     heading: 'Your order is packed and ready',
-    subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} is packed and will ship shortly.`,
+    subtext: (ctx) => `Your 9KARET order ${ctx.orderNumber} is packed and will ship shortly.`,
     ctaLabel: 'View Order',
   },
   ORDER_SHIPPED: {
     stepKey: 'SHIPPED',
     subject: (ctx) => `Your order ${ctx.orderNumber} has shipped`,
     heading: 'Your order is on the way',
-    subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} has been shipped and is on its way to you.`,
+    subtext: (ctx) => `Your 9KARET order ${ctx.orderNumber} has been shipped and is on its way to you.`,
     ctaLabel: 'Track Your Order',
   },
   ORDER_OUT_FOR_DELIVERY: {
     stepKey: 'OUT_FOR_DELIVERY',
     subject: (ctx) => `Order ${ctx.orderNumber} is out for delivery`,
     heading: 'Your order is arriving today',
-    subtext: (ctx) => `Your BOX DIAMONDS order ${ctx.orderNumber} is out for delivery and should arrive today.`,
+    subtext: (ctx) => `Your 9KARET order ${ctx.orderNumber} is out for delivery and should arrive today.`,
     ctaLabel: 'Track Your Order',
     unboxing: 'arriving',
   },
@@ -85,7 +85,7 @@ const ORDER_STATUS_EMAIL_CONFIG = {
     subject: (ctx) => `Order ${ctx.orderNumber} has been delivered`,
     heading: 'Your order has been delivered',
     subtext: (ctx) =>
-      `Your BOX DIAMONDS order ${ctx.orderNumber} has been delivered. We hope you love it.`,
+      `Your 9KARET order ${ctx.orderNumber} has been delivered. We hope you love it.`,
     ctaLabel: 'View Order',
     unboxing: 'delivered',
   },
@@ -166,7 +166,7 @@ function renderProductRow(item) {
     item.purity,
     item.goldColor ? `Gold Colour: ${item.goldColor.charAt(0)}${item.goldColor.slice(1).toLowerCase()}` : null,
     item.sizeLabel ? `Size: ${item.sizeLabel}` : null,
-    item.diamondWeightCarats != null ? `Diamond: ${item.diamondWeightCarats.toFixed(2)} ct` : null,
+    ...(item.stones ?? []).map((st) => `${st.stoneTypeName}: ${st.count} pc, ${Number(st.weightCarats).toFixed(2)} ct`),
     `Qty: ${item.quantity}`,
   ]
     .filter(Boolean)
@@ -334,7 +334,7 @@ function renderHtml(context, config) {
         <!-- Header -->
         <tr>
           <td align="center" style="padding:28px 24px;border-bottom:1px solid ${BRAND.border};">
-            <img src="${LOGO_URL}" alt="BOX DIAMONDS" height="34" style="height:34px;display:inline-block;">
+            <img src="${LOGO_URL}" alt="9KARET" height="34" style="height:34px;display:inline-block;">
           </td>
         </tr>
 
@@ -467,7 +467,7 @@ function renderHtml(context, config) {
         <tr>
           <td align="center" style="padding:0 40px 32px;border-top:1px solid ${BRAND.border};">
             <p style="margin:24px 0 6px;font-family:${FONT_STACK};font-size:13px;font-weight:bold;color:${BRAND.text};">Need help with your order?</p>
-            <p style="margin:0 0 12px;font-family:${FONT_STACK};font-size:12px;color:${BRAND.textMuted};">Contact BOX DIAMONDS support.</p>
+            <p style="margin:0 0 12px;font-family:${FONT_STACK};font-size:12px;color:${BRAND.textMuted};">Contact 9KARET support.</p>
             <a href="mailto:${SUPPORT_EMAIL}" style="font-family:${FONT_STACK};font-size:12px;color:${BRAND.gold};font-weight:bold;text-decoration:none;">Contact Support</a>
           </td>
         </tr>
@@ -485,7 +485,7 @@ function renderHtml(context, config) {
               </tr>
             </table>
             <p style="margin:16px 0 2px;font-family:${FONT_STACK};font-size:12px;color:${BRAND.textMuted};">Thank you for shopping with us</p>
-            <p style="margin:0;font-family:${FONT_STACK};font-size:13px;font-weight:bold;letter-spacing:0.5px;color:${BRAND.text};">BOX DIAMONDS</p>
+            <p style="margin:0;font-family:${FONT_STACK};font-size:13px;font-weight:bold;letter-spacing:0.5px;color:${BRAND.text};">9KARET</p>
           </td>
         </tr>
 
@@ -525,7 +525,7 @@ function renderText(context, config) {
     '',
     `Need help with your order? Contact us at ${SUPPORT_EMAIL}`,
     '',
-    '— BOX DIAMONDS',
+    '— 9KARET',
   ].filter((l) => l !== null);
   return lines.join('\n');
 }

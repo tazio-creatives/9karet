@@ -12,8 +12,8 @@ import { ApiError } from '../api/client';
 import sharedStyles from '../styles/shared.module.css';
 import styles from './AttributesPage.module.css';
 
-// Product variation types (Purity, Gold Color, Diamond Quality, and
-// whatever's added here) — the one place an admin can introduce a
+// Product variation types (Purity, Gold Color, and whatever's added
+// here) — the one place an admin can introduce a
 // genuinely new variation axis (e.g. "Chain Length") without a developer
 // running a migration. Size is deliberately not managed here — its values
 // are per-product free text, entered on the product form itself.
@@ -79,7 +79,7 @@ export function AttributesPage() {
         )}
       </div>
       <p className={styles.pageSubtext}>
-        Product variation types — Purity, Gold Color, and Diamond Quality are built in. Add a new one here (e.g.
+        Product variation types — Purity (always 9K) and Gold Color are built in. Add a new one here (e.g.
         "Chain Length") to make it available on every product's variation form.
       </p>
 
@@ -140,10 +140,9 @@ export function AttributesPage() {
               </span>
             </div>
 
-            {attribute.code === 'diamond_quality' && (
+            {attribute.code === 'purity' && (
               <p className={styles.sectionSubtext}>
-                Values are synced automatically from the Diamond Quality tiers on the Pricing page — add or
-                rename tiers there, not here.
+                9Karet sells 9K gold only — every product is 9K, so no other purity can be added.
               </p>
             )}
 
@@ -184,7 +183,7 @@ export function AttributesPage() {
               </table>
             )}
 
-            {attribute.code !== 'diamond_quality' && (
+            {attribute.code !== 'purity' && (
             <div className={styles.addValueRow}>
               <input
                 value={draft.value}

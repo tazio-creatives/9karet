@@ -26,7 +26,7 @@
 .name {
   font-family: var(--font-heading);
   margin: 0 0 6px;
-  color: #173c40;
+  color: #40171c;
   font-size: 24px;
   font-weight: 500;
   line-height: 1.25;
@@ -65,7 +65,7 @@
 
 .price {
   margin: 0 0 2px;
-  color: #173c40;
+  color: #40171c;
   font-size: 24px;
   font-weight: 500;
   line-height: 34px;
@@ -287,14 +287,14 @@
 }
 
 .addToBag {
-  background: #124e57;
-  border: 1px solid #124e57;
+  background: #57121b;
+  border: 1px solid #57121b;
   color: #ffffff;
 }
 
 .addToBag:hover:not(:disabled) {
-  background: #0d4148;
-  border-color: #0d4148;
+  background: #480d15;
+  border-color: #480d15;
 }
 
 .addToBag:disabled {
@@ -306,12 +306,12 @@
 
 .buyNow {
   background: #ffffff;
-  border: 1px solid #124e57;
-  color: #124e57;
+  border: 1px solid #57121b;
+  color: #57121b;
 }
 
 .buyNow:hover:not(:disabled) {
-  background: #f2f8f7;
+  background: #f8f2f3;
 }
 
 .buyNow:disabled {
@@ -435,7 +435,7 @@
   width: 100%;
   background: #ffffff;
   border-top: 1px solid #dfe5e3;
-  box-shadow: 0 -4px 16px rgba(18, 78, 87, 0.08);
+  box-shadow: 0 -4px 16px rgba(87, 18, 27, 0.08);
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
 }
 
@@ -458,7 +458,7 @@
 .mobileBarPriceCurrent {
   font-size: 22px;
   font-weight: 600;
-  color: #173c40;
+  color: #40171c;
   white-space: nowrap;
 }
 
@@ -509,8 +509,8 @@
 }
 
 .mobileBarAddToBag {
-  background: #124e57;
-  border: 1px solid #124e57;
+  background: #57121b;
+  border: 1px solid #57121b;
   color: #ffffff;
 }
 
@@ -521,8 +521,8 @@
 
 .mobileBarBuyNow {
   background: #ffffff;
-  border: 1px solid #124e57;
-  color: #124e57;
+  border: 1px solid #57121b;
+  color: #57121b;
 }
 
 @media (min-width: 768px) {

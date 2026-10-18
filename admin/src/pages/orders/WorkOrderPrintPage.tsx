@@ -109,7 +109,7 @@ export function WorkOrderPrintPage() {
 
         <header className={styles.header}>
           <div>
-            <img src="/images/logo.png" alt="Box Diamonds" className={styles.logo} />
+            <img src="/images/logo.png" alt="9Karet" className={styles.logo} />
             <p className={styles.docTitle}>Work Order</p>
           </div>
           <div className={styles.headerMeta}>
@@ -135,7 +135,6 @@ export function WorkOrderPrintPage() {
 
         <div className={styles.items}>
           {order.items.map((item, i) => {
-            const diamondColourClarity = [item.diamondColour, item.diamondClarity].filter(Boolean).join(' / ');
             return (
               <div key={item.id} className={styles.itemCard}>
                 <div className={styles.itemImageBlock}>
@@ -161,14 +160,14 @@ export function WorkOrderPrintPage() {
                     <Spec label="Gold Colour" value={item.goldColor} />
                     <Spec label="Gold Purity" value={item.purity} />
                     <Spec label="Gold Wt (g)" value={item.goldWeightGrams != null ? item.goldWeightGrams.toFixed(3) : null} />
-                    <Spec label="Diamond Quality" value={item.diamondConfigName} />
-                    <Spec
-                      label="Diamond Wt (ct)"
-                      value={item.diamondWeightCarats != null ? item.diamondWeightCarats.toFixed(3) : null}
-                    />
-                    <Spec label="Diamond Count" value={item.diamondCount != null ? String(item.diamondCount) : null} />
-                    <Spec label="Diamond Colour/Clarity" value={diamondColourClarity || null} />
                     <Spec label="Size" value={item.sizeLabel} />
+                    {item.stones.map((stone, si) => (
+                      <Spec
+                        key={si}
+                        label={`Stone: ${stone.stoneTypeName}`}
+                        value={`${stone.count} pc${stone.weightCarats != null ? ` · ${stone.weightCarats.toFixed(3)} ct` : ''}`}
+                      />
+                    ))}
                   </div>
 
                   {item.customizationNote && (

@@ -13,6 +13,6 @@ productsRouter.get('/:slug', getBySlug);
 // a review (POST, same path) needs customer auth and is handled by
 // productReviews.routes.js under the customer session router instead.
 productsRouter.get('/:id/reviews', listReviews);
-// Live price for a Purity/Diamond Quality selection — id-based (the PDP
+// Live price for a Gold Colour/Size selection — id-based (the PDP
 // already has product.id after loading by slug), same pattern as reviews.
 productsRouter.get('/:id/price-preview', pricePreview);

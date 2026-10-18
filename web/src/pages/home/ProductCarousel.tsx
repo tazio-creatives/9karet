@@ -40,8 +40,7 @@ function useCardsPerView(desktopCount: number) {
 
 function materialFor(product: NonNullable<HomepageItem['product']>): string | null {
   if (!product.metalType) return null;
-  const metalLabel = product.metalType === 'GOLD' ? 'Gold' : 'Platinum';
-  return product.purity ? `${product.purity} ${metalLabel}` : metalLabel;
+  return `${product.purity ?? '9K'} Gold`;
 }
 
 // Generic multi-product carousel row — shared by NEW_ARRIVALS and

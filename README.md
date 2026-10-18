@@ -1,8 +1,8 @@
-# BOX DIAMONDS
+# 9KARET
 
-Premium jewellery ecommerce platform. Monorepo (npm workspaces) with three independent apps plus a shared package.
+9K gold & gemstone jewellery ecommerce platform ("Smart Gold") — forked from the BOX DIAMONDS platform: every product is BIS-hallmarked 9K gold, set with stones whose weight and price are entered per product (no diamonds). Monorepo (npm workspaces) with three independent apps plus a shared package.
 
-Architecture, database schema, API plan, and the full phased build plan live in the approved plan document: `BOX-DIAMONDS-Architecture-Plan.pdf` (also at `~/.claude/plans/iridescent-swinging-stardust.md`). This README only covers running the repo day to day.
+Architecture, database schema, API plan, and the full phased build plan live in the original BOX DIAMONDS plan document: `BOX-DIAMONDS-Architecture-Plan.pdf` (also at `~/.claude/plans/iridescent-swinging-stardust.md`). This README only covers running the repo day to day.
 
 ## Structure
 
@@ -15,7 +15,7 @@ packages/shared/   Shared TS types, zod schemas, constants (order status, etc.)
 
 ## Requirements
 
-- Node.js >= 20
+- Node.js >= 20 (on Windows with nvm: `nvm use 22.20.0`)
 - npm >= 10
 - PostgreSQL (from Phase 1 onward — not required to run Phase 0's skeleton)
 

@@ -35,8 +35,8 @@ export async function findCategoryById(id) {
 }
 
 // This category's id plus every descendant id, via a recursive CTE — used to
-// make a PLP category filter include subcategory products (plan §3: "Rings →
-// Diamond Rings → Solitaire Rings").
+// make a PLP category filter include subcategory products (e.g. "Rings →
+// Gemstone Rings → Ruby Rings").
 export async function getCategoryAndDescendantIds(categoryId) {
   const { rows } = await query(
     `WITH RECURSIVE descendants AS (
@@ -55,8 +55,8 @@ export async function getCategoryAndDescendantIds(categoryId) {
 // walking up parent_id — the inverse of getCategoryAndDescendantIds. Needed
 // because a product page-cache invalidation (pageCacheInvalidation.js) has
 // to bust every ancestor's PLP page too, not just the product's own direct
-// category: /rings lists Diamond Rings products via descendant inclusion,
-// so adding/editing a product under Diamond Rings must also invalidate
+// category: /rings lists Gemstone Rings products via descendant inclusion,
+// so adding/editing a product under Gemstone Rings must also invalidate
 // /rings or its cached page silently keeps serving a stale product count.
 export async function getCategoryAndAncestorSlugs(categoryId) {
   const { rows } = await query(

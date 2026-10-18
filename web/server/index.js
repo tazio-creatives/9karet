@@ -34,11 +34,8 @@ const CSR_ONLY_SINGLE_SEGMENT = new Set([
   'faqs',
   'size-guide',
   'care-guide',
-  'our-story',
-  'why-box-diamonds',
   'careers',
   'press',
-  'sustainability',
 ]);
 const CSR_ONLY_PREFIXES = ['account', 'order-confirmation'];
 
@@ -79,11 +76,10 @@ async function createServer() {
   // as-is at /index.html, a crawlable titleless duplicate of the homepage.
   app.get('/index.html', (req, res) => res.redirect(301, '/'));
 
-  // Category URLs renamed to match their names (Bangle was /nose-pin, Pendant
-  // was /diamond-rings) — old category and product links, already shared or
-  // indexed, move permanently to the new ones, query string kept. Don't
-  // reuse these old slugs for a new category while they're listed here.
-  const RENAMED_CATEGORY_SLUGS = { 'nose-pin': 'bangles', 'diamond-rings': 'pendants' };
+  // Renamed category URLs — old links move permanently to the new slug,
+  // query string kept. Add an entry here whenever a live category slug is
+  // renamed; don't reuse an old slug for a new category while it's listed.
+  const RENAMED_CATEGORY_SLUGS = {};
   app.use((req, res, next) => {
     const match = /^\/([^/]+)(\/.*)?$/.exec(req.path);
     const renamed = match && RENAMED_CATEGORY_SLUGS[match[1]];

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
-  DiamondIcon,
+  GemIcon,
   HallmarkIcon,
   BuybackIcon,
   ExchangeIcon,
@@ -9,8 +9,8 @@ import {
 import styles from './AssuranceStrip.module.css';
 
 const ASSURANCES = [
-  { Icon: DiamondIcon, title: '100% Certified Diamonds', description: 'IGI / GIA Certified' },
-  { Icon: HallmarkIcon, title: 'BIS Hallmarked Gold', description: 'Trusted Purity' },
+  { Icon: HallmarkIcon, title: 'BIS Hallmarked 9K Gold', description: 'Trusted Purity' },
+  { Icon: GemIcon, title: 'Genuine Gemstones', description: 'Weight & Price Shown' },
   { Icon: BuybackIcon, title: 'Buyback Guarantee', description: 'Better Value, Always' },
   { Icon: ExchangeIcon, title: 'Exchange Support', description: 'Easy & Flexible' },
   { Icon: ShieldCheckIcon, title: 'Secure Payments', description: 'Safe & Reliable' },

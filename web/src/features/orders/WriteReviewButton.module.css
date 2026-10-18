@@ -1,10 +1,10 @@
 .writeButton {
   height: 36px;
   padding: 0 18px;
-  border: 1px solid #075a63;
+  border: 1px solid #620814;
   border-radius: 999px;
   background: transparent;
-  color: #075a63;
+  color: #620814;
   font-size: 12px;
   font-weight: 600;
   font-family: inherit;
@@ -12,7 +12,7 @@
 }
 
 .writeButton:hover {
-  background: #e3f3f1;
+  background: #f3e3e5;
 }
 
 .reviewCard {
@@ -102,10 +102,10 @@
   margin-top: 2px;
   height: 32px;
   padding: 0 16px;
-  border: 1px solid #075a63;
+  border: 1px solid #620814;
   border-radius: 999px;
   background: transparent;
-  color: #075a63;
+  color: #620814;
   font-size: 11px;
   font-weight: 600;
   font-family: inherit;
@@ -113,5 +113,5 @@
 }
 
 .editButton:hover {
-  background: #e3f3f1;
+  background: #f3e3e5;
 }

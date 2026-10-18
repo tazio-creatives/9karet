@@ -2,7 +2,7 @@ import {
   findLiveRules,
   findRuleCategoryLinks,
   findRuleProductLinks,
-  findRuleDiamondTypeLinks,
+  findRuleStoneTypeLinks,
   findRulePurityLinks,
   findRuleConditions,
 } from '../repositories/pricingRules.repository.js';
@@ -36,9 +36,9 @@ const EMPTY_RULE_SET = {
   makingByProduct: new Map(),
   makingByCategory: new Map(),
   makingGlobal: [],
-  diamondByProduct: new Map(),
-  diamondByCategory: new Map(),
-  diamondGlobal: [],
+  stoneByProduct: new Map(),
+  stoneByCategory: new Map(),
+  stoneGlobal: [],
 };
 
 function bucketRule(rule, byProduct, byCategory, global, links) {
@@ -58,7 +58,7 @@ function bucketRule(rule, byProduct, byCategory, global, links) {
   }
 }
 
-function buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, purityLinks, conditionRows) {
+function buildRuleSet(liveRules, categoryLinks, productLinks, stoneTypeLinks, purityLinks, conditionRows) {
   const productIdsByRule = new Map();
   for (const { rule_id, product_id } of productLinks) {
     if (!productIdsByRule.has(rule_id)) productIdsByRule.set(rule_id, []);
@@ -69,10 +69,10 @@ function buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, 
     if (!categoryIdsByRule.has(rule_id)) categoryIdsByRule.set(rule_id, []);
     categoryIdsByRule.get(rule_id).push(category_id);
   }
-  const diamondTypeIdsByRule = new Map();
-  for (const { rule_id, diamond_type_id } of diamondTypeLinks) {
-    if (!diamondTypeIdsByRule.has(rule_id)) diamondTypeIdsByRule.set(rule_id, new Set());
-    diamondTypeIdsByRule.get(rule_id).add(diamond_type_id);
+  const stoneTypeIdsByRule = new Map();
+  for (const { rule_id, stone_type_id } of stoneTypeLinks) {
+    if (!stoneTypeIdsByRule.has(rule_id)) stoneTypeIdsByRule.set(rule_id, new Set());
+    stoneTypeIdsByRule.get(rule_id).add(stone_type_id);
   }
   const purityIdsByRule = new Map();
   for (const { rule_id, purity_value_id } of purityLinks) {
@@ -88,9 +88,9 @@ function buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, 
   const makingByProduct = new Map();
   const makingByCategory = new Map();
   const makingGlobal = [];
-  const diamondByProduct = new Map();
-  const diamondByCategory = new Map();
-  const diamondGlobal = [];
+  const stoneByProduct = new Map();
+  const stoneByCategory = new Map();
+  const stoneGlobal = [];
 
   for (const rule of liveRules) {
     const enriched = {
@@ -98,7 +98,7 @@ function buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, 
       priority: Number(rule.priority),
       discount_value: Number(rule.discount_value),
       purityValueIds: purityIdsByRule.get(rule.id) ?? new Set(),
-      diamondTypeIds: diamondTypeIdsByRule.get(rule.id) ?? new Set(),
+      stoneTypeIds: stoneTypeIdsByRule.get(rule.id) ?? new Set(),
       conditions: conditionsByRule.get(rule.id) ?? [],
     };
     const links = {
@@ -108,11 +108,11 @@ function buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, 
     if (rule.rule_type === 'MAKING_CHARGE') {
       bucketRule(enriched, makingByProduct, makingByCategory, makingGlobal, links);
     } else {
-      bucketRule(enriched, diamondByProduct, diamondByCategory, diamondGlobal, links);
+      bucketRule(enriched, stoneByProduct, stoneByCategory, stoneGlobal, links);
     }
   }
 
-  return { makingByProduct, makingByCategory, makingGlobal, diamondByProduct, diamondByCategory, diamondGlobal };
+  return { makingByProduct, makingByCategory, makingGlobal, stoneByProduct, stoneByCategory, stoneGlobal };
 }
 
 let cachedRuleSet = null;
@@ -161,10 +161,10 @@ export async function loadActiveRuleSet({ at, forceRefresh = false } = {}) {
     const ruleIds = liveRules.map((r) => r.id);
     const categoryLinks = await findRuleCategoryLinks(ruleIds);
     const productLinks = await findRuleProductLinks(ruleIds);
-    const diamondTypeLinks = await findRuleDiamondTypeLinks(ruleIds);
+    const stoneTypeLinks = await findRuleStoneTypeLinks(ruleIds);
     const purityLinks = await findRulePurityLinks(ruleIds);
     const conditionRows = await findRuleConditions(ruleIds);
-    ruleSet = buildRuleSet(liveRules, categoryLinks, productLinks, diamondTypeLinks, purityLinks, conditionRows);
+    ruleSet = buildRuleSet(liveRules, categoryLinks, productLinks, stoneTypeLinks, purityLinks, conditionRows);
   }
 
   if (useNow) {
@@ -229,7 +229,7 @@ function flatTierResult(base, percent) {
 
 const ZERO_RESULT = { amount: 0, percent: 0, ruleId: null, ruleName: null, source: 'NONE', clamped: false };
 
-// The shared resolution engine for both making-charge and diamond discount —
+// The shared resolution engine for both making-charge and stone discount —
 // implements the user-approved, corrected tier order:
 //   1. PRODUCT-scope pricing_rules row
 //   2. product_purity_pricing_rules override (tier2Value)
@@ -287,34 +287,21 @@ export function resolveMakingChargeDiscount({ product, categoryAncestorIds, puri
   });
 }
 
-// component: { diamondTypeId, diamondConfigId, carats, value, colour, clarity }
-// — a gate at every tier: a rule whose conditions don't match this component
+// component: { stoneId, stoneTypeId, stoneTypeName, count, carats, value }
+// — a gate at every tier: a rule whose scope doesn't match this stone line
 // is simply not a candidate anywhere, never "blocks" a lower-priority rule
-// that does match. Diamond type is deliberately NOT gated on — the store only
-// sells natural diamonds, so the field was removed from the product and rule
-// forms; any legacy pricing_rule_diamond_types links are ignored.
-function diamondMatches(rule, component) {
+// that does match. A rule with no stone types selected applies to every
+// stone type; otherwise the line's type must be one of them.
+export function stoneMatches(rule, component) {
+  if (rule.stoneTypeIds.size > 0 && !rule.stoneTypeIds.has(component.stoneTypeId)) return false;
   return conditionsMatch(rule.conditions, component);
 }
 
 function conditionsMatch(conditions, c) {
   for (const cond of conditions) {
-    switch (cond.condition_type) {
-      case 'DIAMOND_QUALITY':
-        if (!cond.string_values?.includes(c.diamondConfigId)) return false;
-        break;
-      case 'DIAMOND_COLOUR':
-        if (!cond.string_values?.includes(c.colour)) return false;
-        break;
-      case 'DIAMOND_CLARITY':
-        if (!cond.string_values?.includes(c.clarity)) return false;
-        break;
-      case 'CARAT_RANGE':
-        if (cond.min_value != null && (c.carats ?? 0) < Number(cond.min_value)) return false;
-        if (cond.max_value != null && (c.carats ?? 0) > Number(cond.max_value)) return false;
-        break;
-      default:
-        break;
+    if (cond.condition_type === 'CARAT_RANGE') {
+      if (cond.min_value != null && (c.carats ?? 0) < Number(cond.min_value)) return false;
+      if (cond.max_value != null && (c.carats ?? 0) > Number(cond.max_value)) return false;
     }
   }
   return true;
@@ -343,7 +330,7 @@ export function buildSyntheticRule(input) {
     priority: Number(input.priority ?? 0),
     created_at: new Date().toISOString(),
     purityValueIds: new Set(input.purityValueIds ?? []),
-    diamondTypeIds: new Set(input.diamondTypeIds ?? []),
+    stoneTypeIds: new Set(input.stoneTypeIds ?? []),
     conditions: (input.conditions ?? []).map((c) => ({
       condition_type: c.conditionType,
       string_values: c.stringValues ?? null,
@@ -364,13 +351,13 @@ export function injectSyntheticRule(baseRuleSet, syntheticRule, { categoryIds = 
     makingByProduct: new Map(baseRuleSet.makingByProduct),
     makingByCategory: new Map(baseRuleSet.makingByCategory),
     makingGlobal: [...baseRuleSet.makingGlobal],
-    diamondByProduct: new Map(baseRuleSet.diamondByProduct),
-    diamondByCategory: new Map(baseRuleSet.diamondByCategory),
-    diamondGlobal: [...baseRuleSet.diamondGlobal],
+    stoneByProduct: new Map(baseRuleSet.stoneByProduct),
+    stoneByCategory: new Map(baseRuleSet.stoneByCategory),
+    stoneGlobal: [...baseRuleSet.stoneGlobal],
   };
   const isMaking = syntheticRule.rule_type === 'MAKING_CHARGE';
-  const byProduct = isMaking ? clone.makingByProduct : clone.diamondByProduct;
-  const byCategory = isMaking ? clone.makingByCategory : clone.diamondByCategory;
+  const byProduct = isMaking ? clone.makingByProduct : clone.stoneByProduct;
+  const byCategory = isMaking ? clone.makingByCategory : clone.stoneByCategory;
 
   if (syntheticRule.scope === 'PRODUCT') {
     for (const id of productIds) byProduct.set(id, [...(byProduct.get(id) ?? []), syntheticRule]);
@@ -379,20 +366,20 @@ export function injectSyntheticRule(baseRuleSet, syntheticRule, { categoryIds = 
   } else if (isMaking) {
     clone.makingGlobal.push(syntheticRule);
   } else {
-    clone.diamondGlobal.push(syntheticRule);
+    clone.stoneGlobal.push(syntheticRule);
   }
   return clone;
 }
 
-export function resolveDiamondDiscount({ product, categoryAncestorIds, purityRuleRow, ruleSet, component }) {
-  const matches = (r) => diamondMatches(r, component);
-  const productRules = (ruleSet.diamondByProduct.get(product.id) ?? []).filter(matches);
-  const categoryCandidates = pickCategoryLevel(ruleSet.diamondByCategory, categoryAncestorIds, matches);
-  const globalCandidates = ruleSet.diamondGlobal.filter(matches);
+export function resolveStoneDiscount({ product, categoryAncestorIds, purityRuleRow, ruleSet, component }) {
+  const matches = (r) => stoneMatches(r, component);
+  const productRules = (ruleSet.stoneByProduct.get(product.id) ?? []).filter(matches);
+  const categoryCandidates = pickCategoryLevel(ruleSet.stoneByCategory, categoryAncestorIds, matches);
+  const globalCandidates = ruleSet.stoneGlobal.filter(matches);
   return resolveTier({
     productRules,
-    tier2Value: numOrNull(purityRuleRow?.diamond_discount_percent),
-    tier3Value: Number(product.diamond_discount_percent ?? 0),
+    tier2Value: numOrNull(purityRuleRow?.stone_discount_percent),
+    tier3Value: Number(product.stone_discount_percent ?? 0),
     categoryCandidates,
     globalCandidates,
     base: component.value,

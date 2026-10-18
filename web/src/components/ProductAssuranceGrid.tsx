@@ -1,5 +1,5 @@
 import {
-  DiamondIcon,
+  GemIcon,
   HallmarkIcon,
   BuybackIcon,
   ExchangeIcon,
@@ -8,33 +8,30 @@ import {
 import styles from './ProductAssuranceGrid.module.css';
 
 interface ProductAssuranceGridProps {
-  // Static per-product facts, not the live customer selection — a product's
-  // metal type and whether it carries diamonds at all don't change based on
-  // which purity/colour/diamond-quality option is picked, so these are
-  // decided once from the product record, not from ProductInfo's selection
-  // state (plan: "Do not display claims that are untrue for the selected
-  // product or variation").
-  hasDiamonds: boolean;
-  isGold: boolean;
+  // Static per-product facts, not the live customer selection — whether a
+  // piece carries stones doesn't change with the colour/size picked, so this
+  // is decided once from the product record (plan: "Do not display claims
+  // that are untrue for the selected product or variation").
+  hasStones: boolean;
 }
 
 // Separate, deliberately lighter design from the homepage's dark
 // AssuranceStrip (pages/home/AssuranceStrip.tsx) — same icon set, its own
 // compact ivory/champagne layout. Renders only the claims that are actually
 // true for this product; Buyback/Exchange/Secure Payment are universal.
-export function ProductAssuranceGrid({ hasDiamonds, isGold }: ProductAssuranceGridProps) {
+export function ProductAssuranceGrid({ hasStones }: ProductAssuranceGridProps) {
   const items = [
-    hasDiamonds && {
-      key: 'diamonds',
-      Icon: DiamondIcon,
-      title: '100% Certified Diamonds',
-      description: 'Genuine and quality checked',
-    },
-    isGold && {
+    {
       key: 'hallmark',
       Icon: HallmarkIcon,
-      title: 'BIS Hallmark Gold',
+      title: 'BIS Hallmarked 9K Gold',
       description: 'Purity you can trust',
+    },
+    hasStones && {
+      key: 'stones',
+      Icon: GemIcon,
+      title: 'Genuine Gemstones',
+      description: 'Weight & price shown upfront',
     },
     {
       key: 'buyback',

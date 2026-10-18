@@ -77,9 +77,9 @@ const SECTIONS: PolicySection[] = [
             With service providers who support our website, hosting, analytics, customer support and marketing on our
             behalf.
           </li>
-          <li>With diamond/gemstone certification bodies, where relevant to your order.</li>
+          <li>With gemstone certification bodies, where relevant to your order.</li>
           <li>
-            Where required by law, court order, or to protect the rights, property or safety of Box Diamonds, our
+            Where required by law, court order, or to protect the rights, property or safety of 9Karet, our
             customers or the public.
           </li>
           <li>
@@ -200,18 +200,18 @@ export function PrivacyPolicyPage() {
       lastUpdated="16 September 2026"
       subtitle={
         <>
-          How Box Diamonds collects, uses and protects your personal information.
+          How 9Karet collects, uses and protects your personal information.
           <br />
           Your privacy matters to us.
         </>
       }
       glance={{
-        heading: 'Your Privacy at Box Diamonds',
+        heading: 'Your Privacy at 9Karet',
         content: (
           <>
             <p>
-              Box Diamonds (“we”, “us”, “our”), owned and operated by Goldbox Diamonds Private Limited, respects your
-              privacy. This Privacy Policy explains what personal information we collect through www.boxdiamonds.com,
+              9Karet (“we”, “us”, “our”), owned and operated by Goldbox Diamonds Private Limited, respects your
+              privacy. This Privacy Policy explains what personal information we collect through www.9karet.com,
               how we use it, who we share it with, and the choices available to you.
             </p>
             <p>

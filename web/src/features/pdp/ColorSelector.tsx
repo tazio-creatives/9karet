@@ -6,21 +6,17 @@ interface ColorSelectorProps {
   colors: GoldColor[];
   selectedColor: GoldColor | null;
   onSelect: (_color: GoldColor) => void;
-  // Purity currently selected elsewhere on the page — some colors aren't
-  // manufactured at some purities for a given product; disables (rather
-  // than hides) the swatch so the shopper can see the option exists and why
-  // it's blocked, instead of a color silently disappearing.
-  selectedPurity?: string | null;
-  // Real per-product combination check (from useVariantSelection, driven by
-  // that product's actual variants) — this component stays generic/
-  // product-agnostic itself.
-  isColorAvailable: (color: GoldColor, purity: string | null | undefined) => boolean;
+  // Real per-product availability check (from useVariantSelection, driven
+  // by that product's actual variants) — this component stays generic/
+  // product-agnostic itself. An unavailable colour is disabled rather than
+  // hidden, so the shopper can see the option exists and why it's blocked.
+  isColorAvailable: (color: GoldColor) => boolean;
 }
 
-export function ColorSelector({ colors, selectedColor, onSelect, selectedPurity, isColorAvailable }: ColorSelectorProps) {
+export function ColorSelector({ colors, selectedColor, onSelect, isColorAvailable }: ColorSelectorProps) {
   if (colors.length === 0) return null;
 
-  const unavailableColor = colors.find((color) => !isColorAvailable(color, selectedPurity));
+  const unavailableColor = colors.find((color) => !isColorAvailable(color));
 
   return (
     <div className={styles.wrap}>
@@ -29,7 +25,7 @@ export function ColorSelector({ colors, selectedColor, onSelect, selectedPurity,
         {colors.map((color) => {
           const swatch = COLOR_SWATCH[color];
           const active = selectedColor === color;
-          const available = isColorAvailable(color, selectedPurity);
+          const available = isColorAvailable(color);
           return (
             <button
               key={color}
@@ -46,9 +42,9 @@ export function ColorSelector({ colors, selectedColor, onSelect, selectedPurity,
           );
         })}
       </div>
-      {selectedPurity && unavailableColor && (
+      {unavailableColor && (
         <p className={styles.unavailableNote}>
-          {COLOR_SWATCH[unavailableColor].label} isn&apos;t available in {selectedPurity} purity for this product.
+          {COLOR_SWATCH[unavailableColor].label} isn&apos;t currently available for this product.
         </p>
       )}
     </div>

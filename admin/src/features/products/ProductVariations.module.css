@@ -4,16 +4,16 @@
    these custom properties from .section, so nothing outside this card is
    affected. */
 .section {
-  --pv-primary: #075968;
-  --pv-primary-hover: #06474f;
-  --pv-primary-bg: #e3eef0;
+  --pv-primary: #670815;
+  --pv-primary-hover: #4f0610;
+  --pv-primary-bg: #f0e3e5;
   --pv-ivory: #faf8f3;
   --pv-border: #dde2e5;
   --pv-success: #218838;
   --pv-success-bg: #eaf5ec;
   --pv-warning: #a8631a;
   --pv-warning-bg: #fff8e8;
-  --pv-text: #172126;
+  --pv-text: #261719;
   --pv-text-muted: #667172;
   --pv-radius: 10px;
 }

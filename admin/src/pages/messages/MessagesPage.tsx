@@ -176,7 +176,7 @@ export function MessagesPage() {
                           <div className={styles.detailSide}>
                             <a
                               className={sharedStyles.buttonPrimary}
-                              href={`mailto:${m.email}?subject=${encodeURIComponent('Re: Your message to Box Diamonds')}`}
+                              href={`mailto:${m.email}?subject=${encodeURIComponent('Re: Your message to 9Karet')}`}
                             >
                               Reply by email
                             </a>

@@ -25,12 +25,12 @@ export function SuccessIllustration() {
       <svg className={styles.svg} viewBox="0 0 200 190" fill="none">
         <defs>
           <linearGradient id="boxFront" x1="40" y1="112" x2="160" y2="176" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#0a5560" />
-            <stop offset="100%" stopColor="#00363c" />
+            <stop offset="0%" stopColor="#600a15" />
+            <stop offset="100%" stopColor="#38040b" />
           </linearGradient>
           <linearGradient id="boxLid" x1="40" y1="58" x2="160" y2="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#0e6470" />
-            <stop offset="100%" stopColor="#054a54" />
+            <stop offset="0%" stopColor="#700e1b" />
+            <stop offset="100%" stopColor="#520711" />
           </linearGradient>
           <linearGradient id="ringGrad" x1="72" y1="96" x2="128" y2="122" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#f0c94a" />
@@ -56,10 +56,10 @@ export function SuccessIllustration() {
 
           {/* box front */}
           <rect x="40" y="112" width="120" height="62" rx="12" fill="url(#boxFront)" />
-          <rect x="40" y="112" width="120" height="10" rx="5" fill="#0e6470" />
+          <rect x="40" y="112" width="120" height="10" rx="5" fill="#700e1b" />
 
           {/* contact shadow + cushion inside the opening */}
-          <ellipse cx="100" cy="116" rx="34" ry="8" fill="#001f23" opacity="0.28" />
+          <ellipse cx="100" cy="116" rx="34" ry="8" fill="#200307" opacity="0.28" />
           <ellipse cx="100" cy="113" rx="30" ry="7" fill="#f8e8ec" opacity="0.9" />
 
           {/* ring resting on the cushion */}

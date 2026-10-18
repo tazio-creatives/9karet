@@ -10,7 +10,7 @@ export function requireCsrfHeader(req, res, next) {
   if (SAFE_METHODS.has(req.method)) return next();
   if (req.path.endsWith('/webhook')) return next();
 
-  if (req.get('X-Requested-With') !== 'box-diamonds') {
+  if (req.get('X-Requested-With') !== '9karet') {
     return next(new ForbiddenError('Missing CSRF header'));
   }
   next();

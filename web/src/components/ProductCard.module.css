@@ -12,7 +12,7 @@
 }
 
 .card:hover {
-  box-shadow: 0 8px 24px rgba(18, 78, 87, 0.08);
+  box-shadow: 0 8px 24px rgba(87, 18, 27, 0.08);
   transform: translateY(-2px);
 }
 
@@ -58,7 +58,7 @@
 }
 
 .badgeOut {
-  background: #124e57;
+  background: #57121b;
   color: #ffffff;
   font-weight: 500;
 }
@@ -79,7 +79,7 @@
   border-radius: 50%;
   background: #ffffff;
   border: 1px solid #dfe5e3;
-  color: #124e57;
+  color: #57121b;
 }
 
 .body {
@@ -102,7 +102,7 @@
 .name {
   font-family: var(--font-heading);
   margin: 0 0 8px;
-  color: #173c40;
+  color: #40171c;
   font-size: 15px;
   font-weight: 600;
   line-height: 21px;
@@ -124,7 +124,7 @@
 
 .price {
   margin: 0;
-  color: #173c40;
+  color: #40171c;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;

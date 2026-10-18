@@ -19,18 +19,10 @@ import styles from './CartPage.module.css';
 import placeholderStyles from './PlaceholderPage.module.css';
 
 // Size is shown as its own dedicated line on the cart card (matches the
-// approved reference design) — everything else (metal, diamond config)
-// stays on one combined meta line above it.
+// approved reference design) — the metal stays on the meta line above it.
 function metaLine(item: CartItem): string {
-  const parts: string[] = [];
-  if (item.metalType === 'GOLD') {
-    const color = item.goldColor ? item.goldColor.charAt(0) + item.goldColor.slice(1).toLowerCase() : '';
-    parts.push([item.purity, color, 'Gold'].filter(Boolean).join(' '));
-  } else {
-    parts.push(item.purity ? `${item.purity} Platinum` : 'Platinum');
-  }
-  if (item.diamondConfigName) parts.push(item.diamondConfigName);
-  return parts.join('  ·  ');
+  const color = item.goldColor ? item.goldColor.charAt(0) + item.goldColor.slice(1).toLowerCase() : '';
+  return [item.purity, color, 'Gold'].filter(Boolean).join(' ');
 }
 
 function sizeLabel(item: CartItem): string | null {
@@ -378,9 +370,8 @@ export function CartPage() {
 
         <div className={styles.trustSection}>
           {/* Same visual as the PDP's own trust banner — the cart isn't tied
-              to one product's real metal/diamond composition, so both flags
-              are on to show the full, generic assurance set. */}
-          <ProductAssuranceGrid hasDiamonds isGold />
+              to one product's stones, so the full, generic set is shown. */}
+          <ProductAssuranceGrid hasStones />
         </div>
       </div>
 

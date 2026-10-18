@@ -36,8 +36,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(14, 74, 80, 0.06);
-  color: #0e4a50;
+  background: rgba(80, 14, 23, 0.06);
+  color: #500e17;
 }
 
 .icon svg {
@@ -51,7 +51,7 @@
 
 .title {
   margin: 0;
-  color: #0e4a50;
+  color: #500e17;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.3;

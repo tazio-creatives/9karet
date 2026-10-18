@@ -6,7 +6,7 @@ import styles from './VariantMatrixEditor.module.css';
 type AttributeValues = VariantOverrideInput['attributeValues'];
 
 function comboKey(av: AttributeValues): string {
-  return [av.goldColor ?? '', av.purity ?? '', av.diamondConfigId ?? '', av.sizeLabel ?? ''].join('|');
+  return [av.goldColor ?? '', av.purity ?? '', av.sizeLabel ?? ''].join('|');
 }
 
 function cartesian(lists: AttributeValues[][]): AttributeValues[] {
@@ -19,9 +19,7 @@ function cartesian(lists: AttributeValues[][]): AttributeValues[] {
 interface VariantMatrixEditorProps {
   goldColors: GoldColor[];
   purities: Purity[];
-  diamondConfigIds: string[];
   goldColorLabels: Record<GoldColor, string>;
-  diamondConfigNames: Record<string, string>;
   sizeLabels: string[];
   value: VariantOverrideInput[];
   onChange: (next: VariantOverrideInput[]) => void;
@@ -30,17 +28,15 @@ interface VariantMatrixEditorProps {
 // Client-side preview of the exact variant matrix syncProductVariants will
 // generate server-side from the same axes — lets a brand-new product be
 // fully configured (starting stock, and optionally a different gold weight
-// per combination) in the same save that picks Gold Colors/Purities/Diamond
-// Qualities/Sizes, instead of a separate trip into the per-product variant
+// per combination) in the same save that picks Gold Colors/Sizes, instead
+// of a separate trip into the per-product variant
 // editor afterward. Only used on the Add Product (create) flow; editing an
 // existing product's combinations happens on that dedicated page, which
 // also shows each row's live price.
 export function VariantMatrixEditor({
   goldColors,
   purities,
-  diamondConfigIds,
   goldColorLabels,
-  diamondConfigNames,
   sizeLabels,
   value,
   onChange,
@@ -48,13 +44,10 @@ export function VariantMatrixEditor({
   const axisLists: AttributeValues[][] = [];
   if (goldColors.length) axisLists.push(goldColors.map((v) => ({ goldColor: v })));
   if (purities.length) axisLists.push(purities.map((v) => ({ purity: v })));
-  if (diamondConfigIds.length) axisLists.push(diamondConfigIds.map((v) => ({ diamondConfigId: v })));
   if (sizeLabels.length) axisLists.push(sizeLabels.map((v) => ({ sizeLabel: v })));
 
   const combos = axisLists.length === 0 ? [] : cartesian(axisLists);
-  const axisSignature = [goldColors.join(','), purities.join(','), diamondConfigIds.join(','), sizeLabels.join(',')].join(
-    '|',
-  );
+  const axisSignature = [goldColors.join(','), purities.join(','), sizeLabels.join(',')].join('|');
 
   // Reconcile the draft list whenever the checked axes change: keep the
   // existing draft for a combination that's still valid (preserves whatever
@@ -84,10 +77,12 @@ export function VariantMatrixEditor({
     onChange(value.map((o, i) => (i === index ? { ...o, ...patch } : o)));
   }
 
+  // Purity is always 9K, so it's only named when it's the sole axis.
   function labelFor(av: AttributeValues): string {
-    return [av.purity, av.goldColor ? goldColorLabels[av.goldColor] : undefined, av.diamondConfigId ? diamondConfigNames[av.diamondConfigId] : undefined, av.sizeLabel]
+    const label = [av.goldColor ? goldColorLabels[av.goldColor] : undefined, av.sizeLabel ? `Size ${av.sizeLabel}` : undefined]
       .filter(Boolean)
       .join(' / ');
+    return label || (av.purity ?? '');
   }
 
   if (combos.length === 0) return null;
