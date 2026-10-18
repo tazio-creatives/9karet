@@ -67,6 +67,9 @@ export const cashfreePaymentProvider = {
         },
         order_meta: {
           return_url: `${env.webAppBaseUrl}/order-confirmation/${order.id}`,
+          // Per-order webhook target — overrides the dashboard URL, which
+          // points at BOX's API on the shared Cashfree account.
+          ...(env.apiPublicBaseUrl ? { notify_url: `${env.apiPublicBaseUrl}/api/v1/payments/webhook` } : {}),
         },
       }),
     });

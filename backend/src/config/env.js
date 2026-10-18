@@ -105,6 +105,11 @@ export const env = {
   // to build the payment gateway's post-payment return_url. Not the API's
   // own URL/PORT above.
   webAppBaseUrl: process.env.WEB_APP_BASE_URL ?? 'http://localhost:5173',
+  // This API's own public https origin (e.g. https://api.9karet.com) — sent
+  // to Cashfree as each order's notify_url so payment webhooks reach this
+  // backend even though the Cashfree account (and its dashboard webhook URL)
+  // is shared with BOX DIAMONDS. Unset = Cashfree's dashboard URL is used.
+  apiPublicBaseUrl: process.env.API_PUBLIC_BASE_URL || null,
 
   // Shipping (plan §11b)
   shippingProvider: process.env.SHIPPING_PROVIDER ?? 'stub',
