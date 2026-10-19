@@ -1,5 +1,5 @@
 // Dev seed: foundational reference data (admin roles/user, categories, a
-// collection, a starting gold rate, homepage sections) plus a few sample 9K
+// collection, the live gold rate, homepage sections) plus a few sample 9K
 // products — not orders/carts/reviews, which need real application flows.
 //
 // Reference data goes in with its own pg Client in one transaction. Sample
@@ -15,11 +15,15 @@ import bcrypt from 'bcrypt';
 import { pool } from '../../config/db.js';
 import { adminCreateProduct } from '../../services/productsService.js';
 import { deriveRatesFromBase24k } from '../../services/pricingService.js';
+import { runGoldRateSync } from '../../services/goldRateService.js';
 
 const { Client } = pg;
 
-// Starting 24K market rate (₹/g) — the live feed replaces it on first sync.
-const SEED_RATE_24K = 7420.0;
+// Offline fallback only (₹/g, 24K) — used when the live feed can't be
+// reached while seeding. Never seeded otherwise: the sync's deviation guard
+// (max % move per sync) would keep rejecting the real rate if it were far
+// from this number, freezing every price at a stale value.
+const FALLBACK_RATE_24K = 14700.0;
 
 async function seedReferenceData(client) {
   const {
@@ -71,16 +75,26 @@ async function seedReferenceData(client) {
      ON CONFLICT (slug) DO NOTHING`,
   );
 
-  const {
-    rows: [{ count: rateCount }],
-  } = await client.query(`SELECT COUNT(*)::int AS count FROM gold_rates`);
-  if (rateCount === 0) {
-    for (const { purity, ratePerGram } of deriveRatesFromBase24k(SEED_RATE_24K)) {
-      await client.query(`INSERT INTO gold_rates (purity, rate_per_gram, source) VALUES ($1, $2, 'seed')`, [
-        purity,
-        ratePerGram,
-      ]);
-    }
+}
+
+// Products are priced off the current 9K rate, so one must exist before
+// they're created: the live feed (same sync the cron runs), falling back to
+// FALLBACK_RATE_24K only if the feed can't be reached.
+async function ensureGoldRate() {
+  const { rows } = await pool.query(`SELECT COUNT(*)::int AS count FROM gold_rates`);
+  if (rows[0].count > 0) return;
+  try {
+    const { applied } = await runGoldRateSync({ trigger: 'MANUAL' });
+    if (applied) return;
+  } catch (err) {
+    console.warn('Live gold rate unavailable:', err.message);
+  }
+  console.warn(`Seeding fallback 24K rate ₹${FALLBACK_RATE_24K}/g — run a gold-rate sync once the feed is reachable.`);
+  for (const { purity, ratePerGram } of deriveRatesFromBase24k(FALLBACK_RATE_24K)) {
+    await pool.query(`INSERT INTO gold_rates (purity, rate_per_gram, source) VALUES ($1, $2, 'seed')`, [
+      purity,
+      ratePerGram,
+    ]);
   }
 }
 
@@ -273,6 +287,7 @@ async function main() {
   }
 
   try {
+    await ensureGoldRate();
     await seedSampleProducts();
   } finally {
     await pool.end();
