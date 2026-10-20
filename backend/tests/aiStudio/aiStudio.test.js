@@ -486,7 +486,7 @@ describe('previewPromptsForJob — Ring-only output structure', () => {
     assert.equal(hand1.creativeInstructions.background, hand2.creativeInstructions.background);
     assert.match(hand1.finalPrompt, /natural photographic environment/i);
     assert.match(hand1.finalPrompt, /do not force a champagne, ivory, peach or rose-coloured background/i);
-    assert.doesNotMatch(hand1.finalPrompt, /#F4E7DA|#E8C4B2/);
+    assert.doesNotMatch(hand1.finalPrompt, /#FFFFFF/);
   });
 
   test('Front View is a true direct view, explicitly not the tilted orientation used for the Three-Quarter Side View', () => {
@@ -539,7 +539,7 @@ describe('previewPromptsForJob — Ring-only output structure', () => {
     }
   });
 
-  test('Gold catalogue shots use the spec-exact satin background hex values, Rose shots use the Rose set', () => {
+  test('Gold and Rose catalogue shots both use the pure white studio background', () => {
     const previews = previewPromptsForJob({
       confirmedType: 'RING',
       template: RING_TEMPLATE,
@@ -548,9 +548,10 @@ describe('previewPromptsForJob — Ring-only output structure', () => {
       overridesByAssetType: undefined,
     });
     const goldFront = previews.find((p) => p.assetType === 'RING_GOLD_FRONT');
-    assert.match(goldFront.finalPrompt, /#F4E7DA/);
+    assert.match(goldFront.finalPrompt, /pure white \(#FFFFFF\)/);
+    assert.doesNotMatch(goldFront.finalPrompt, /satin/i);
     const roseFront = previews.find((p) => p.assetType === 'RING_ROSE_FRONT');
-    assert.match(roseFront.finalPrompt, /#E8C4B2/);
+    assert.match(roseFront.finalPrompt, /pure white \(#FFFFFF\)/);
   });
 });
 

@@ -240,7 +240,7 @@ const PRESENTER_POSE_REFERENCE = {
   PRESENTER_YELLOW_2: 'face_45_url',
 };
 
-// Catalogue shots — every category now shares the one premium satin
+// Catalogue shots — every category now shares the one white studio
 // background system originally approved for Ring only (client correction:
 // having a separate warm/cool-ivory system for every other category looked
 // inconsistent next to Ring in the storefront). See
@@ -283,21 +283,15 @@ const PRESENTER_BACKGROUND_NOTE =
 // four categories the spec gave exact wording for use it verbatim; every
 // other type — including the two new ones, Brooch/Other — gets a generic
 // rule of the same shape rather than being left unsupported.
-// Shared catalogue background — a premium satin system (soft fabric folds,
-// subtle depth) originally approved for Ring, now the standard background
-// for every jewellery category's FRONT/HERO_45 shots, keyed only by metal
-// colour (Gold vs Rose Gold), never by category. The background must stay
-// secondary to the product and never tint the stones — both call out
-// explicitly per client correction, not left implicit. Committed fully to
-// the fabric look (no "or a clean neutral studio background" alternative)
-// — that wording let the model legitimately pick a plain flat backdrop
-// instead of fabric, which is what caused a Front shot to render with a
-// noticeably flatter background than its matching Side shot despite both
-// using this exact same background text (client correction).
-const RING_GOLD_CATALOGUE_BACKGROUND_NOTE =
-  ' Use a soft champagne-ivory satin fabric backdrop with visible natural folds and drape — base colour #F4E7DA, a #FFF8F0 highlight and a #D9BDA7 grounding shadow. Keep the background lighter and less saturated than the jewellery itself, with clear separation between the gold and the backdrop.';
-const RING_ROSE_CATALOGUE_BACKGROUND_NOTE =
-  ' Use a soft blush-peach satin fabric backdrop with visible natural folds and drape — base colour #E8C4B2, a #F8E7DD highlight and a #C98F76 grounding shadow. Keep sufficient contrast around the product, and do not let the background tint the gemstones or alter their colour.';
+// Shared catalogue background (9karet) — every jewellery category's product
+// shots (FRONT/HERO_45 and the Ring Front/Side views) sit on a seamless pure
+// white studio background with a soft natural contact shadow, for both Gold
+// and Rose Gold. Kept as two constants keyed by metal colour so the call
+// sites stay unchanged. Model/presenter/hand/lifestyle shots are unaffected.
+const WHITE_CATALOGUE_BACKGROUND_NOTE =
+  ' Use a seamless, pure white (#FFFFFF) studio background — evenly lit, with no fabric, folds, texture, gradient, vignette or colour tint. Add only a soft, natural contact shadow directly beneath the jewellery so it sits grounded on the surface. Keep clear separation between the metal and the white background, and do not let the background tint the metal or the gemstones.';
+const RING_GOLD_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
+const RING_ROSE_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
 const RING_CATALOGUE_LIGHTING_NOTE =
   ' Use soft, premium studio lighting with natural, controlled product shadows, keeping the jewellery clearly separated from the background. Avoid busy props, flowers, boxes, unrelated decorative objects or hard reflections. The background must remain secondary to the product.';
 const RING_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px.';
@@ -741,7 +735,7 @@ function buildAssetPromptSections({
         additionalInstructions: '',
       };
       negativeParts.push(
-        'Do not add props, text, hands, packaging or decorative elements beyond the satin backdrop.',
+        'Do not add props, text, hands, packaging or decorative elements — the background must stay plain pure white.',
         'Do not stand the ring vertically upright on its band for this shot.',
         'Do not display the circular band opening as the main shape of the image.',
         'Do not rotate the ring to a 30-45 degree angle for this shot.',
