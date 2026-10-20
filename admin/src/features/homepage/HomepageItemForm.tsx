@@ -6,6 +6,7 @@ import { fetchAdminProducts } from '../../api/products';
 import { uploadHomepageImage, uploadHomepageVideo } from '../../api/homepage';
 import type { HomepageItem, HomepageItemInput, HomepageSectionType } from '../../api/types';
 import { ApiError } from '../../api/client';
+import { categoryPathOptions } from '../../utils/categoryTree';
 import sharedStyles from '../../styles/shared.module.css';
 import { IMAGE_SIZE_HINTS } from './imageSizes';
 
@@ -183,9 +184,9 @@ export function HomepageItemForm({
           Link to Category
           <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
             <option value="">— None —</option>
-            {categoriesData?.categories.map((c) => (
+            {categoryPathOptions(categoriesData?.categories ?? []).map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {c.pathLabel}
               </option>
             ))}
           </select>

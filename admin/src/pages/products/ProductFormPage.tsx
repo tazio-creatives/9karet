@@ -39,6 +39,7 @@ import {
   type StoneDraft,
 } from '../../features/products/StonesEditor';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { categoryPathOptions } from '../../utils/categoryTree';
 import pv from '../../features/products/ProductVariations.module.css';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './ProductFormPage.module.css';
@@ -650,9 +651,9 @@ export function ProductFormPage() {
                 onChange={(e) => set('categoryId', e.target.value || null)}
               >
                 <option value="">— None —</option>
-                {categories.map((c) => (
+                {categoryPathOptions(categories).map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.pathLabel}
                   </option>
                 ))}
               </select>

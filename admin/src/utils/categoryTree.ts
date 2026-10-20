@@ -36,3 +36,24 @@ export function buildCategoryTree(categories: Category[]): CategoryTreeNode[] {
 export function flattenTree(nodes: CategoryTreeNode[]): CategoryTreeNode[] {
   return nodes.flatMap((n) => [n, ...flattenTree(n.children)]);
 }
+
+export interface CategoryPathOption extends CategoryTreeNode {
+  // "Rings › Gemstone Rings" — the full ancestor path, so two subcategories
+  // with the same name under different parents can be told apart.
+  pathLabel: string;
+}
+
+// Every category in tree order (parent, then its children), each labelled
+// with its full path — what every category dropdown in the admin shows.
+export function categoryPathOptions(categories: Category[]): CategoryPathOption[] {
+  const out: CategoryPathOption[] = [];
+  const walk = (nodes: CategoryTreeNode[], parentPath: string) => {
+    for (const n of nodes) {
+      const pathLabel = parentPath ? `${parentPath} › ${n.name}` : n.name;
+      out.push({ ...n, pathLabel });
+      walk(n.children, pathLabel);
+    }
+  };
+  walk(buildCategoryTree(categories), '');
+  return out;
+}

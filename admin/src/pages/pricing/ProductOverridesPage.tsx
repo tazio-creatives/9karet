@@ -5,6 +5,7 @@ import { fetchAdminCategories } from '../../api/categories';
 import type { ProductOverride, ProductOverrideBulkAction } from '../../api/types';
 import { ApiError } from '../../api/client';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { categoryPathOptions } from '../../utils/categoryTree';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './pricing.module.css';
 
@@ -198,9 +199,9 @@ export function ProductOverridesPage() {
           />
           <select className={styles.formControl} value={categoryId} onChange={(e) => { setCategoryId(e.target.value); setPage(1); }}>
             <option value="">All categories</option>
-            {(categoriesData?.categories ?? []).map((c) => (
+            {categoryPathOptions(categoriesData?.categories ?? []).map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {c.pathLabel}
               </option>
             ))}
           </select>

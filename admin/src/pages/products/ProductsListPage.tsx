@@ -6,7 +6,7 @@ import { fetchAdminCollections } from '../../api/collections';
 import { fetchAdminCategories } from '../../api/categories';
 import type { ProductStatus } from '../../api/types';
 import { formatPrice } from '../../utils/formatPrice';
-import { buildCategoryTree, flattenTree } from '../../utils/categoryTree';
+import { categoryPathOptions } from '../../utils/categoryTree';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Toast } from '../../components/Toast';
 import sharedStyles from '../../styles/shared.module.css';
@@ -108,7 +108,7 @@ export function ProductsListPage() {
   });
 
   const { data: categoriesData } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
-  const categoryOptions = flattenTree(buildCategoryTree(categoriesData?.categories ?? []));
+  const categoryOptions = categoryPathOptions(categoriesData?.categories ?? []);
   const { data: collectionsData } = useQuery({ queryKey: ['admin-collections'], queryFn: fetchAdminCollections });
   const collections = collectionsData?.collections ?? [];
   const collectionName = (id: string | null | undefined) => (id ? (collections.find((c) => c.id === id)?.name ?? '—') : '—');
@@ -214,7 +214,7 @@ export function ProductsListPage() {
           <option value="">All categories</option>
           {categoryOptions.map((c) => (
             <option key={c.id} value={c.slug}>
-              {'—'.repeat(c.depth)} {c.name}
+              {c.pathLabel}
             </option>
           ))}
         </select>

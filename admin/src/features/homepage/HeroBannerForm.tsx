@@ -7,6 +7,7 @@ import { uploadHomepageImage } from '../../api/homepage';
 import type { HeroRedirectType, HomepageItem, HomepageItemInput } from '../../api/types';
 import { ApiError } from '../../api/client';
 import { SearchableSelect, type SearchableSelectOption } from '../../components/SearchableSelect';
+import { categoryPathOptions } from '../../utils/categoryTree';
 import sharedStyles from '../../styles/shared.module.css';
 
 interface HeroBannerFormProps {
@@ -61,10 +62,12 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
 
   function loadCategoryOptions(query: string): SearchableSelectOption[] {
     const q = query.trim().toLowerCase();
-    return (categoriesData?.categories ?? [])
-      .filter((c) => c.isActive && (!q || c.name.toLowerCase().includes(q)))
+    // Matches on the full path, so typing a parent ("Rings") finds its
+    // subcategories too.
+    return categoryPathOptions(categoriesData?.categories ?? [])
+      .filter((c) => c.isActive && (!q || c.pathLabel.toLowerCase().includes(q)))
       .slice(0, 50)
-      .map((c) => ({ id: c.id, label: c.name }));
+      .map((c) => ({ id: c.id, label: c.pathLabel }));
   }
 
   function loadCollectionOptions(query: string): SearchableSelectOption[] {
@@ -266,7 +269,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
             {redirectType === 'CATEGORY' && (
               <SearchableSelect
                 value={categoryId}
-                selectedLabel={categoriesData?.categories.find((c) => c.id === categoryId)?.name ?? ''}
+                selectedLabel={categoryPathOptions(categoriesData?.categories ?? []).find((c) => c.id === categoryId)?.pathLabel ?? ''}
                 onChange={(id) => setCategoryId(id)}
                 onClear={() => setCategoryId('')}
                 loadOptions={loadCategoryOptions}
