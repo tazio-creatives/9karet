@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import type { Category, CategoryInput } from '../../api/types';
 import { ApiError } from '../../api/client';
 import { uploadCategoryImage } from '../../api/categories';
+import { categoryPathOptions, selfAndDescendantIds } from '../../utils/categoryTree';
 import sharedStyles from '../../styles/shared.module.css';
 
 interface CategoryFormProps {
@@ -16,6 +17,7 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
   const [name, setName] = useState(initial?.name ?? '');
   const [slug, setSlug] = useState(initial?.slug ?? '');
   const [parentId, setParentId] = useState<string>(initial?.parentId ?? defaultParentId ?? '');
+  const excludedParentIds = initial ? selfAndDescendantIds(categories, initial.id) : new Set<string>();
   const [description, setDescription] = useState(initial?.description ?? '');
   const [seoTitle, setSeoTitle] = useState(initial?.seoTitle ?? '');
   const [seoDescription, setSeoDescription] = useState(initial?.seoDescription ?? '');
@@ -145,11 +147,14 @@ export function CategoryForm({ initial, categories, defaultParentId, onSubmit, o
           Parent Category
           <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">— None (top-level) —</option>
-            {categories
-              .filter((c) => c.id !== initial?.id)
+            {/* Full path ("Rings › Gemstone") so same-named subcategories can
+                be told apart; a category can't be moved under itself or any
+                of its own subcategories. */}
+            {categoryPathOptions(categories)
+              .filter((c) => !excludedParentIds.has(c.id))
               .map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.pathLabel}
                 </option>
               ))}
           </select>

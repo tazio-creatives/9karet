@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAdminCategories } from '../api/categories';
-import { buildCategoryTree, flattenTree } from '../utils/categoryTree';
+import { categoryPathOptions } from '../utils/categoryTree';
 import styles from './CategoryTreeSelect.module.css';
 
 interface CategoryTreeSelectProps {
@@ -18,11 +18,14 @@ interface CategoryTreeSelectProps {
 export function CategoryTreeSelect({ values, onChange, disabled }: CategoryTreeSelectProps) {
   const [filter, setFilter] = useState('');
   const { data, isLoading } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
-  const tree = useMemo(() => buildCategoryTree(data?.categories ?? []), [data]);
-  const flat = useMemo(() => flattenTree(tree), [tree]);
+  const flat = useMemo(() => categoryPathOptions(data?.categories ?? []), [data]);
 
-  const visible = filter.trim()
-    ? flat.filter((n) => n.name.toLowerCase().includes(filter.trim().toLowerCase()))
+  // While filtering, the tree indentation is dropped, so rows show their full
+  // path instead ("Rings › Gemstone") — otherwise same-named subcategories
+  // look identical. Matching on the path also lets "Rings" find its children.
+  const isFiltering = filter.trim().length > 0;
+  const visible = isFiltering
+    ? flat.filter((n) => n.pathLabel.toLowerCase().includes(filter.trim().toLowerCase()))
     : flat;
 
   function toggle(id: string) {
@@ -47,7 +50,7 @@ export function CategoryTreeSelect({ values, onChange, disabled }: CategoryTreeS
           <label
             key={node.id}
             className={styles.row}
-            style={{ paddingLeft: (filter.trim() ? 0 : node.depth * 20) + 12 }}
+            style={{ paddingLeft: (isFiltering ? 0 : node.depth * 20) + 12 }}
           >
             <input
               type="checkbox"
@@ -55,7 +58,7 @@ export function CategoryTreeSelect({ values, onChange, disabled }: CategoryTreeS
               onChange={() => toggle(node.id)}
               disabled={disabled}
             />
-            <span className={node.isActive ? undefined : styles.inactive}>{node.name}</span>
+            <span className={node.isActive ? undefined : styles.inactive}>{isFiltering ? node.pathLabel : node.name}</span>
           </label>
         ))}
       </div>

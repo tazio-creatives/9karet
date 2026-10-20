@@ -37,6 +37,23 @@ export function flattenTree(nodes: CategoryTreeNode[]): CategoryTreeNode[] {
   return nodes.flatMap((n) => [n, ...flattenTree(n.children)]);
 }
 
+// A category's own id plus every descendant's — what can't be chosen as its
+// parent (that would create a cycle).
+export function selfAndDescendantIds(categories: Category[], id: string): Set<string> {
+  const ids = new Set([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const c of categories) {
+      if (c.parentId && ids.has(c.parentId) && !ids.has(c.id)) {
+        ids.add(c.id);
+        grew = true;
+      }
+    }
+  }
+  return ids;
+}
+
 export interface CategoryPathOption extends CategoryTreeNode {
   // "Rings › Gemstone Rings" — the full ancestor path, so two subcategories
   // with the same name under different parents can be told apart.
