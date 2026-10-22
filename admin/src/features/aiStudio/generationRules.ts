@@ -1,9 +1,17 @@
 import type { AssetType, CustomerCategory, JewelleryType } from '../../api/aiStudio';
 
-// Ring (9karet): four Yellow Gold views, in output order. The hand and
-// rose-gold slots are legacy — only older jobs have them.
-const RING_ASSET_TYPES: AssetType[] = ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO'];
-const LEGACY_RING_ASSET_TYPES: AssetType[] = ['RING_HAND_1', 'RING_HAND_2', 'RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
+// Ring (9karet): four Yellow Gold catalogue views then two Yellow Gold hand
+// shots, in output order. The rose-gold slots are legacy — only older jobs
+// have them.
+const RING_ASSET_TYPES: AssetType[] = [
+  'RING_GOLD_HERO',
+  'RING_GOLD_FRONT',
+  'RING_GOLD_SIDE',
+  'RING_GOLD_MACRO',
+  'RING_HAND_1',
+  'RING_HAND_2',
+];
+const LEGACY_RING_ASSET_TYPES: AssetType[] = ['RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
 const RING_ASSET_TYPE_SET = new Set<AssetType>([...RING_ASSET_TYPES, ...LEGACY_RING_ASSET_TYPES]);
 
 // Best-effort keyword match from a free-text product category name (e.g.
@@ -37,9 +45,9 @@ export function inferJewelleryTypeFromCategory(categoryName: string | null): Jew
 // duplicated intentionally (same pattern as SHOT_LABELS being duplicated
 // across GenerateStep/ReviewImportStep) so Step 3's live Generation Summary
 // can compute counts reactively without a round-trip to the server. Ring is
-// a completely separate, fixed 4-image output structure (Hero, Front, Side,
-// Macro — Yellow Gold only) — ignores both toggles, since Rings never use a
-// Presenter or rose gold.
+// a completely separate, fixed 6-image output structure (Hero, Front, Side,
+// Macro, Hand Pose 1, Hand Pose 2 — Yellow Gold only) — ignores both
+// toggles, since Rings never use a Presenter or rose gold.
 // Mirrors backend effectiveGenerateRoseGold — Necklace always gets the full
 // Yellow + Rose set regardless of the Rose Gold toggle.
 export function isRoseGoldForced(jewelleryType?: JewelleryType | ''): boolean {
@@ -107,15 +115,14 @@ export const SHOT_LABELS: Record<AssetType, string> = {
   RING_GOLD_SIDE: 'Yellow Gold — Side-Profile View',
   RING_GOLD_MACRO: 'Yellow Gold — Macro Detail View',
   RING_HAND_1: 'Yellow Gold — Hand Pose 1',
-  RING_HAND_2: 'Rose Gold — Hand Pose 2',
+  RING_HAND_2: 'Yellow Gold — Hand Pose 2',
   RING_ROSE_FRONT: 'Rose Gold — True Front View',
   RING_ROSE_SIDE: 'Rose Gold — Three-Quarter Side View',
 };
 
-// RING_HAND_2 (legacy) took its label from the Rose Gold toggle — every other
-// Ring label is fixed.
-export function ringShotLabel(assetType: AssetType, generateRoseGold: boolean): string {
-  if (assetType === 'RING_HAND_2' && !generateRoseGold) return 'Yellow Gold — Hand Pose 2';
+// Every Ring label is fixed (both hand shots are Yellow Gold); the toggle
+// argument is kept so call sites stay unchanged.
+export function ringShotLabel(assetType: AssetType, _generateRoseGold?: boolean): string {
   return SHOT_LABELS[assetType];
 }
 
@@ -127,12 +134,9 @@ export function groupForAssetType(assetType: AssetType): AssetGroup {
   return assetType.startsWith('ROSE_') ? 'Rose Gold' : 'Yellow Gold';
 }
 
-// RING_HAND_2's metal follows the Rose Gold toggle (Rose when required, Gold
-// otherwise) — every other asset type is unambiguous from its name alone, so
-// the extra param is a no-op for them. Defaults to true (Rose Gold on) to
-// match the previous no-arg call sites' assumption.
-export function metalColorForAssetType(assetType: AssetType, generateRoseGold = true): 'YELLOW' | 'ROSE' {
-  if (assetType === 'RING_HAND_2') return generateRoseGold ? 'ROSE' : 'YELLOW';
+// Every asset type's metal is unambiguous from its name alone (Ring hand
+// shots are always Yellow Gold), so the toggle argument is a no-op.
+export function metalColorForAssetType(assetType: AssetType, _generateRoseGold?: boolean): 'YELLOW' | 'ROSE' {
   if (assetType.startsWith('RING_ROSE_')) return 'ROSE';
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'YELLOW';
   return assetType.startsWith('ROSE_') || assetType === 'PRESENTER_ROSE' ? 'ROSE' : 'YELLOW';

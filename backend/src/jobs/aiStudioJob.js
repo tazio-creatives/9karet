@@ -86,8 +86,7 @@ async function ensureDefaultFeatured(jobId, assets) {
 // Ring images get one automatic retry when validation fails, before falling
 // back to the normal manual "Accept Anyway / Regenerate" flow. Capped at
 // exactly one extra attempt (not an unbounded loop) since each attempt is a
-// real, billed OpenAI image-edit + vision call. (The four-view Ring set has
-// no hand shots; the retry now covers its catalogue views.)
+// real, billed OpenAI image-edit + vision call. Covers all six Ring shots.
 const RING_AUTO_RETRY_TYPES = new Set(Object.keys(RING_OUTPUT_NAMES));
 
 // Gents/Kids describe the presenter demographic purely in text (see

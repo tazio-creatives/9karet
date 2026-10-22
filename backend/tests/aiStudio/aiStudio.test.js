@@ -107,20 +107,20 @@ describe('resolveAssetTypesForJob (rose gold toggle x presenter selection)', () 
 });
 
 describe('resolveAssetTypesForJob — Ring-only output structure (9karet)', () => {
-  test('always exactly 4 Yellow Gold views — Hero, Front, Side, Macro — whatever the toggles say', () => {
+  test('always 6 Yellow Gold images — Hero, Front, Side, Macro, then Hand 1 and Hand 2 — whatever the toggles say', () => {
     for (const generateRoseGold of [false, true]) {
       for (const hasPresenter of [false, true]) {
         assert.deepEqual(
           resolveAssetTypesForJob({ generateRoseGold, hasPresenter, confirmedType: 'RING' }),
-          ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO'],
+          ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO', 'RING_HAND_1', 'RING_HAND_2'],
         );
       }
     }
   });
 
-  test('never produces rose gold, hand, presenter or generic 45° shots for Ring', () => {
+  test('never produces rose gold, presenter or generic 45° shots for Ring', () => {
     const types = resolveAssetTypesForJob({ generateRoseGold: true, hasPresenter: true, confirmedType: 'RING' });
-    assert.ok(!types.some((t) => /ROSE|HAND|PRESENTER|HERO_45/.test(t)));
+    assert.ok(!types.some((t) => /ROSE|PRESENTER|HERO_45/.test(t)));
   });
 
   test('Ring never records rose gold as on; Necklace still forces it; others follow the toggle', () => {
@@ -130,22 +130,24 @@ describe('resolveAssetTypesForJob — Ring-only output structure (9karet)', () =
     assert.equal(effectiveGenerateRoseGold('EARRINGS', false), false);
   });
 
-  test('display order and output names follow the spec: yellow_gold_hero, _front, _side, _macro', () => {
+  test('display order and output names: yellow_gold_hero, _front, _side, _macro, then the two hand shots', () => {
     assert.deepEqual(
-      ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO'].map((t) => [ASSET_DISPLAY_ORDER[t], RING_OUTPUT_NAMES[t]]),
+      ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO', 'RING_HAND_1', 'RING_HAND_2'].map((t) => [ASSET_DISPLAY_ORDER[t], RING_OUTPUT_NAMES[t]]),
       [
         [0, 'yellow_gold_hero'],
         [1, 'yellow_gold_front'],
         [2, 'yellow_gold_side'],
         [3, 'yellow_gold_macro'],
+        [4, 'yellow_gold_hand_1'],
+        [5, 'yellow_gold_hand_2'],
       ],
     );
   });
 });
 
 describe('metalColorForAssetType — Ring types', () => {
-  test('all four Ring views are Yellow', () => {
-    for (const t of ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO']) assert.equal(metalColorForAssetType(t, true), 'YELLOW');
+  test('all six Ring images are Yellow — including Hand 2, even with the rose toggle on', () => {
+    for (const t of ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO', 'RING_HAND_1', 'RING_HAND_2']) assert.equal(metalColorForAssetType(t, true), 'YELLOW');
   });
 
   test('legacy RING_ROSE_* images from older jobs still read as Rose', () => {
@@ -231,7 +233,7 @@ describe('previewPromptsForJob (Review Prompts panel — pure, no DB/API calls)'
     }
   });
 
-  test('a presenter picked for a Ring job is ignored — Ring only ever gets its four catalogue views', () => {
+  test('a presenter picked for a Ring job is ignored — Ring only ever gets its own catalogue and hand shots', () => {
     const previews = previewPromptsForJob({
       confirmedType: 'RING',
       template: FAKE_TEMPLATE,
@@ -239,7 +241,7 @@ describe('previewPromptsForJob (Review Prompts panel — pure, no DB/API calls)'
       generateRoseGold: false,
       overridesByAssetType: undefined,
     });
-    assert.ok(previews.every((p) => p.assetType.startsWith('RING_GOLD_')));
+    assert.ok(previews.every((p) => p.assetType.startsWith('RING_')));
     assert.ok(previews.every((p) => !/presenter reference photo/i.test(p.finalPrompt)));
   });
 
@@ -354,7 +356,7 @@ describe('Gents presenter identity consistency — scoped to GENTS only', () => 
     }
   });
 
-  test('Ring views are untouched by confirmedCustomerCategory GENTS — no presenter or identity text', () => {
+  test('Ring shots never get the Gents presenter identity-lock text', () => {
     const previews = previewPromptsForJob({
       confirmedType: 'RING',
       template: FAKE_TEMPLATE,
@@ -364,7 +366,7 @@ describe('Gents presenter identity consistency — scoped to GENTS only', () => 
       confirmedCustomerCategory: 'GENTS',
     });
     for (const p of previews) {
-      assert.doesNotMatch(p.finalPrompt, /identity reference photo|adult male model/i);
+      assert.doesNotMatch(p.finalPrompt, /identity reference photo/i);
     }
   });
 
@@ -387,7 +389,7 @@ describe('Gents presenter identity consistency — scoped to GENTS only', () => 
   });
 });
 
-describe('previewPromptsForJob — Ring four-view catalogue set (9karet)', () => {
+describe('previewPromptsForJob — Ring catalogue views + hand shots (9karet)', () => {
   const ring = () =>
     previewPromptsForJob({
       confirmedType: 'RING',
@@ -397,15 +399,16 @@ describe('previewPromptsForJob — Ring four-view catalogue set (9karet)', () =>
       overridesByAssetType: undefined,
     });
   const byType = (previews, t) => previews.find((p) => p.assetType === t);
+  const catalogue = () => ring().filter((p) => p.assetType.startsWith('RING_GOLD_'));
 
-  test('4 prompts in spec order, all yellow gold, even with the rose toggle on', () => {
+  test('6 prompts in order, all yellow gold, even with the rose toggle on', () => {
     const previews = ring();
-    assert.deepEqual(previews.map((p) => p.assetType), ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO']);
+    assert.deepEqual(previews.map((p) => p.assetType), ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO', 'RING_HAND_1', 'RING_HAND_2']);
     for (const p of previews) assert.equal(p.metalColor, 'YELLOW');
   });
 
   test('every view shares the common rules: 816 × 816 square, white background, yellow gold only, consistent lighting', () => {
-    for (const p of ring()) {
+    for (const p of catalogue()) {
       assert.match(p.finalPrompt, /816 × 816px \(1:1\)/);
       assert.match(p.finalPrompt, /pure white \(#FFFFFF\)/);
       assert.doesNotMatch(p.finalPrompt, /satin/i);
@@ -419,7 +422,7 @@ describe('previewPromptsForJob — Ring four-view catalogue set (9karet)', () =>
   });
 
   test('stone colours are held: colourless stays colourless, coloured gemstones keep their colour', () => {
-    for (const p of ring()) {
+    for (const p of catalogue()) {
       assert.match(p.finalPrompt, /keep colourless stones \(diamonds, cubic zirconia\) colourless/i);
       assert.match(p.finalPrompt, /every coloured gemstone its exact original colour/i);
     }
@@ -433,7 +436,7 @@ describe('previewPromptsForJob — Ring four-view catalogue set (9karet)', () =>
     assert.match(byType(previews, 'RING_GOLD_SIDE').finalPrompt, /stand the ring upright and photograph it from the side/i);
     assert.match(byType(previews, 'RING_GOLD_SIDE').finalPrompt, /do not reuse or slightly rotate the hero/i);
     assert.match(byType(previews, 'RING_GOLD_MACRO').finalPrompt, /close-up of the main design/i);
-    const compositions = new Set(previews.map((p) => p.creativeInstructions.composition));
+    const compositions = new Set(catalogue().map((p) => p.creativeInstructions.composition));
     assert.equal(compositions.size, 4);
   });
 
@@ -447,6 +450,86 @@ describe('previewPromptsForJob — Ring four-view catalogue set (9karet)', () =>
     assert.match(macro, /part of the band may extend outside the frame/i);
     assert.match(macro, /do not crop any important stone or primary design detail/i);
   });
+  test('Hand Image 1 and Hand Image 2 are always the two fixed, distinct lifestyle poses — no admin pose choice involved', () => {
+    const previews = previewPromptsForJob({
+      confirmedType: 'RING',
+      template: { ...FAKE_TEMPLATE },
+      presenter: null,
+      generateRoseGold: false,
+      overridesByAssetType: undefined,
+    });
+    const hand1 = previews.find((p) => p.assetType === 'RING_HAND_1');
+    const hand2 = previews.find((p) => p.assetType === 'RING_HAND_2');
+    assert.notEqual(hand1.categoryPlacementRules[0], hand2.categoryPlacementRules[0]);
+    assert.match(hand1.categoryPlacementRules[0], /her face may be visible/i);
+    assert.match(hand2.categoryPlacementRules[0], /closer crop/i);
+    assert.match(hand2.categoryPlacementRules[0], /full face does not need to be visible/i);
+    assert.match(hand2.finalPrompt, /different hand position from Hand Image 1/i);
+  });
+
+  test('hand shots allow a visible face, exclude other jewellery, and require exactly one ring', () => {
+    const previews = previewPromptsForJob({
+      confirmedType: 'RING',
+      template: { ...FAKE_TEMPLATE },
+      presenter: null,
+      generateRoseGold: true,
+      overridesByAssetType: undefined,
+    });
+    for (const assetType of ['RING_HAND_1', 'RING_HAND_2']) {
+      const shot = previews.find((p) => p.assetType === assetType);
+      assert.doesNotMatch(shot.finalPrompt, /do not show a face/i);
+      assert.match(shot.finalPrompt, /do not show earrings, a necklace, or any other distracting jewellery/i);
+      assert.match(shot.finalPrompt, /exactly one ring/i);
+      assert.match(shot.finalPrompt, /five naturally proportioned fingers/i);
+    }
+  });
+
+  test('hand shots carry the strict physical-placement rules: wrap the finger, no floating/pasting/embedding, correct finger, no added/removed stones', () => {
+    const previews = previewPromptsForJob({
+      confirmedType: 'RING',
+      template: { ...FAKE_TEMPLATE },
+      presenter: null,
+      generateRoseGold: true,
+      overridesByAssetType: undefined,
+    });
+    for (const assetType of ['RING_HAND_1', 'RING_HAND_2']) {
+      const shot = previews.find((p) => p.assetType === assetType);
+      assert.match(shot.finalPrompt, /physically wrap around the ring finger/i);
+      assert.match(shot.finalPrompt, /decorative top sits above the finger/i);
+      assert.match(shot.finalPrompt, /rear band is hidden behind the finger/i);
+      assert.match(shot.finalPrompt, /do not make the ring float above the skin/i);
+      assert.match(shot.finalPrompt, /do not paste the complete circular band flatly/i);
+      assert.match(shot.finalPrompt, /do not embed the ring inside the skin/i);
+      assert.match(shot.finalPrompt, /do not place the ring on the wrong finger/i);
+      assert.match(shot.finalPrompt, /do not add or remove any stones/i);
+    }
+  });
+
+  test('hand shots use a natural background that is never tied to the metal colour', () => {
+    const previews = previewPromptsForJob({
+      confirmedType: 'RING',
+      template: { ...FAKE_TEMPLATE },
+      presenter: null,
+      generateRoseGold: true,
+      overridesByAssetType: undefined,
+    });
+    const hand1 = previews.find((p) => p.assetType === 'RING_HAND_1');
+    const hand2 = previews.find((p) => p.assetType === 'RING_HAND_2');
+    // Same background instruction regardless of the metal colour of the shot.
+    assert.equal(hand1.creativeInstructions.background, hand2.creativeInstructions.background);
+    assert.match(hand1.finalPrompt, /natural photographic environment/i);
+    assert.match(hand1.finalPrompt, /do not force a champagne, ivory, peach or rose-coloured background/i);
+    assert.doesNotMatch(hand1.finalPrompt, /#FFFFFF/);
+  });
+
+  test('hand shots keep their own natural background and are not given the catalogue no-hands rules', () => {
+    for (const t of ['RING_HAND_1', 'RING_HAND_2']) {
+      const shot = byType(ring(), t);
+      assert.doesNotMatch(shot.finalPrompt, /do not show hands, fingers, a model/i);
+      assert.match(shot.finalPrompt, /the metal colour is yellow gold/i);
+    }
+  });
+
 });
 
 describe('duplicate active job prevention (plan §8)', () => {

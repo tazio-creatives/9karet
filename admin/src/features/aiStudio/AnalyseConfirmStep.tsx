@@ -71,7 +71,7 @@ export function AnalyseConfirmStep({
         formatCustomerCategory(customerCategory),
         presenterSummary,
         isRoseGoldUnavailable(jewelleryType)
-          ? '4 Yellow Gold views: Hero, Front, Side, Macro'
+          ? 'Yellow Gold: 4 catalogue + 2 hand images'
           : generateRoseGold
             ? 'Gold & Rose Gold'
             : 'Gold Only',
@@ -278,8 +278,8 @@ export function AnalyseConfirmStep({
         <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
         {isRoseGoldUnavailable(jewelleryType) ? (
           <p className={styles.confirmedNotice}>
-            Ring: 4 Yellow Gold catalogue images — Hero, Front/Top, Side Profile and Macro Detail — on a white
-            background. No rose gold or hand images.
+            Ring: 6 Yellow Gold images — 4 catalogue views on white (Hero, Front/Top, Side Profile, Macro Detail)
+            plus Hand Pose 1 and Hand Pose 2. No rose gold.
           </p>
         ) : (
           <Toggle
