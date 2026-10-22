@@ -70,11 +70,7 @@ export function AnalyseConfirmStep({
     ? [
         formatCustomerCategory(customerCategory),
         presenterSummary,
-        isRoseGoldUnavailable(jewelleryType)
-          ? 'Yellow Gold: 4 catalogue + 2 hand images'
-          : generateRoseGold
-            ? 'Gold & Rose Gold'
-            : 'Gold Only',
+        generateRoseGold ? 'Gold & Rose Gold' : 'Gold Only',
       ]
         .filter(Boolean)
         .join(' · ')
@@ -274,14 +270,10 @@ export function AnalyseConfirmStep({
         )}
       </section>
 
-      <section className={styles.generationPlan}>
-        <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
-        {isRoseGoldUnavailable(jewelleryType) ? (
-          <p className={styles.confirmedNotice}>
-            Ring: 6 Yellow Gold images — 4 catalogue views on white (Hero, Front/Top, Side Profile, Macro Detail)
-            plus Hand Pose 1 and Hand Pose 2. No rose gold.
-          </p>
-        ) : (
+      {/* Ring has a fixed plan (no rose gold to choose), so the section is hidden for it. */}
+      {!isRoseGoldUnavailable(jewelleryType) && (
+        <section className={styles.generationPlan}>
+          <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
           <Toggle
             checked={generateRoseGold}
             onChange={onGenerateRoseGoldChange}
@@ -293,9 +285,9 @@ export function AnalyseConfirmStep({
                 : 'Creates Rose Gold catalogue and presenter images in addition to the Yellow Gold images.'
             }
           />
-        )}
-        {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
-      </section>
+          {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
+        </section>
+      )}
 
       <section className={styles.generationPlan}>
         <Toggle
