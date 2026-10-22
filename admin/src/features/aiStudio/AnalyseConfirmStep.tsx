@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CUSTOMER_CATEGORIES, REAL_JEWELLERY_TYPES, type CustomerCategory, type JewelleryType, type StudioJob } from '../../api/aiStudio';
 import { Toggle } from '../../components/Toggle';
-import { isRoseGoldForced, formatCustomerCategory, inferJewelleryTypeFromCategory, presenterDemographicSummary } from './generationRules';
+import { isRoseGoldForced, isRoseGoldUnavailable, formatCustomerCategory, inferJewelleryTypeFromCategory, presenterDemographicSummary } from './generationRules';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './AnalyseConfirmStep.module.css';
 
@@ -70,7 +70,11 @@ export function AnalyseConfirmStep({
     ? [
         formatCustomerCategory(customerCategory),
         presenterSummary,
-        generateRoseGold ? 'Gold & Rose Gold' : 'Gold Only',
+        isRoseGoldUnavailable(jewelleryType)
+          ? '4 Yellow Gold views: Hero, Front, Side, Macro'
+          : generateRoseGold
+            ? 'Gold & Rose Gold'
+            : 'Gold Only',
       ]
         .filter(Boolean)
         .join(' · ')
@@ -272,17 +276,24 @@ export function AnalyseConfirmStep({
 
       <section className={styles.generationPlan}>
         <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
-        <Toggle
-          checked={generateRoseGold}
-          onChange={onGenerateRoseGoldChange}
-          disabled={isRoseGoldForced(jewelleryType)}
-          label="Generate Rose Gold Version"
-          helperText={
-            isRoseGoldForced(jewelleryType)
-              ? 'Always on for Necklace — 2 Yellow + 2 Rose catalogue images, plus 1 Yellow + 1 Rose presenter image when a presenter is selected.'
-              : 'Creates Rose Gold catalogue and presenter images in addition to the Yellow Gold images.'
-          }
-        />
+        {isRoseGoldUnavailable(jewelleryType) ? (
+          <p className={styles.confirmedNotice}>
+            Ring: 4 Yellow Gold catalogue images — Hero, Front/Top, Side Profile and Macro Detail — on a white
+            background. No rose gold or hand images.
+          </p>
+        ) : (
+          <Toggle
+            checked={generateRoseGold}
+            onChange={onGenerateRoseGoldChange}
+            disabled={isRoseGoldForced(jewelleryType)}
+            label="Generate Rose Gold Version"
+            helperText={
+              isRoseGoldForced(jewelleryType)
+                ? 'Always on for Necklace — 2 Yellow + 2 Rose catalogue images, plus 1 Yellow + 1 Rose presenter image when a presenter is selected.'
+                : 'Creates Rose Gold catalogue and presenter images in addition to the Yellow Gold images.'
+            }
+          />
+        )}
         {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
       </section>
 

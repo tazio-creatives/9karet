@@ -34,6 +34,7 @@ import {
   resolveAssetTypesForJob,
   inferJewelleryTypeFromCategory,
   isRoseGoldForced,
+  isRoseGoldUnavailable,
 } from '../../features/aiStudio/generationRules';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './AiImageStudioPage.module.css';
@@ -78,9 +79,11 @@ export function AiImageStudioPage() {
   const [generateRoseGold, setGenerateRoseGold] = useState(
     () => localStorage.getItem(ROSE_GOLD_PREF_KEY) !== 'false',
   );
-  // Necklace always gets the Yellow + Rose set (see generationRules'
-  // isRoseGoldForced) — the saved toggle preference only applies elsewhere.
-  const effectiveRoseGold = isRoseGoldForced(jewelleryType) || generateRoseGold;
+  // Necklace always gets the Yellow + Rose set and Ring never gets rose gold
+  // (see generationRules) — the saved toggle preference only applies elsewhere.
+  const effectiveRoseGold = isRoseGoldUnavailable(jewelleryType)
+    ? false
+    : isRoseGoldForced(jewelleryType) || generateRoseGold;
   const [presenterId, setPresenterId] = useState<string | null>(null);
   const [promptOverrides, setPromptOverrides] = useState<PromptOverrides>({});
   // A Set (not a single id) so "Regenerate All" — Ring-only — can show every

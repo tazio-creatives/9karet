@@ -30,8 +30,10 @@ const CATALOGUE_TYPES = new Set([
   'YELLOW_HERO_45',
   'ROSE_FRONT',
   'ROSE_HERO_45',
+  'RING_GOLD_HERO',
   'RING_GOLD_FRONT',
   'RING_GOLD_SIDE',
+  'RING_GOLD_MACRO',
   'RING_ROSE_FRONT',
   'RING_ROSE_SIDE',
 ]);
@@ -144,7 +146,7 @@ export function ReviewImportStep({
         <div className={styles.ringHeader}>
           <h2 className={styles.ringHeading}>Generated Ring Images</h2>
           <p className={styles.ringSubheading}>{assets.length} images ready for review</p>
-          <span className={sharedStyles.badgeNeutral}>Ring · {job.generateRoseGold ? 'Yellow Gold & Rose Gold' : 'Yellow Gold Only'}</span>
+          <span className={sharedStyles.badgeNeutral}>Ring · Yellow Gold</span>
           <button
             type="button"
             className={sharedStyles.buttonLink}
@@ -303,10 +305,12 @@ export function ReviewImportStep({
               <dd>{job.presenter ? job.presenter.displayName : 'No Presenter'}</dd>
             </div>
           )}
-          <div className={styles.summaryRow}>
-            <dt>Rose Gold</dt>
-            <dd>{job.generateRoseGold ? 'On' : 'Off'}</dd>
-          </div>
+          {!isRing && (
+            <div className={styles.summaryRow}>
+              <dt>Rose Gold</dt>
+              <dd>{job.generateRoseGold ? 'On' : 'Off'}</dd>
+            </div>
+          )}
           <div className={styles.summaryRow}>
             <dt>Featured Image</dt>
             <dd>{featured ? (isRing ? ringShotLabel(featured.assetType, job.generateRoseGold) : SHOT_LABELS[featured.assetType]) : '—'}</dd>

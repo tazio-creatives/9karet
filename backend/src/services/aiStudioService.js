@@ -149,23 +149,31 @@ export const ASSET_TYPES = [
   'PRESENTER_ROSE',
 ];
 
-// Ring-only output structure — 2 hand-model shots + 4 catalogue shots
-// (Front + Three-Quarter Side View, no 45° Hero), replacing the generic 7-value
-// vocabulary above whenever confirmedType === 'RING'. See RING_ASSET_TYPE_SET
-// and resolveAssetTypesForJob below for where the branch happens.
-export const RING_ASSET_TYPES = [
-  'RING_HAND_1',
-  'RING_HAND_2',
-  'RING_GOLD_FRONT',
-  'RING_GOLD_SIDE',
-  'RING_ROSE_FRONT',
-  'RING_ROSE_SIDE',
-];
-const RING_ASSET_TYPE_SET = new Set(RING_ASSET_TYPES);
+// Ring-only output structure (9karet) — exactly four Yellow Gold catalogue
+// shots per reference, in this fixed order: Hero three-quarter, Front/Top,
+// Side profile, Macro detail. 9karet sells no rose gold and Ring gets no
+// hand/lifestyle shots. Replaces the generic 7-value vocabulary above
+// whenever confirmedType === 'RING'.
+export const RING_ASSET_TYPES = ['RING_GOLD_HERO', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_GOLD_MACRO'];
 
-// Mirrors the DB CHECK constraint in the ai_studio_presenters migration —
-// must stay in lockstep with it, this is the single source of truth on the
-// JS side.
+// The previous Ring workflow's hand and rose-gold slots. Never generated any
+// more — kept only so images from jobs made before the change still load
+// and can still be imported.
+export const LEGACY_RING_ASSET_TYPES = ['RING_HAND_1', 'RING_HAND_2', 'RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
+const RING_ASSET_TYPE_SET = new Set([...RING_ASSET_TYPES, ...LEGACY_RING_ASSET_TYPES]);
+
+// File-name stem for each Ring output (yellow_gold_hero, …), used in the
+// generated image's storage key.
+export const RING_OUTPUT_NAMES = {
+  RING_GOLD_HERO: 'yellow_gold_hero',
+  RING_GOLD_FRONT: 'yellow_gold_front',
+  RING_GOLD_SIDE: 'yellow_gold_side',
+  RING_GOLD_MACRO: 'yellow_gold_macro',
+};
+
+// Mirrors the DB CHECK constraint (latest: the 9karet ring catalogue
+// migration) — must stay in lockstep with it, this is the single source of
+// truth on the JS side.
 export const ASSET_DISPLAY_ORDER = {
   YELLOW_FRONT: 0,
   YELLOW_HERO_45: 1,
@@ -174,18 +182,19 @@ export const ASSET_DISPLAY_ORDER = {
   PRESENTER_YELLOW_1: 4,
   PRESENTER_YELLOW_2: 5,
   PRESENTER_ROSE: 6,
-  RING_HAND_1: 0,
-  RING_HAND_2: 1,
-  RING_GOLD_FRONT: 2,
-  RING_GOLD_SIDE: 3,
-  RING_ROSE_FRONT: 4,
-  RING_ROSE_SIDE: 5,
+  RING_GOLD_HERO: 0,
+  RING_GOLD_FRONT: 1,
+  RING_GOLD_SIDE: 2,
+  RING_GOLD_MACRO: 3,
+  RING_HAND_1: 4,
+  RING_HAND_2: 5,
+  RING_ROSE_FRONT: 6,
+  RING_ROSE_SIDE: 7,
 };
 
 // Which asset types get generated for a job. Ring is a completely separate,
-// fixed output structure (Problem: the generic Yellow/Rose/Presenter shape
-// doesn't apply to Rings at all) — 4 images normally, 6 when Rose Gold is
-// required, in the exact Hand1/Hand2/Front/Side(/RoseFront/RoseSide) order.
+// fixed output structure — always the same four Yellow Gold shots, whatever
+// the Rose Gold toggle says.
 // Every other jewellery type keeps the original logic untouched: Yellow Gold
 // catalogue shots are always present, Rose Gold and presenter shots are
 // additive, driven purely by the Rose Gold toggle and whether a presenter
@@ -200,16 +209,16 @@ export const ASSET_DISPLAY_ORDER = {
 // other type follows the toggle.
 const ALWAYS_ROSE_GOLD_TYPES = new Set(['NECKLACE']);
 
+// 9karet has no rose gold for Ring, so a Ring job never records it as on.
+const NEVER_ROSE_GOLD_TYPES = new Set(['RING']);
+
 export function effectiveGenerateRoseGold(confirmedType, requested) {
+  if (NEVER_ROSE_GOLD_TYPES.has(confirmedType)) return false;
   return ALWAYS_ROSE_GOLD_TYPES.has(confirmedType) ? true : requested;
 }
 
 export function resolveAssetTypesForJob({ generateRoseGold, hasPresenter, confirmedType }) {
-  if (confirmedType === 'RING') {
-    const types = ['RING_HAND_1', 'RING_HAND_2', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE'];
-    if (generateRoseGold) types.push('RING_ROSE_FRONT', 'RING_ROSE_SIDE');
-    return types;
-  }
+  if (confirmedType === 'RING') return [...RING_ASSET_TYPES];
   const types = ['YELLOW_FRONT', 'YELLOW_HERO_45'];
   if (generateRoseGold) types.push('ROSE_FRONT', 'ROSE_HERO_45');
   if (hasPresenter) {
@@ -219,8 +228,7 @@ export function resolveAssetTypesForJob({ generateRoseGold, hasPresenter, confir
   return types;
 }
 
-// RING_HAND_2's metal depends on the Rose Gold toggle (Rose when required,
-// Gold otherwise — it's always "the second hand shot", not always Rose) —
+// RING_HAND_2 (a legacy slot) took its metal from the Rose Gold toggle —
 // every other asset type is unambiguous from its name alone, so the extra
 // param is a no-op for them.
 export function metalColorForAssetType(assetType, generateRoseGold = true) {
@@ -294,37 +302,58 @@ const RING_GOLD_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
 const RING_ROSE_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
 const RING_CATALOGUE_LIGHTING_NOTE =
   ' Use soft, premium studio lighting with natural, controlled product shadows, keeping the jewellery clearly separated from the background. Avoid busy props, flowers, boxes, unrelated decorative objects or hard reflections. The background must remain secondary to the product.';
-const RING_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px.';
+const RING_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px (1:1).';
 
-// Hand-pose background is a natural photographic environment picked to suit
-// the pose, NOT a brand/metal-colour cue — client correction: "Background
-// colour must not change according to the ring's metal colour," so this one
-// note is shared by both RING_HAND_1 (Yellow Gold) and RING_HAND_2 (Rose
-// Gold) rather than each metal getting its own tinted backdrop.
-const RING_HAND_BACKGROUND_NOTE =
-  ' Use a natural photographic environment appropriate to the hand pose — for example a neutral studio background, a white or light-grey background, a black studio background, a soft natural interior, or a subtle beige background. Do not force a champagne, ivory, peach or rose-coloured background onto this hand shot, and do not choose the background colour based on the ring\'s metal colour.';
-const RING_HAND_LIGHTING_NOTE =
-  ' Use soft, natural photographic lighting with the ring sharply focused and the complete ring design clearly visible.';
+// The four Ring catalogue views, in output order. Each must give genuinely
+// new information — the side profile is a true side view, not the hero
+// rotated a little, and the macro is the only shot allowed to crop the band.
+const RING_CATALOGUE_SHOTS = {
+  RING_GOLD_HERO: {
+    composition:
+      'Hero three-quarter view — the primary product and product-list image. Stand the complete ring upright on its band and turn it to an approximately 40-45 degree three-quarter angle, so the centre stone, the decorative top and the band are all clearly visible. Centre the ring with balanced white space around it and keep the complete ring inside the frame.',
+    negatives: ['Do not crop any part of the ring out of frame.', 'Do not use a flat top-down view or a pure side profile for this shot.'],
+  },
+  RING_GOLD_FRONT: {
+    composition:
+      'Front/top view. Lay the ring horizontally and photograph the complete decorative top from the front or a slightly elevated top angle, so the centre stone and every visible small stone are clearly displayed. Keep the complete decorative section visible and the complete ring inside the frame. This view must look clearly different from the upright three-quarter hero view.',
+    negatives: [
+      'Do not crop any part of the ring out of frame.',
+      'Do not stand the ring upright at a three-quarter angle — that is the hero view, and this shot must differ from it.',
+    ],
+  },
+  RING_GOLD_SIDE: {
+    composition:
+      'Side-profile view. Stand the ring upright and photograph it from the side, so the band profile, the setting height, the prongs and the centre-stone mounting are clearly shown. Preserve the original band thickness and structural proportions. The angle must give genuine side-profile information. Keep the complete ring inside the frame.',
+    negatives: [
+      'Do not crop any part of the ring out of frame.',
+      'Do not reuse or slightly rotate the hero three-quarter view — this must be a true side profile.',
+      'Do not show the ring face-on from the front.',
+    ],
+  },
+  RING_GOLD_MACRO: {
+    composition:
+      'Macro detail view. A close-up of the main design: the centre stone, the prongs, the small stones, the metal finishing and the setting details, sharp and clearly lit. Keep the centre design as the focal point. Part of the band may extend outside the frame.',
+    negatives: [
+      'Do not crop any important stone or primary design detail out of frame — only the band may be cut off.',
+      'Do not invent texture, engraving or stones that are not visible on the reference.',
+    ],
+  },
+};
 
-// The two Ring hand shots are now always these fixed lifestyle compositions —
-// client correction: no admin pose choice, no "Choose a Hand Pose" screen;
-// generation starts immediately once the category is confirmed. Unlike the
-// old Hand Pose workflow, a face IS allowed to be visible here — only OTHER
-// jewellery (earrings, necklace, etc.) is excluded, not the model's face.
-const RING_HAND_PLACEMENT_COMPOSITION =
-  "The ring must physically wrap around the ring finger: the decorative top sits above the finger and the rear band is hidden behind the finger, with the band's angle matching the direction of the finger. Render realistic scale, lighting and contact shadows so the ring reads as genuinely worn, not composited on top of the hand.";
-
-const RING_HAND_PLACEMENT_NEGATIVES = [
-  "Show exactly one ring, worn on the correct ring finger — preserve the uploaded ring's exact design and realistic size.",
-  'Do not make the ring float above the skin.',
-  'Do not paste the complete circular band flatly over the finger.',
-  'Do not embed the ring inside the skin.',
-  'Do not place the ring on the wrong finger.',
-  'Do not add or remove any stones from the ring.',
+// Ring catalogue rules shared by all four shots (9karet spec): one lighting
+// and shadow style, yellow gold only, and stone colours held exactly. 9karet
+// sets coloured gemstones as well as colourless ones, so "keep diamonds
+// colourless" is worded so it can never wash out a ruby or emerald.
+const RING_CATALOGUE_COMMON_NOTE =
+  'This is one of a set of four Ring catalogue images of the same ring (Hero three-quarter, Front/Top, Side profile, Macro detail): use the same lighting, white balance and soft shadow style as the rest of the set. The metal is polished yellow gold only — realistic and premium, a natural warm yellow, never excessively orange. Keep colourless stones (diamonds, cubic zirconia) colourless and naturally reflective, and keep every coloured gemstone its exact original colour. Preserve the exact number, shape, size and position of every stone, the centre-stone shape, the prong count and placement, the band shape, thickness and proportions, and any asymmetrical detail.';
+const RING_CATALOGUE_COMMON_NEGATIVES = [
+  'Do not generate a rose-gold or white-gold version — yellow gold only.',
+  'Do not show hands, fingers, a model, props, packaging, text, logos, borders or badges.',
+  'Do not use a coloured, gradient or textured background — plain clean white only.',
+  'Do not change the ring into another jewellery category.',
+  'Do not add unrealistic reflections or artificial sparkle effects.',
+  'Do not make the yellow gold excessively orange.',
 ];
-
-const RING_HAND_NO_OTHER_JEWELLERY_NEGATIVE =
-  'Do not show earrings, a necklace, or any other distracting jewellery on the model — only the uploaded ring should be visible.';
 
 // Appended as an extra negative instruction on every Ring asset type, on top
 // of the generic FIDELITY_BLOCK every asset type already gets — Ring's
@@ -335,7 +364,7 @@ const RING_HAND_NO_OTHER_JEWELLERY_NEGATIVE =
 // never the jewellery design itself, and a visually attractive but
 // inaccurate result must never be treated as good enough.
 const RING_FIDELITY_EXTRA =
-  'The uploaded product image is the only source of truth for the ring design — preserve the exact number, shape and position of every stone, the centre-stone shape and setting, band count and structure, pavé arrangement, curves/crossings/gaps, proportions, setting height, metal thickness and every decorative detail. Do not invent additional stones, remove stones, create a second ring, change the centre stone, change the band design, simplify the construction, or mirror/symmetrise an asymmetric detail. Do not redesign the ring to suit the pose. Pose and background reference images may influence only the hand position, camera angle or background — never the jewellery design. A visually attractive but structurally inaccurate result is not acceptable — do not add, remove or move stones, change the motif or band design, add another band, invent a different setting, convert the ring into a bangle or bracelet, or mix the uploaded ring with any design elements from pose or background reference images.';
+  'The uploaded product image is the only source of truth for the ring design — preserve the exact number, shape and position of every stone, the centre-stone shape and setting, band count and structure, pavé arrangement, curves/crossings/gaps, proportions, setting height, metal thickness and every decorative detail. Do not invent additional stones, remove stones, create a second ring, change the centre stone, change the band design, simplify the construction, or mirror/symmetrise an asymmetric detail. Do not redesign the ring to suit the pose. Pose and background reference images may influence only the camera angle or background — never the jewellery design. A visually attractive but structurally inaccurate result is not acceptable — do not add, remove or move stones, change the motif or band design, add another band, invent a different setting, convert the ring into a bangle or bracelet, or mix the uploaded ring with any design elements from pose or background reference images.';
 
 // Appended as an extra negative instruction on every asset type for a
 // confirmed Bracelet, on top of whatever that asset type's own negatives
@@ -371,12 +400,12 @@ const NECKLACE_SET_NOTE_PRESENTER =
 // only listed props, and the image model filled the gap with a model.
 const CATALOGUE_NO_PERSON_NOTE =
   'This is a product-only catalogue image: do not include any person, model, mannequin, bust, face, neck, ears, hands or other body part — show only the jewellery on the backdrop.';
-const CATALOGUE_ASSET_TYPES = new Set(['YELLOW_FRONT', 'YELLOW_HERO_45', 'ROSE_FRONT', 'ROSE_HERO_45']);
+const CATALOGUE_ASSET_TYPES = new Set(['YELLOW_FRONT', 'YELLOW_HERO_45', 'ROSE_FRONT', 'ROSE_HERO_45', ...RING_ASSET_TYPES]);
 
 // Audience-specific presenter description (Gents/Kids), substituted for
 // whichever real presenter's own prompt_descriptor would otherwise be used
 // (non-Ring PRESENTER_* shots) or for the hardcoded default-audience text
-// (Ring hand shots) — see buildAssetPromptSections and RING_HAND_1/2 below.
+// (unused for Ring, which has no presenter or hand shots).
 // Presenter demographic is resolved automatically from the confirmed
 // customer category (never a separate manual picker) — the presenter
 // library's own photo reference is deliberately NOT attached for Gents/Kids
@@ -472,37 +501,6 @@ function audiencePresenterOverrideFor(confirmedCustomerCategory) {
       background: KIDS_PRESENTER_BACKGROUND_NOTE,
       negative: KIDS_SAFETY_NEGATIVE,
     };
-  }
-  return null;
-}
-
-// Ring hand shots never go through the Presenter/PRESENTER_* path at all
-// (see the RING_HAND_1/RING_HAND_2 cases below) — they need their own
-// audience-aware hand-only text, since "existing jewellery-type rules such
-// as Ring hand-only images must still take priority": for Gents/Kids this
-// means the hand-only framing is kept exactly, only the hand's owner and its
-// scale/styling change. WOMEN/UNISEX fall through to the existing hardcoded
-// text further down, completely unchanged.
-const GENTS_RING_HAND_1_TEXT =
-  "Show an adult male model's hand only — do not show his face or any other part of his body. Position the hand naturally, with the exact uploaded ring placed on his ring finger, clearly visible and sharply focused. Use a premium jewellery-campaign composition. Generate realistic masculine hand anatomy with exactly five naturally proportioned fingers, realistic joints, and clean, well-groomed nails with no polish.";
-const GENTS_RING_HAND_2_TEXT =
-  "Use a closer crop of the same adult male model's hand, from a different angle than Hand Image 1 — do not show his face or any other part of his body. Keep the ring finger straight and unobstructed, with the exact uploaded ring placed naturally around it, clearly showing the ring design and band placement. Use a different hand position from Hand Image 1, keeping the composition natural and premium. Generate realistic masculine hand anatomy with exactly five naturally proportioned fingers, realistic joints, and clean, well-groomed nails with no polish.";
-const GENTS_RING_HAND_NEGATIVE =
-  'Do not show a female or child hand, or any part of a face or body — use an adult male hand only.';
-
-const KIDS_RING_HAND_1_TEXT =
-  "Show a young child's hand only, approximately 2 to 4 years old — do not show the child's face or any other part of their body. Position the hand naturally, with the exact uploaded ring placed on the correct finger at a scale realistic for a small child's hand, clearly visible and sharply focused. Generate realistic child hand anatomy with exactly five naturally proportioned, softly rounded fingers, with no manicure or nail polish.";
-const KIDS_RING_HAND_2_TEXT =
-  "Use a closer crop of the same young child's hand (approximately 2 to 4 years old), from a different angle than Hand Image 1 — do not show the child's face or any other part of their body. Keep the finger straight and unobstructed, with the exact uploaded ring placed naturally around it at a scale realistic for a small child's hand, clearly showing the ring design. Use a different hand position from Hand Image 1, keeping the composition natural and family-friendly. Generate realistic child hand anatomy with exactly five naturally proportioned, softly rounded fingers, with no manicure or nail polish.";
-const KIDS_RING_HAND_NEGATIVE =
-  "Do not show an adult or teenager's hand, or any part of a face or body — use a young child's hand only, approximately 2 to 4 years old, and do not render the ring at adult hand scale.";
-
-function ringHandTextFor(confirmedCustomerCategory, slot) {
-  if (confirmedCustomerCategory === 'GENTS') {
-    return { text: slot === 1 ? GENTS_RING_HAND_1_TEXT : GENTS_RING_HAND_2_TEXT, negative: GENTS_RING_HAND_NEGATIVE };
-  }
-  if (confirmedCustomerCategory === 'KIDS') {
-    return { text: slot === 1 ? KIDS_RING_HAND_1_TEXT : KIDS_RING_HAND_2_TEXT, negative: KIDS_RING_HAND_NEGATIVE };
   }
   return null;
 }
@@ -674,110 +672,32 @@ function buildAssetPromptSections({
       }
       break;
     }
-    case 'RING_HAND_1': {
-      const audienceHand = ringHandTextFor(confirmedCustomerCategory, 1);
-      categoryPlacement =
-        audienceHand?.text ??
-        "Show a young female model — her face may be visible. Position her hand naturally near her face (for example resting near her cheek or chin), with the exact uploaded ring placed on her ring finger, clearly visible and sharply focused. Use a premium jewellery-campaign composition. Generate realistic hand anatomy with exactly five naturally proportioned fingers, realistic joints and fingernails, and a clean nude manicure.";
-      creativeDefaults = {
-        background: RING_HAND_BACKGROUND_NOTE.trim(),
-        lighting: RING_HAND_LIGHTING_NOTE.trim(),
-        composition: `${RING_SIZE_NOTE} ${RING_HAND_PLACEMENT_COMPOSITION}`,
-        presenterPose: '',
-        cameraAngle: '',
-        additionalInstructions: '',
-      };
-      negativeParts.push(
-        RING_HAND_NO_OTHER_JEWELLERY_NEGATIVE,
-        'Do not create distorted fingers or unrealistic hand anatomy.',
-        'Do not apply a background colour tied to the ring\'s metal colour — the background must be a natural, neutral photographic environment, not champagne, ivory, peach or rose-coloured.',
-        ...RING_HAND_PLACEMENT_NEGATIVES,
-      );
-      if (audienceHand) negativeParts.push(audienceHand.negative);
-      break;
-    }
-    case 'RING_HAND_2': {
-      const audienceHand = ringHandTextFor(confirmedCustomerCategory, 2);
-      categoryPlacement =
-        audienceHand?.text ??
-        "Use a closer crop of a young female model's hand positioned near her face — the full face does not need to be visible. Keep the ring finger straight and unobstructed, with the exact uploaded ring placed naturally around it, clearly showing the ring design and band placement. Use a different hand position from Hand Image 1, keeping the composition natural and premium. Generate realistic hand anatomy with exactly five naturally proportioned fingers, realistic joints and fingernails, and a clean nude manicure.";
-      creativeDefaults = {
-        background: RING_HAND_BACKGROUND_NOTE.trim(),
-        lighting: RING_HAND_LIGHTING_NOTE.trim(),
-        composition: `${RING_SIZE_NOTE} ${RING_HAND_PLACEMENT_COMPOSITION}`,
-        presenterPose: '',
-        cameraAngle: '',
-        additionalInstructions: '',
-      };
-      negativeParts.push(
-        RING_HAND_NO_OTHER_JEWELLERY_NEGATIVE,
-        'Do not create distorted fingers or unrealistic hand anatomy.',
-        'Do not apply a background colour tied to the ring\'s metal colour — the background must be a natural, neutral photographic environment, not champagne, ivory, peach or rose-coloured.',
-        'Use a hand pose visibly different from Hand Image 1 — do not reuse the same pose or camera angle.',
-        ...RING_HAND_PLACEMENT_NEGATIVES,
-      );
-      if (audienceHand) negativeParts.push(audienceHand.negative);
-      break;
-    }
+    // Ring (9karet): four Yellow Gold catalogue shots, each from a genuinely
+    // different viewpoint. Shared rules (lighting, stones, gold tone) come
+    // from RING_CATALOGUE_COMMON_NOTE / _NEGATIVES; each case adds only its
+    // own angle and framing.
+    case 'RING_GOLD_HERO':
     case 'RING_GOLD_FRONT':
-    case 'RING_ROSE_FRONT': {
-      const isRose = assetType === 'RING_ROSE_FRONT';
-      creativeDefaults = {
-        background: (isRose ? RING_ROSE_CATALOGUE_BACKGROUND_NOTE : RING_GOLD_CATALOGUE_BACKGROUND_NOTE).trim(),
-        lighting: RING_CATALOGUE_LIGHTING_NOTE.trim(),
-        // True Front View — a direct, symmetrical view of the ring's
-        // decorative top, NOT the upright three-quarter stance used for the
-        // Three-Quarter Side View below. This composition is deliberately
-        // the opposite of that shot's in every stated respect.
-        composition: `${RING_SIZE_NOTE} Photograph the ring's decorative top in a true, direct front view: the camera looks straight at the decorative face of the ring, as if looking down onto it, not standing it upright on its band. Position the centre stone in the exact visual centre of the frame, with the decorative bands extending clearly to the left and right so the front design reads approximately horizontal. Show the complete ring face and the full stone arrangement with minimal perspective distortion. The circular band opening may be partially visible behind the decorative face, but it must never be the dominant shape in the frame.`,
-        presenterPose: '',
-        cameraAngle: '',
-        additionalInstructions: '',
-      };
-      negativeParts.push(
-        'Do not add props, text, hands, packaging or decorative elements — the background must stay plain pure white.',
-        'Do not stand the ring vertically upright on its band for this shot.',
-        'Do not display the circular band opening as the main shape of the image.',
-        'Do not rotate the ring to a 30-45 degree angle for this shot.',
-        'Do not use the same orientation as the Three-Quarter Side View shot — this is a true, direct front view, not a three-quarter view.',
-      );
-      break;
-    }
     case 'RING_GOLD_SIDE':
-    case 'RING_ROSE_SIDE': {
-      const isRose = assetType === 'RING_ROSE_SIDE';
-      // Hardcoded opposite tilt directions (rather than a vague "make it
-      // different" instruction) so the Gold and Rose Three-Quarter Side View
-      // shots are reliably distinguishable from each other, on top of each
-      // already being required to differ sharply from its own Front View.
-      const directionNote = isRose
-        ? ' Tilt the ring toward the opposite direction from the Gold Three-Quarter Side View shot (if Gold tilts left, tilt right, and vice versa) so the two Three-Quarter Side View images are clearly distinguishable.'
-        : '';
+    case 'RING_GOLD_MACRO': {
+      const shot = RING_CATALOGUE_SHOTS[assetType];
       creativeDefaults = {
-        background: (isRose ? RING_ROSE_CATALOGUE_BACKGROUND_NOTE : RING_GOLD_CATALOGUE_BACKGROUND_NOTE).trim(),
+        background: RING_GOLD_CATALOGUE_BACKGROUND_NOTE.trim(),
         lighting: RING_CATALOGUE_LIGHTING_NOTE.trim(),
-        // Three-Quarter Side View — an elevated three-quarter angle with the
-        // ring tilted approximately 35-45 degrees, decorative top still
-        // facing the camera, replacing the old true 80-90° upright side
-        // profile (client correction: the upright profile hid the front
-        // motif and read as an unnatural product pose). Still required to
-        // stay visually distinct from Front View: Front stays flat with no
-        // tilt; this stays tilted, with both shoulders, the band opening and
-        // setting height all visible.
-        composition: `${RING_SIZE_NOTE} Photograph the ring from an elevated three-quarter angle with the ring tilted approximately 35-45 degrees — placed naturally, not standing completely upright on its band and not a direct front view. Keep the decorative top facing toward the camera with the complete front motif clearly visible, while also showing the circular band opening below the design, both the left and right shoulders, the band thickness and side construction, and the setting height and stone depth.${directionNote} Keep the complete ring inside the frame with safe margins and add a soft, realistic shadow directly underneath the product. Use a clean catalogue composition with different fabric folds from the matching Front View shot.`,
+        composition: `${RING_SIZE_NOTE} ${shot.composition}`,
         presenterPose: '',
         cameraAngle: '',
         additionalInstructions: '',
       };
-      negativeParts.push(
-        'Do not use a direct front-facing angle for this shot.',
-        'Do not stand the ring completely upright on its band or generate a true 80-90 degree side profile — use the elevated three-quarter tilt (approximately 35-45 degrees) described above.',
-        'Do not hide the band opening, either shoulder, or flatten the setting.',
-        'Do not crop any part of the ring out of frame.',
-        'Do not repeat the orientation used for the Front View shot — the two must be visually and structurally different.',
-      );
+      categoryPlacement = RING_CATALOGUE_COMMON_NOTE;
+      negativeParts.push(...RING_CATALOGUE_COMMON_NEGATIVES, ...shot.negatives);
       break;
     }
+    case 'RING_HAND_1':
+    case 'RING_HAND_2':
+    case 'RING_ROSE_FRONT':
+    case 'RING_ROSE_SIDE':
+      throw new AppError(400, 'This Ring image type is no longer generated — start a new generation for the four Yellow Gold views.');
     default:
       throw new Error(`Unknown asset type "${assetType}"`);
   }
@@ -996,17 +916,25 @@ const VALIDATION_SYSTEM_PROMPT = `You are a jewellery product-photo quality revi
 // front-facing — which in practice catches the same "these two look the
 // same" failure mode the client described, without a separate cross-asset
 // validation pass.
+const RING_VALIDATION_COMMON =
+  ' The background must be plain clean white — set validationStatus to "failed" for a coloured, gradient or textured background, for a rose-gold or white-gold ring (yellow gold only), or for any hand, finger or person.';
+const RING_VALIDATION_CONTEXT = {
+  RING_GOLD_HERO:
+    ' This is the Ring HERO THREE-QUARTER VIEW — the ring stands upright at an approximately 40-45 degree three-quarter angle, showing the centre stone, the decorative top and the band, centred with balanced white space. Set validationStatus to "failed" if any part of the ring is cropped out of frame, or if this is a flat top-down view or a pure side profile instead of a three-quarter view.',
+  RING_GOLD_FRONT:
+    ' This is the Ring FRONT/TOP VIEW — the ring lies horizontally and the complete decorative top is seen from the front or a slightly elevated top angle, with the centre stone and the small stones clearly shown. Set validationStatus to "failed" if the ring stands upright at a three-quarter angle (that is the hero view), if the decorative section is incomplete, or if any part of the ring is cropped out of frame.',
+  RING_GOLD_SIDE:
+    ' This is the Ring SIDE-PROFILE VIEW — the ring stands upright and is seen from the side, showing the band profile, setting height, prongs and centre-stone mounting. Set validationStatus to "failed" if this looks like a three-quarter hero view or a front view rather than a genuine side profile, or if any part of the ring is cropped out of frame.',
+  RING_GOLD_MACRO:
+    ' This is the Ring MACRO DETAIL VIEW — a close-up of the main design (centre stone, prongs, small stones, metal finishing, setting). Part of the band extending outside the frame is EXPECTED and must not be flagged. Set validationStatus to "failed" only if an important stone or primary design detail is cropped out, or if the centre design is not the focal point.',
+};
+
+// Each Ring view is checked against its own angle rules — one vision call
+// only sees its own image, but a hero that came out as a side view (or a
+// side view that is just the hero rotated) fails its own checklist.
 function ringValidationContextFor(assetType) {
-  if (assetType === 'RING_HAND_1' || assetType === 'RING_HAND_2') {
-    return ' This is a Ring lifestyle hand-wearing shot — a hand, and possibly the model\'s face, are expected and must not be flagged as an obstruction. The background is a natural, neutral photographic environment (studio grey/white/black, soft interior, subtle beige) and must NOT be flagged just for not matching a metal-coloured catalogue background — only flag the background if it is champagne/ivory/peach/rose-tinted (i.e. tied to the metal colour), which is explicitly disallowed here. Pass only when: the ring is physically wrapped around the ring finger — not floating above the skin, not pasted on as a flat circular shape, not embedded inside the finger; the ring sits on the correct ring finger; the ring closely matches the uploaded product reference (same stones, same band structure — not just a loosely similar ring); hand anatomy is realistic; and no other jewellery (earrings, necklace, bracelet, watch, additional ring) is visible on the model. Set validationStatus to "failed" (not "warning") when: the ring is on the wrong finger, the ring appears to float above the skin or is pasted on flat, the ring appears embedded inside the finger, more than one ring is visible, any other jewellery item is visible, hand anatomy is unrealistic (wrong finger count, malformed joints), or the generated ring is only loosely similar to the reference rather than an accurate reproduction.';
-  }
-  if (assetType === 'RING_GOLD_FRONT' || assetType === 'RING_ROSE_FRONT') {
-    return ' This is a Ring TRUE FRONT VIEW — a direct, symmetrical view of the decorative top, not an upright three-quarter angle. It passes only when: the decorative ring face is the dominant visible element; the centre stone is centrally positioned; the left and right decorative bands are clearly visible extending outward; the ring is viewed directly from above/toward its decorative face; the image does NOT resemble an upright side view. Set validationStatus to "failed" (not "warning") if the ring is standing upright on its band, if the circular band opening is the dominant shape, or if this looks like a three-quarter/rotated angle rather than a true direct front view — this is a common and important failure mode to catch.';
-  }
-  if (assetType === 'RING_GOLD_SIDE' || assetType === 'RING_ROSE_SIDE') {
-    return ' This is a Ring THREE-QUARTER SIDE VIEW — an elevated three-quarter angle with the ring tilted approximately 35-45 degrees, not a direct front view and not a true 80-90 degree upright side profile. It passes only when: the ring is placed naturally at that tilt rather than standing completely upright on its band; the decorative top still faces toward the camera with the complete front motif clearly visible; the circular band opening is clearly visible below the design; both the left and right shoulders are visible; band thickness and side construction are visible; the centre-stone setting height and stone depth are visible; the complete ring is inside the frame with safe margins; a soft, realistic shadow is visible underneath the product. Set validationStatus to "failed" (not "warning") if the shot is a direct front view with no tilt, if the ring stands fully upright on its band (a true 80-90 degree side profile), if the band opening or either shoulder is hidden, if the setting appears flattened rather than showing real height, or if any part of the ring is cropped out of frame.';
-  }
-  return '';
+  const context = RING_VALIDATION_CONTEXT[assetType];
+  return context ? `${context}${RING_VALIDATION_COMMON}` : '';
 }
 
 // Necklace sets — the system prompt's rule (2) ("no additional jewellery")
@@ -1024,7 +952,7 @@ function necklaceValidationContextFor(confirmedType) {
 // A presenter shot showing a hand only (Ring's dedicated workflow) has no
 // visible model demographic to check — every other presenter-eligible shot
 // (PRESENTER_* and, for a non-Ring category, any future hand/body shot) does.
-const NO_DEMOGRAPHIC_ASSET_TYPES = new Set(['RING_GOLD_FRONT', 'RING_GOLD_SIDE', 'RING_ROSE_FRONT', 'RING_ROSE_SIDE']);
+const NO_DEMOGRAPHIC_ASSET_TYPES = new Set([...RING_ASSET_TYPES, 'RING_ROSE_FRONT', 'RING_ROSE_SIDE']);
 
 // Audience-specific validation criteria (spec's "VALIDATION" section) —
 // appended alongside ringValidationContextFor, never replacing it, so a

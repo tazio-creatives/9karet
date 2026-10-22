@@ -49,8 +49,12 @@ const CATALOGUE_ASSET_TYPES = [
   'YELLOW_HERO_45',
   'ROSE_FRONT',
   'ROSE_HERO_45',
+  'RING_GOLD_HERO',
   'RING_GOLD_FRONT',
   'RING_GOLD_SIDE',
+  'RING_GOLD_MACRO',
+  // Legacy Ring slots — still featurable on jobs made before the 9karet
+  // four-view Ring workflow.
   'RING_ROSE_FRONT',
   'RING_ROSE_SIDE',
 ];
@@ -318,7 +322,7 @@ export async function confirmJob(req, res, next) {
     const template = await findCategoryTemplate(input.jewelleryType);
     if (!template) throw new AppError(400, `No generation template for "${input.jewelleryType}"`);
 
-    // Rings never use a Presenter — a "Hand Pose" choice replaces it — so
+    // Rings never use a Presenter (only the four catalogue views), so
     // presenterId is ignored outright for a Ring job even if the client sent
     // one (e.g. left over from switching jewellery type mid-wizard).
     const isRing = input.jewelleryType === 'RING';
