@@ -14,6 +14,7 @@ import {
   resolvePresenter,
   buildGenerationRequest,
   IDENTITY_SOURCES,
+  hiddenFasteningValidationContextFor,
 } from '../../src/services/aiStudioService.js';
 import { splitGenerationWaves } from '../../src/jobs/aiStudioJob.js';
 import { query } from '../../src/config/db.js';
@@ -376,38 +377,71 @@ describe('previewPromptsForJob (Review Prompts panel — pure, no DB/API calls)'
     }
   });
 
-  test('Bracelet gets a clasp-hidden negative instruction on every generated view, and it does not leak to other categories', () => {
-    const braceletPreviews = previewPromptsForJob({
-      confirmedType: 'BRACELET',
-      template: FAKE_TEMPLATE,
-      presenter: FAKE_PRESENTER,
-      generateRoseGold: true,
-      overridesByAssetType: undefined,
-    });
-    // Same 6 asset types/order as any other non-Ring category — the clasp
-    // rule must not change what gets generated, only add a negative.
-    assert.deepEqual(
-      braceletPreviews.map((p) => p.assetType),
-      ['YELLOW_FRONT', 'YELLOW_HERO_45', 'ROSE_FRONT', 'ROSE_HERO_45', 'PRESENTER_YELLOW_1', 'PRESENTER_ROSE'],
-    );
-    for (const p of braceletPreviews) {
-      assert.ok(
-        p.negativeInstructions.some((n) => /clasp/i.test(n) && /lock/i.test(n)),
-        `missing clasp-hidden negative for ${p.assetType}`,
-      );
-      assert.match(p.finalPrompt, /do not show the bracelet's lock, clasp/i);
-    }
+  describe('hidden fastening — Necklace, Bracelet and Anklet only', () => {
+    const run = (confirmedType, generateRoseGold, confirmedCustomerCategory) =>
+      previewPromptsForJob({
+        confirmedType,
+        template: FAKE_TEMPLATE,
+        presenter: FAKE_PRESENTER,
+        generateRoseGold,
+        overridesByAssetType: undefined,
+        confirmedCustomerCategory,
+      });
 
-    const banglePreviews = previewPromptsForJob({
-      confirmedType: 'BANGLE',
-      template: FAKE_TEMPLATE,
-      presenter: FAKE_PRESENTER,
-      generateRoseGold: true,
-      overridesByAssetType: undefined,
+    test('every one of the six prompts gets the rule, in both Rose Gold modes and for every customer category', () => {
+      for (const type of ['NECKLACE', 'BRACELET', 'ANKLET']) {
+        for (const rose of [false, true]) {
+          for (const customer of ['WOMEN', 'UNISEX', 'GENTS', 'KIDS']) {
+            const previews = run(type, rose, customer);
+            assert.equal(previews.length, 6);
+            for (const p of previews) {
+              const where = `${type} ${rose ? 'ON' : 'OFF'} ${customer} ${p.slotKey}`;
+              assert.match(p.finalPrompt, /do not show any clasp, hook, lock, lobster clasp, spring-ring clasp, S-hook, extension-chain end or fastening mechanism/i, where);
+              assert.match(p.finalPrompt, /even when it is visible in the uploaded reference/i, where);
+              assert.match(p.finalPrompt, /do not delete or redesign the jewellery structure/i, where);
+              assert.match(p.finalPrompt, /hidden behind the product or positioned outside the visible frame/i, where);
+              assert.match(p.finalPrompt, /preserve the exact chain design, jewellery shape, diamond count, stones, proportions and metal colour/i, where);
+            }
+          }
+        }
+      }
     });
-    for (const p of banglePreviews) {
-      assert.ok(!p.negativeInstructions.some((n) => /clasp/i.test(n)), `clasp rule leaked into BANGLE for ${p.assetType}`);
-    }
+
+    test('the general fidelity rule no longer asks these categories to preserve a visible clasp', () => {
+      for (const type of ['NECKLACE', 'BRACELET', 'ANKLET']) {
+        for (const p of run(type, false)) {
+          assert.doesNotMatch(p.finalPrompt, /band or chain proportions, clasps,/i);
+          assert.match(p.finalPrompt, /the fastening as part of the structure \(kept out of sight/i);
+        }
+      }
+    });
+
+    test('other categories are unchanged: no rule, clasps still preserved as shown', () => {
+      for (const type of ['CHAIN', 'MANGALSUTRA', 'BANGLE', 'PENDANT', 'RING', 'EARRINGS', 'NOSE_PIN', 'BROOCH', 'OTHER']) {
+        for (const p of run(type, true)) {
+          assert.doesNotMatch(p.finalPrompt, /hidden fastening|do not show any clasp/i, `${type} ${p.slotKey}`);
+          assert.match(p.finalPrompt, /band or chain proportions, clasps,/i, `${type} ${p.slotKey}`);
+        }
+      }
+    });
+
+    test('the six-image plan itself is unchanged by the rule', () => {
+      const shape = (type) => run(type, true).map((p) => `${p.slotKey}=${p.assetType}`);
+      assert.deepEqual(shape('NECKLACE'), shape('PENDANT'));
+      assert.deepEqual(shape('ANKLET'), shape('BANGLE'));
+    });
+
+    test('quality check: a visible fastening fails; a hidden one is not a design change; altering the piece fails', () => {
+      for (const type of ['NECKLACE', 'BRACELET', 'ANKLET']) {
+        const text = hiddenFasteningValidationContextFor(type);
+        assert.match(text, /"failed" if any clasp, hook, lock/i);
+        assert.match(text, /must NOT be flagged as a missing component or design change/i);
+        assert.match(text, /chain is cut or shortened/i);
+      }
+      for (const type of ['CHAIN', 'MANGALSUTRA', 'BANGLE', 'PENDANT', 'RING', 'EARRINGS']) {
+        assert.equal(hiddenFasteningValidationContextFor(type), '');
+      }
+    });
   });
 
   test('presenter shots include the exact spec-mandated Ring placement/exclusion wording (Problem 2) — a non-Ring category still using the generic Presenter flow', () => {

@@ -135,6 +135,31 @@ export async function analyseJewellery(imageBuffer, mimetype) {
 
 const FIDELITY_BLOCK = `The uploaded jewellery reference is the definitive product. Preserve its exact jewellery type, stone count and apparent arrangement, stone shape and position, prongs and setting, metal colour, band or chain proportions, clasps, and every other distinctive construction detail. Do not redesign, reinterpret or add/remove/resize/reposition any component. Photorealistic, premium e-commerce jewellery photography. No text, logos, or watermarks.`;
 
+// Necklace, Bracelet and Anklet never show their fastening (9karet, fixed
+// rule — no per-product setting). The clasp stays part of the structure but
+// is turned behind the piece or out of frame. Chain, Mangalsutra, Bangle and
+// every other category keep their clasps as shown.
+const HIDDEN_FASTENING_TYPES = new Set(['NECKLACE', 'BRACELET', 'ANKLET']);
+
+export function hidesFastening(confirmedType) {
+  return HIDDEN_FASTENING_TYPES.has(confirmedType);
+}
+
+// The general fidelity rule asks for clasps to be preserved; for the hidden-
+// fastening categories that would contradict the rule below, so the clasp
+// is preserved structurally but not shown.
+const FIDELITY_BLOCK_HIDDEN_FASTENING = FIDELITY_BLOCK.replace(
+  'band or chain proportions, clasps, and every other',
+  'band or chain proportions, the fastening as part of the structure (kept out of sight — see the hidden-fastening rule), and every other',
+);
+
+function fidelityBlockFor(confirmedType) {
+  return hidesFastening(confirmedType) ? FIDELITY_BLOCK_HIDDEN_FASTENING : FIDELITY_BLOCK;
+}
+
+const HIDDEN_FASTENING_NOTE =
+  'Hidden fastening: do not show any clasp, hook, lock, lobster clasp, spring-ring clasp, S-hook, extension-chain end or fastening mechanism in the final generated image, even when it is visible in the uploaded reference. Do not delete or redesign the jewellery structure — do not cut the chain, close a gap with invented links, shorten it or add a substitute connector. Compose or rotate the jewellery so the fastening mechanism is naturally hidden behind the product or positioned outside the visible frame, with the piece still looking naturally closed and continuous. Preserve the exact chain design, jewellery shape, diamond count, stones, proportions and metal colour.';
+
 // The 7-value asset vocabulary replaces the old 4-value shot_type — metal
 // color is now encoded directly in the identifier (e.g. ROSE_FRONT) instead
 // of being a separate per-job field, since a single job can now produce both
@@ -538,15 +563,6 @@ const RING_HAND_NO_OTHER_JEWELLERY_NEGATIVE =
 const RING_FIDELITY_EXTRA =
   'The uploaded product image is the only source of truth for the ring design — preserve the exact number, shape and position of every stone, the centre-stone shape and setting, band count and structure, pavé arrangement, curves/crossings/gaps, proportions, setting height, metal thickness and every decorative detail. Do not invent additional stones, remove stones, create a second ring, change the centre stone, change the band design, simplify the construction, or mirror/symmetrise an asymmetric detail. Do not redesign the ring to suit the pose. Pose and background reference images may influence only the hand position, camera angle or background — never the jewellery design. A visually attractive but structurally inaccurate result is not acceptable — do not add, remove or move stones, change the motif or band design, add another band, invent a different setting, convert the ring into a bangle or bracelet, or mix the uploaded ring with any design elements from pose or background reference images.';
 
-// Appended as an extra negative instruction on every asset type for a
-// confirmed Bracelet, on top of whatever that asset type's own negatives
-// already are — Bracelet is otherwise just the generic (non-Ring) prompt
-// path, so this is the only Bracelet-specific rule. Applies to every
-// generated view (front, hero angle, presenter) and every metal colour,
-// without changing which asset types are generated or their order.
-const BRACELET_CLASP_HIDDEN_NOTE =
-  "This is a Bracelet — do not show the bracelet's lock, clasp, hook or fastening mechanism anywhere in this image. Position or rotate the bracelet so the locking area stays hidden behind the product itself or outside the visible angle, while keeping the bracelet looking naturally closed and continuous. Do not invent a decorative lock, clasp or connector that is not part of the original design. Preserve the bracelet's original design, stones, metal colour, proportions and pattern exactly.";
-
 // Appended as an extra instruction on every asset type for a confirmed
 // Necklace — a Necklace-category product is either a necklace alone or a
 // necklace + matching earrings set photographed together in one reference
@@ -877,7 +893,7 @@ function buildAssetPromptSections({
     confirmedCustomerCategory: audienceOverride
       ? `The confirmed customer category is ${formatCustomerCategory(confirmedCustomerCategory)}.`
       : '',
-    designPreservation: FIDELITY_BLOCK,
+    designPreservation: fidelityBlockFor(confirmedType),
     metalColour: metalColourNote,
     outputSpecs: 'Photorealistic, premium e-commerce jewellery photography. No text, logos, or watermarks.',
   };
@@ -886,7 +902,7 @@ function buildAssetPromptSections({
   let creativeDefaults;
   const negativeParts = ['Do not redesign, reinterpret or add/remove/resize/reposition any component.'];
   if (RING_ASSET_TYPE_SET.has(assetType)) negativeParts.push(RING_FIDELITY_EXTRA);
-  if (confirmedType === 'BRACELET') negativeParts.push(BRACELET_CLASP_HIDDEN_NOTE);
+  if (hidesFastening(confirmedType)) negativeParts.push(HIDDEN_FASTENING_NOTE);
   if (confirmedType === 'NECKLACE') {
     negativeParts.push(CATALOGUE_ASSET_TYPES.has(assetType) ? NECKLACE_SET_NOTE_CATALOGUE : NECKLACE_SET_NOTE_PRESENTER);
   }
@@ -1388,6 +1404,13 @@ function catalogueValidationContextFor(assetType) {
   return ' This is a PRODUCT-ONLY catalogue image (no model). Set validationStatus to "failed" if any person, model, mannequin, bust, face, neck, ears, hands or other body part appears anywhere in the generated image.';
 }
 
+// Necklace / Bracelet / Anklet: a visible fastening fails; a hidden one is
+// what was asked for and must not be read as a design change.
+export function hiddenFasteningValidationContextFor(confirmedType) {
+  if (!hidesFastening(confirmedType)) return '';
+  return ' This category must not show its fastening: set validationStatus to "failed" if any clasp, hook, lock, lobster clasp, spring-ring clasp, S-hook, extension-chain end or other fastening mechanism is visible in the generated image. The fastening being out of sight is expected and must NOT be flagged as a missing component or design change — but set validationStatus to "failed" if the jewellery was altered to hide it, e.g. the chain is cut or shortened, a gap is closed with links that are not in the reference, or a new connector was added.';
+}
+
 function necklaceValidationContextFor(confirmedType) {
   if (confirmedType !== 'NECKLACE') return '';
   return ' This is the Necklace category: if the original reference shows the necklace together with matching earrings (a necklace set), those earrings are part of the product and must NOT be flagged as additional jewellery. In that case set validationStatus to "failed" if the generated image is missing the necklace or the matching earrings, or — on a presenter shot — if the presenter is not wearing both (necklace on the neck, matching earrings on the ears). Also compare the earrings closely with the reference: set validationStatus to "failed" if their type, size or length differs — e.g. the reference shows small stud earrings but the generated image shows drop, dangle, chandelier or hoop earrings, or the earrings are visibly longer or larger than in the reference — and say so explicitly, e.g. "Failed: Earrings changed from studs to long drops." If the reference shows only a necklace, set validationStatus to "failed" if any earrings appear in the generated image.';
@@ -1445,7 +1468,7 @@ export async function validateGeneratedImage({
   const generatedBase64 = generatedBuffer.toString('base64');
   const referenceBase64 = referenceBuffer.toString('base64');
 
-  let text = `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference.${ringValidationContextFor(assetType)}${extraViewValidationContextFor(assetType)}${necklaceValidationContextFor(confirmedType)}${catalogueValidationContextFor(assetType)}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
+  let text = `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference.${ringValidationContextFor(assetType)}${extraViewValidationContextFor(assetType)}${necklaceValidationContextFor(confirmedType)}${hiddenFasteningValidationContextFor(confirmedType)}${catalogueValidationContextFor(assetType)}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
 
   const content = [
     { type: 'text', text },
