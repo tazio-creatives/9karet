@@ -7,6 +7,7 @@ import { boss } from '../jobs/queue.js';
 import { JOB_AI_STUDIO_ANALYSE, JOB_AI_STUDIO_GENERATE, resetAssetForRetry } from '../jobs/aiStudioJob.js';
 import {
   effectiveGenerateRoseGold,
+  isModelShot,
   JEWELLERY_TYPES,
   ASSET_DISPLAY_ORDER,
   previewPromptsForJob,
@@ -53,6 +54,10 @@ const CATALOGUE_ASSET_TYPES = [
   'RING_GOLD_FRONT',
   'RING_GOLD_SIDE',
   'RING_GOLD_MACRO',
+  'GOLD_HERO',
+  'GOLD_FRONT',
+  'GOLD_SIDE',
+  'GOLD_MACRO',
   // Legacy Ring slots — still featurable on jobs made before the 9karet
   // four-view Ring workflow.
   'RING_ROSE_FRONT',
@@ -322,19 +327,10 @@ export async function confirmJob(req, res, next) {
     const template = await findCategoryTemplate(input.jewelleryType);
     if (!template) throw new AppError(400, `No generation template for "${input.jewelleryType}"`);
 
-    // Rings never use a Presenter (only the four catalogue views), so
-    // presenterId is ignored outright for a Ring job even if the client sent
-    // one (e.g. left over from switching jewellery type mid-wizard).
-    const isRing = input.jewelleryType === 'RING';
-
-    let presenter = null;
-    if (!isRing && input.presenterId) {
-      presenter = await findPresenterById(input.presenterId);
-      if (!presenter || !presenter.is_active) throw new AppError(400, 'Selected presenter is not available');
-      if (!presenter.supported_jewellery_types.includes(input.jewelleryType)) {
-        throw new AppError(400, 'Selected presenter does not support this jewellery type');
-      }
-    }
+    // No category uses the presenter library any more (9karet: model shots
+    // are AI-described), so presenterId is ignored outright even if the
+    // client sent one.
+    const presenter = null;
 
     const generateRoseGold = effectiveGenerateRoseGold(input.jewelleryType, input.generateRoseGold ?? true);
     const customerCategory = input.customerCategory ?? DEFAULT_CUSTOMER_CATEGORY;
@@ -342,7 +338,7 @@ export async function confirmJob(req, res, next) {
     await updateJob(job.id, {
       jewellery_type: input.jewelleryType,
       category_id: input.categoryId ?? null,
-      presenter_id: isRing ? null : (input.presenterId ?? null),
+      presenter_id: null,
       generate_rose_gold: generateRoseGold,
       customer_category: customerCategory,
       customer_category_confirmed_at: new Date(),
@@ -405,13 +401,8 @@ export async function previewPrompts(req, res, next) {
     const template = await findCategoryTemplate(jewelleryType);
     if (!template) throw new AppError(400, `No generation template for "${jewelleryType}"`);
 
-    const isRing = jewelleryType === 'RING';
-    const presenterId = input.presenterId !== undefined ? input.presenterId : job.presenter_id;
-    let presenter = null;
-    if (!isRing && presenterId) {
-      presenter = await findPresenterById(presenterId);
-      if (!presenter || !presenter.is_active) throw new AppError(400, 'Selected presenter is not available');
-    }
+    // See confirmJob — the presenter library is no longer used.
+    const presenter = null;
 
     const generateRoseGold = effectiveGenerateRoseGold(
       jewelleryType,
@@ -483,7 +474,7 @@ export async function changeGentsPresenter(req, res, next) {
     }
 
     const assets = await findAssetsByJobId(job.id);
-    const presenterAssets = assets.filter((a) => a.asset_type.startsWith('PRESENTER_'));
+    const presenterAssets = assets.filter((a) => isModelShot(a.asset_type));
     if (presenterAssets.length === 0) {
       throw new AppError(400, 'This job has no presenter images to regenerate');
     }

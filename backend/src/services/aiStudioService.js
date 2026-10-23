@@ -164,7 +164,22 @@ export const RING_ASSET_TYPES = [...RING_CATALOGUE_TYPES, ...RING_HAND_TYPES];
 export const LEGACY_RING_ASSET_TYPES = ['RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
 const RING_ASSET_TYPE_SET = new Set([...RING_ASSET_TYPES, ...LEGACY_RING_ASSET_TYPES]);
 
-// File-name stem for each Ring output (yellow_gold_hero, …), used in the
+// Every other category (9karet) — the same shape as Ring: four Yellow Gold
+// catalogue views on white, then two images of an AI-described model
+// wearing the piece (no presenter library, no rose gold). The older
+// YELLOW_* / ROSE_* / PRESENTER_* slots are kept only so jobs made before
+// this change still load.
+export const CATALOGUE_VIEW_TYPES = ['GOLD_HERO', 'GOLD_FRONT', 'GOLD_SIDE', 'GOLD_MACRO'];
+export const MODEL_SHOT_TYPES = ['MODEL_1', 'MODEL_2'];
+export const STANDARD_ASSET_TYPES = [...CATALOGUE_VIEW_TYPES, ...MODEL_SHOT_TYPES];
+
+// Shots of a person wearing the piece — the old presenter slots and the new
+// model slots. Gents identity locking applies to all of them.
+export function isModelShot(assetType) {
+  return assetType.startsWith('PRESENTER_') || assetType.startsWith('MODEL_');
+}
+
+// File-name stem for each output (yellow_gold_hero, …), used in the
 // generated image's storage key.
 export const RING_OUTPUT_NAMES = {
   RING_GOLD_HERO: 'yellow_gold_hero',
@@ -173,6 +188,12 @@ export const RING_OUTPUT_NAMES = {
   RING_GOLD_MACRO: 'yellow_gold_macro',
   RING_HAND_1: 'yellow_gold_hand_1',
   RING_HAND_2: 'yellow_gold_hand_2',
+  GOLD_HERO: 'yellow_gold_hero',
+  GOLD_FRONT: 'yellow_gold_front',
+  GOLD_SIDE: 'yellow_gold_side',
+  GOLD_MACRO: 'yellow_gold_macro',
+  MODEL_1: 'yellow_gold_model_1',
+  MODEL_2: 'yellow_gold_model_2',
 };
 
 // Mirrors the DB CHECK constraint (latest: the 9karet ring catalogue
@@ -194,35 +215,29 @@ export const ASSET_DISPLAY_ORDER = {
   RING_HAND_2: 5,
   RING_ROSE_FRONT: 6,
   RING_ROSE_SIDE: 7,
+  GOLD_HERO: 0,
+  GOLD_FRONT: 1,
+  GOLD_SIDE: 2,
+  GOLD_MACRO: 3,
+  MODEL_1: 4,
+  MODEL_2: 5,
 };
 
-// Which asset types get generated for a job. Ring is a completely separate,
-// fixed output structure — always the same four Yellow Gold catalogue views
-// plus two Yellow Gold hand shots, whatever the Rose Gold toggle says.
-// Every other jewellery type keeps the original logic untouched: Yellow Gold
-// catalogue shots are always present, Rose Gold and presenter shots are
-// additive, driven purely by the Rose Gold toggle and whether a presenter
-// was picked. When both rose gold and a presenter are on, PRESENTER_YELLOW_1
-// + PRESENTER_ROSE form a matched pose pair (same pose, two metals);
-// PRESENTER_YELLOW_2 (a second, different-angle yellow view) is reserved for
-// the no-rose-gold+presenter case, where there's no rose shot to pair
-// against instead.
-// Necklace always produces the full Yellow + Rose set — 2 catalogue shots
-// per metal, plus one presenter shot per metal when a presenter is chosen —
-// regardless of the admin's Rose Gold toggle (client requirement). Every
-// other type follows the toggle.
-const ALWAYS_ROSE_GOLD_TYPES = new Set(['NECKLACE']);
-
-// 9karet has no rose gold for Ring, so a Ring job never records it as on.
-const NEVER_ROSE_GOLD_TYPES = new Set(['RING']);
-
-export function effectiveGenerateRoseGold(confirmedType, requested) {
-  if (NEVER_ROSE_GOLD_TYPES.has(confirmedType)) return false;
-  return ALWAYS_ROSE_GOLD_TYPES.has(confirmedType) ? true : requested;
+// Which asset types get generated for a job (9karet). Every category has a
+// fixed six-image plan, whatever the Rose Gold toggle or presenter choice
+// says: Ring gets its own four catalogue views plus two hand shots, every
+// other category the standard four catalogue views plus two model shots.
+// The older Yellow/Rose/Presenter combination below is only reached when
+// no category is known.
+// 9karet sells no rose gold, so no job ever records it as on — whatever the
+// client sends.
+export function effectiveGenerateRoseGold(_confirmedType, _requested) {
+  return false;
 }
 
 export function resolveAssetTypesForJob({ generateRoseGold, hasPresenter, confirmedType }) {
   if (confirmedType === 'RING') return [...RING_ASSET_TYPES];
+  if (confirmedType) return [...STANDARD_ASSET_TYPES];
   const types = ['YELLOW_FRONT', 'YELLOW_HERO_45'];
   if (generateRoseGold) types.push('ROSE_FRONT', 'ROSE_HERO_45');
   if (hasPresenter) {
@@ -234,7 +249,7 @@ export function resolveAssetTypesForJob({ generateRoseGold, hasPresenter, confir
 
 // Every Ring hand shot is Yellow Gold (9karet has no rose gold) — asset types
 // are unambiguous from their name alone, so the extra param is a no-op.
-export function metalColorForAssetType(assetType, generateRoseGold = true) {
+export function metalColorForAssetType(assetType, _generateRoseGold = true) {
   if (assetType.startsWith('RING_ROSE_')) return 'ROSE';
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'YELLOW';
   return assetType.startsWith('ROSE_') || assetType === 'PRESENTER_ROSE' ? 'ROSE' : 'YELLOW';
@@ -306,6 +321,64 @@ const RING_CATALOGUE_LIGHTING_NOTE =
   ' Use soft, premium studio lighting with natural, controlled product shadows, keeping the jewellery clearly separated from the background. Avoid busy props, flowers, boxes, unrelated decorative objects or hard reflections. The background must remain secondary to the product.';
 const RING_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px.';
 const RING_CATALOGUE_SIZE_NOTE = 'Create a premium square jewellery photograph at 816 × 816px (1:1).';
+
+// The four catalogue views for every non-Ring category — the same idea as
+// the Ring set, worded for any piece. Chains, necklaces, bracelets and
+// anklets are laid flat for the front view; pairs and sets stay together.
+function catalogueViewShot(assetType, label) {
+  const piece = label ? label.toLowerCase() : 'jewellery piece';
+  switch (assetType) {
+    case 'GOLD_HERO':
+      return {
+        composition: `Hero three-quarter view — the primary product and product-list image. Show the complete ${piece} at an approximately 40-45 degree three-quarter angle with a slight elevation, so the main design, the stones and the depth of the construction are all clearly visible. Centre it with balanced white space around it and keep the complete piece inside the frame.`,
+        negatives: ['Do not crop any part of the jewellery out of frame.', 'Do not use a flat front view or a pure side profile for this shot.'],
+      };
+    case 'GOLD_FRONT':
+      return {
+        composition: `Front view. Show the complete ${piece} straight from the front — or laid flat and photographed from directly above for a chain, necklace, bracelet, bangle or anklet — so the full design and every visible stone are clearly displayed. Keep the complete piece inside the frame. This view must look clearly different from the three-quarter hero view.`,
+        negatives: [
+          'Do not crop any part of the jewellery out of frame.',
+          'Do not use a three-quarter angle — that is the hero view, and this shot must differ from it.',
+        ],
+      };
+    case 'GOLD_SIDE':
+      return {
+        composition: `Side-profile view. Show the ${piece} from the side, so its thickness, depth, setting height and construction (for example an earring post or hook, a pendant bail, or the profile of a band or link) are clearly shown. The angle must give genuine side-profile information. Keep the complete piece inside the frame.`,
+        negatives: [
+          'Do not crop any part of the jewellery out of frame.',
+          'Do not reuse or slightly rotate the hero three-quarter view — this must be a true side profile.',
+          'Do not show the piece face-on from the front.',
+        ],
+      };
+    default:
+      return {
+        composition: `Macro detail view. A close-up of the main design of the ${piece}: the main stone or motif, the setting, the small stones, the metal finishing and the craftsmanship details, sharp and clearly lit. Keep the main design as the focal point. Part of the piece (for example a chain or band) may extend outside the frame.`,
+        negatives: [
+          'Do not crop any important stone or primary design detail out of frame — only a chain, band or similar may be cut off.',
+          'Do not invent texture, engraving or stones that are not visible on the reference.',
+        ],
+      };
+  }
+}
+
+const CATALOGUE_SET_COMMON_NOTE =
+  'This is one of a set of four catalogue images of the same piece (Hero three-quarter, Front, Side profile, Macro detail): use the same lighting, white balance and soft shadow style as the rest of the set. If the uploaded reference shows a pair (such as earrings) or a set, show the complete pair or set together. The metal is polished yellow gold only — realistic and premium, a natural warm yellow, never excessively orange. Keep colourless stones (diamonds, cubic zirconia) colourless and naturally reflective, and keep every coloured gemstone its exact original colour. Preserve the exact number, shape, size and position of every stone, the settings, the proportions and any asymmetrical detail.';
+const CATALOGUE_SET_COMMON_NEGATIVES = [
+  'Do not generate a rose-gold or white-gold version — yellow gold only.',
+  'Do not show a person, model, hands, props, packaging, text, logos, borders or badges.',
+  'Do not use a coloured, gradient or textured background — plain clean white only.',
+  'Do not change the piece into another jewellery category.',
+  'Do not add unrealistic reflections or artificial sparkle effects.',
+  'Do not make the yellow gold excessively orange.',
+];
+
+// Model shots (every non-Ring category): an AI-described model, chosen by
+// customer category, wearing only the uploaded piece. Women and Unisex get
+// this descriptor; Gents and Kids use their existing descriptors.
+const DEFAULT_MODEL_DESCRIPTOR =
+  'an adult female model, approximately 22 to 35 years old, with a natural, elegant, premium Indian or internationally suitable commercial appearance, minimal makeup and neutral, solid-coloured clothing that does not compete with the jewellery';
+const MODEL_BACKGROUND_NOTE =
+  ' Use a soft, solid studio backdrop colour that elegantly complements the model described above — refined and premium, not a busy pattern and not pure white.';
 
 // The four Ring catalogue views, in output order. Each must give genuinely
 // new information — the side profile is a true side view, not the hero
@@ -433,7 +506,14 @@ const NECKLACE_SET_NOTE_PRESENTER =
 // only listed props, and the image model filled the gap with a model.
 const CATALOGUE_NO_PERSON_NOTE =
   'This is a product-only catalogue image: do not include any person, model, mannequin, bust, face, neck, ears, hands or other body part — show only the jewellery on the backdrop.';
-const CATALOGUE_ASSET_TYPES = new Set(['YELLOW_FRONT', 'YELLOW_HERO_45', 'ROSE_FRONT', 'ROSE_HERO_45', ...RING_CATALOGUE_TYPES]);
+const CATALOGUE_ASSET_TYPES = new Set([
+  'YELLOW_FRONT',
+  'YELLOW_HERO_45',
+  'ROSE_FRONT',
+  'ROSE_HERO_45',
+  ...RING_CATALOGUE_TYPES,
+  ...CATALOGUE_VIEW_TYPES,
+]);
 
 // Audience-specific presenter description (Gents/Kids), substituted for
 // whichever real presenter's own prompt_descriptor would otherwise be used
@@ -656,7 +736,9 @@ function buildAssetPromptSections({
   if (RING_ASSET_TYPE_SET.has(assetType)) negativeParts.push(RING_FIDELITY_EXTRA);
   if (confirmedType === 'BRACELET') negativeParts.push(BRACELET_CLASP_HIDDEN_NOTE);
   if (confirmedType === 'NECKLACE') {
-    negativeParts.push(CATALOGUE_ASSET_TYPES.has(assetType) ? NECKLACE_SET_NOTE_CATALOGUE : NECKLACE_SET_NOTE_PRESENTER);
+    let setNote = CATALOGUE_ASSET_TYPES.has(assetType) ? NECKLACE_SET_NOTE_CATALOGUE : NECKLACE_SET_NOTE_PRESENTER;
+    if (assetType.startsWith('MODEL_')) setNote = setNote.replace(/the presenter/g, 'the model');
+    negativeParts.push(setNote);
   }
   if (CATALOGUE_ASSET_TYPES.has(assetType)) negativeParts.push(CATALOGUE_NO_PERSON_NOTE);
 
@@ -800,6 +882,58 @@ function buildAssetPromptSections({
         ...RING_HAND_PLACEMENT_NEGATIVES,
       );
       if (audienceHand) negativeParts.push(audienceHand.negative);
+      break;
+    }
+    case 'GOLD_HERO':
+    case 'GOLD_FRONT':
+    case 'GOLD_SIDE':
+    case 'GOLD_MACRO': {
+      const shot = catalogueViewShot(assetType, categoryLabel);
+      creativeDefaults = {
+        background: RING_GOLD_CATALOGUE_BACKGROUND_NOTE.trim(),
+        lighting: RING_CATALOGUE_LIGHTING_NOTE.trim(),
+        composition: `${RING_CATALOGUE_SIZE_NOTE} ${shot.composition}`,
+        presenterPose: '',
+        cameraAngle: '',
+        additionalInstructions: '',
+      };
+      categoryPlacement = CATALOGUE_SET_COMMON_NOTE;
+      negativeParts.push(...CATALOGUE_SET_COMMON_NEGATIVES, ...shot.negatives);
+      break;
+    }
+    case 'MODEL_1':
+    case 'MODEL_2': {
+      const rule = placementRuleFor(confirmedType);
+      const itemLabel = categoryLabel ? categoryLabel.toLowerCase() : 'jewellery';
+      const isGentsIdentityLocked = confirmedCustomerCategory === 'GENTS';
+      const descriptor = audienceOverride?.descriptor ?? DEFAULT_MODEL_DESCRIPTOR;
+      categoryPlacement = `The model wears only this exact ${itemLabel}, on ${rule.location}. ${rule.excluded} Do not create a similar replacement design. Do not add accessory jewellery for styling. Keep the product clearly visible and unobstructed — do not allow clothing, hair or hands to cover it.`;
+      if (isGentsIdentityLocked) categoryPlacement = `${categoryPlacement} ${GENTS_IDENTITY_LOCK_NOTE}`;
+      const framing =
+        assetType === 'MODEL_1'
+          ? `Framed as a ${template.presenter_placement} (${template.presenter_crop} crop). Use realistic product scale and placement.`
+          : `A closer crop from a different angle than Model Image 1, focused on the ${itemLabel} as worn, with realistic product scale. Use a visibly different pose and camera angle from Model Image 1.`;
+      creativeDefaults = {
+        background: (audienceOverride?.background ?? MODEL_BACKGROUND_NOTE).trim(),
+        lighting: '',
+        composition: `${RING_SIZE_NOTE} ${framing}`,
+        presenterPose: isGentsIdentityLocked
+          ? `Worn naturally by the same adult male presenter shown in the first attached identity reference photo — ${GENTS_PRESENTER_DESCRIPTOR}.`
+          : `Worn naturally by ${descriptor}.`,
+        cameraAngle: '',
+        additionalInstructions: '',
+      };
+      negativeParts.push(
+        rule.excluded,
+        'Do not replace the uploaded product with a similar design.',
+        'Do not generate a rose-gold or white-gold version — yellow gold only.',
+      );
+      if (assetType === 'MODEL_2') negativeParts.push('Do not reuse the pose or camera angle of Model Image 1.');
+      if (isGentsIdentityLocked) {
+        negativeParts.push(GENTS_PRESENTER_NEGATIVE, GENTS_IDENTITY_LOCK_NEGATIVE);
+      } else if (audienceOverride) {
+        negativeParts.push(audienceOverride.negative);
+      }
       break;
     }
     case 'RING_ROSE_FRONT':
@@ -1047,8 +1181,24 @@ const RING_VALIDATION_CONTEXT = {
 const RING_HAND_VALIDATION_CONTEXT =
   ' This is a Ring lifestyle hand-wearing shot — a hand, and possibly the model\'s face, are expected and must not be flagged as an obstruction. The background is a natural, neutral photographic environment (studio grey/white/black, soft interior, subtle beige) and must NOT be flagged just for not matching a metal-coloured catalogue background — only flag the background if it is champagne/ivory/peach/rose-tinted (i.e. tied to the metal colour), which is explicitly disallowed here. Pass only when: the ring is physically wrapped around the ring finger — not floating above the skin, not pasted on as a flat circular shape, not embedded inside the finger; the ring sits on the correct ring finger; the ring closely matches the uploaded product reference (same stones, same band structure — not just a loosely similar ring); hand anatomy is realistic; and no other jewellery (earrings, necklace, bracelet, watch, additional ring) is visible on the model. Set validationStatus to "failed" (not "warning") when: the ring is on the wrong finger, the ring appears to float above the skin or is pasted on flat, the ring appears embedded inside the finger, more than one ring is visible, any other jewellery item is visible, hand anatomy is unrealistic (wrong finger count, malformed joints), or the generated ring is only loosely similar to the reference rather than an accurate reproduction.';;
 
+// Non-Ring catalogue views — the same angle checks as Ring, worded for any
+// piece, with the same lenient background rule.
+const CATALOGUE_VIEW_VALIDATION_CONTEXT = {
+  GOLD_HERO:
+    ' This is the HERO THREE-QUARTER VIEW — the complete piece at an approximately 40-45 degree three-quarter angle, centred with balanced white space. Set validationStatus to "failed" if any part of the piece is cropped out of frame, or if this is a flat front view or a pure side profile instead of a three-quarter view.',
+  GOLD_FRONT:
+    ' This is the FRONT VIEW — the complete piece seen straight from the front, or laid flat from directly above for a chain, necklace, bracelet, bangle or anklet. Set validationStatus to "failed" if it is at a three-quarter angle (that is the hero view), or if any part of the piece is cropped out of frame.',
+  GOLD_SIDE:
+    ' This is the SIDE-PROFILE VIEW — the piece seen from the side, showing its thickness, depth and construction. Set validationStatus to "failed" if this looks like a three-quarter hero view or a front view rather than a genuine side profile, or if any part of the piece is cropped out of frame.',
+  GOLD_MACRO:
+    ' This is the MACRO DETAIL VIEW — a close-up of the main design. Part of a chain, band or similar extending outside the frame is EXPECTED and must not be flagged. Set validationStatus to "failed" only if an important stone or primary design detail is cropped out, or if the main design is not the focal point.',
+};
+
 function ringValidationContextFor(assetType) {
   if (RING_HAND_TYPES.includes(assetType)) return RING_HAND_VALIDATION_CONTEXT;
+  if (CATALOGUE_VIEW_VALIDATION_CONTEXT[assetType]) {
+    return `${CATALOGUE_VIEW_VALIDATION_CONTEXT[assetType]}${RING_VALIDATION_COMMON.replace('a rose-gold or white-gold ring', 'a rose-gold or white-gold piece')}`;
+  }
   const context = RING_VALIDATION_CONTEXT[assetType];
   return context ? `${context}${RING_VALIDATION_COMMON}` : '';
 }
@@ -1068,7 +1218,7 @@ function necklaceValidationContextFor(confirmedType) {
 // A presenter shot showing a hand only (Ring's dedicated workflow) has no
 // visible model demographic to check — every other presenter-eligible shot
 // (PRESENTER_* and, for a non-Ring category, any future hand/body shot) does.
-const NO_DEMOGRAPHIC_ASSET_TYPES = new Set([...RING_CATALOGUE_TYPES, ...LEGACY_RING_ASSET_TYPES]);
+const NO_DEMOGRAPHIC_ASSET_TYPES = new Set([...RING_CATALOGUE_TYPES, ...LEGACY_RING_ASSET_TYPES, ...CATALOGUE_VIEW_TYPES]);
 
 // Audience-specific validation criteria (spec's "VALIDATION" section) —
 // appended alongside ringValidationContextFor, never replacing it, so a

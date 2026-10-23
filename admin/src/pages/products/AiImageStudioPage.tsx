@@ -14,35 +14,26 @@ import {
   changeGentsPresenter,
   type JewelleryType,
   type CustomerCategory,
-  type PromptOverrides,
   type PromptCreativeOverride,
 } from '../../api/aiStudio';
 import { fetchAdminCategories } from '../../api/categories';
 import { fetchAdminProduct } from '../../api/products';
-import { fetchPresenters } from '../../api/presenters';
 import { fetchProductSizeMeasurements } from '../../api/productSizeImage';
 import { ApiError } from '../../api/client';
 import { StudioStepper } from '../../features/aiStudio/StudioStepper';
 import { UploadStep } from '../../features/aiStudio/UploadStep';
 import { AnalyseConfirmStep } from '../../features/aiStudio/AnalyseConfirmStep';
 import { ManualMeasurementsForm } from '../../features/aiStudio/ManualMeasurementsForm';
-import { PresenterStep } from '../../features/aiStudio/PresenterStep';
-import { ReviewPromptsStep } from '../../features/aiStudio/ReviewPromptsStep';
 import { GenerateStep } from '../../features/aiStudio/GenerateStep';
 import { ReviewImportStep } from '../../features/aiStudio/ReviewImportStep';
-import {
-  resolveAssetTypesForJob,
-  inferJewelleryTypeFromCategory,
-  isRoseGoldForced,
-  isRoseGoldUnavailable,
-} from '../../features/aiStudio/generationRules';
+import { resolveAssetTypesForJob, inferJewelleryTypeFromCategory } from '../../features/aiStudio/generationRules';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './AiImageStudioPage.module.css';
 
-// The admin's last Rose Gold choice, remembered as a device-local default
-// for the next product (spec: "use it as the default for the next product,
-// the administrator must still be able to change it for each product").
-const ROSE_GOLD_PREF_KEY = 'aiStudio.defaultGenerateRoseGold';
+// 9karet: every category has a fixed plan — four Yellow Gold catalogue views
+// plus two hand (Ring) or model shots — so there is no rose-gold choice, no
+// presenter step and no prompt review; generation starts as soon as the
+// category is confirmed.
 
 export function AiImageStudioPage() {
   const { id: productId } = useParams<{ id: string }>();
@@ -57,7 +48,7 @@ export function AiImageStudioPage() {
 
   const [jobId, setJobId] = useState<string | null>(requestedJobId);
   const [hasCheckedActiveJob, setHasCheckedActiveJob] = useState(!!requestedJobId);
-  const [confirmSubStep, setConfirmSubStep] = useState<'analyse' | 'measurements' | 'presenter' | 'prompts'>('analyse');
+  const [confirmSubStep, setConfirmSubStep] = useState<'analyse' | 'measurements'>('analyse');
   // Default off (plan: "Include Product Size Image" toggle). A fully
   // decoupled generation pipeline from everything else on this page — see
   // productSizeImage.controller.js on the backend — so this state only ever
@@ -76,22 +67,11 @@ export function AiImageStudioPage() {
   // rationale as Problem 1's category-confirmation audit trail).
   const [customerCategory, setCustomerCategory] = useState<CustomerCategory | ''>('');
   const [customerCategoryConfirmed, setCustomerCategoryConfirmed] = useState(false);
-  const [generateRoseGold, setGenerateRoseGold] = useState(
-    () => localStorage.getItem(ROSE_GOLD_PREF_KEY) !== 'false',
-  );
-  // Necklace always gets the Yellow + Rose set and Ring never gets rose gold
-  // (see generationRules) — the saved toggle preference only applies elsewhere.
-  const effectiveRoseGold = isRoseGoldUnavailable(jewelleryType)
-    ? false
-    : isRoseGoldForced(jewelleryType) || generateRoseGold;
-  const [presenterId, setPresenterId] = useState<string | null>(null);
-  const [promptOverrides, setPromptOverrides] = useState<PromptOverrides>({});
   // A Set (not a single id) so "Regenerate All" — Ring-only — can show every
   // in-flight tile's own "Requesting…" state at once, not just the last one
   // clicked; individual regenerate still works exactly as before, just
   // adding/removing its own id from the set.
   const [regeneratingAssetIds, setRegeneratingAssetIds] = useState<Set<string>>(new Set());
-  const isRing = jewelleryType === 'RING';
 
   const { data: productData } = useQuery({
     queryKey: ['admin-product', productId],
@@ -101,14 +81,6 @@ export function AiImageStudioPage() {
   const { data: categoriesData } = useQuery({ queryKey: ['admin-categories'], queryFn: fetchAdminCategories });
   const product = productData?.product ?? null;
   const productCategory = categoriesData?.categories.find((c) => c.id === product?.categoryId) ?? null;
-
-  // Shares its cache with PresenterStep's identical query — only fetched
-  // here for the presenter's display name on the Review Prompts panel.
-  const { data: presentersData } = useQuery({
-    queryKey: ['ai-studio-presenters'],
-    queryFn: () => fetchPresenters(),
-  });
-  const presenters = presentersData?.presenters ?? [];
 
   const sizeMeasurementsQueryKey = ['product-size-measurements', productId];
   const { data: sizeMeasurementsData } = useQuery({
@@ -174,7 +146,6 @@ export function AiImageStudioPage() {
       setCategoryConfirmed(false);
       setCustomerCategory('');
       setCustomerCategoryConfirmed(false);
-      setPromptOverrides({});
     },
   });
 
@@ -183,9 +154,9 @@ export function AiImageStudioPage() {
       confirmStudioJob(productId as string, jobId as string, {
         jewelleryType: jewelleryType as Exclude<JewelleryType, 'UNKNOWN'>,
         categoryId: product?.categoryId ?? null,
-        presenterId: isRing ? null : presenterId,
-        generateRoseGold: effectiveRoseGold,
-        promptOverrides,
+        presenterId: null,
+        generateRoseGold: false,
+        promptOverrides: {},
         customerCategory: customerCategory || undefined,
       }),
     onSuccess: invalidateJob,
@@ -277,12 +248,7 @@ export function AiImageStudioPage() {
   const createError = createMutation.error instanceof ApiError ? createMutation.error.message : null;
   const confirmError = confirmMutation.error instanceof ApiError ? confirmMutation.error.message : null;
 
-  function handleGenerateRoseGoldChange(value: boolean) {
-    setGenerateRoseGold(value);
-    localStorage.setItem(ROSE_GOLD_PREF_KEY, String(value));
-  }
-
-  const generateCount = resolveAssetTypesForJob({ generateRoseGold: effectiveRoseGold, hasPresenter: !!presenterId, jewelleryType }).length;
+  const generateCount = resolveAssetTypesForJob({ generateRoseGold: false, hasPresenter: false, jewelleryType }).length;
 
   return (
     <div>
@@ -298,7 +264,7 @@ export function AiImageStudioPage() {
         Upload jewellery reference photos and generate a catalogue image set for {product?.name ?? 'this product'}.
       </p>
 
-      <StudioStepper status={job?.status ?? null} confirmSubStep={confirmSubStep} generateCount={generateCount} isRing={isRing} />
+      <StudioStepper status={job?.status ?? null} confirmSubStep={confirmSubStep} generateCount={generateCount} isRing />
 
       <section className={sharedStyles.cardPadded}>
         {!job && (
@@ -317,8 +283,8 @@ export function AiImageStudioPage() {
               onJewelleryTypeChange={setJewelleryType}
               categoryConfirmed={categoryConfirmed}
               onCategoryConfirmedChange={setCategoryConfirmed}
-              generateRoseGold={effectiveRoseGold}
-              onGenerateRoseGoldChange={handleGenerateRoseGoldChange}
+              generateRoseGold={false}
+              onGenerateRoseGoldChange={() => {}}
               customerCategory={customerCategory}
               onCustomerCategoryChange={setCustomerCategory}
               customerCategoryConfirmed={customerCategoryConfirmed}
@@ -326,7 +292,7 @@ export function AiImageStudioPage() {
               includeProductSizeImage={includeProductSizeImage}
               onIncludeProductSizeImageChange={setIncludeProductSizeImage}
             />
-            {confirmError && isRing && <p className={sharedStyles.error}>{confirmError}</p>}
+            {confirmError && <p className={sharedStyles.error}>{confirmError}</p>}
             <div className={styles.actions}>
               <button
                 type="button"
@@ -335,27 +301,20 @@ export function AiImageStudioPage() {
                   !jewelleryType ||
                   !categoryConfirmed ||
                   !customerCategoryConfirmed ||
-                  (isRing && !includeProductSizeImage && confirmMutation.isPending)
+                  (!includeProductSizeImage && confirmMutation.isPending)
                 }
-                // Ring skips both the presenter/hand-pose choice and the Review
-                // Prompts screen entirely — generation starts immediately once
-                // the category is confirmed, per spec: no pose selection, no
-                // additional confirmation step in between. The new
-                // measurements sub-step takes priority over both when the
-                // toggle is on, for Ring and non-Ring jobs alike.
+                // Generation starts as soon as the category is confirmed —
+                // the measurements sub-step comes first only when the
+                // Product Size Image toggle is on.
                 onClick={() => {
                   if (includeProductSizeImage) {
                     setConfirmSubStep('measurements');
                     return;
                   }
-                  if (isRing) {
-                    confirmMutation.mutate();
-                    return;
-                  }
-                  setConfirmSubStep('presenter');
+                  confirmMutation.mutate();
                 }}
               >
-                {isRing && !includeProductSizeImage
+                {!includeProductSizeImage
                   ? confirmMutation.isPending
                     ? 'Starting…'
                     : `Confirm & Generate ${generateCount} Images`
@@ -374,11 +333,7 @@ export function AiImageStudioPage() {
               onSaved={() => queryClient.invalidateQueries({ queryKey: sizeMeasurementsQueryKey })}
               onGenerating={() => {
                 queryClient.invalidateQueries({ queryKey: sizeMeasurementsQueryKey });
-                if (isRing) {
-                  confirmMutation.mutate();
-                } else {
-                  setConfirmSubStep('presenter');
-                }
+                confirmMutation.mutate();
               }}
               onCancel={() => setConfirmSubStep('analyse')}
             />
@@ -405,59 +360,6 @@ export function AiImageStudioPage() {
               <button
                 type="button"
                 className={sharedStyles.buttonPrimary}
-                onClick={() => (isRing ? confirmMutation.mutate() : setConfirmSubStep('presenter'))}
-              >
-                {isRing ? (confirmMutation.isPending ? 'Starting…' : `Confirm & Generate ${generateCount} Images`) : 'Continue'}
-              </button>
-            </div>
-          </>
-        )}
-
-        {job && job.status === 'awaiting_confirmation' && confirmSubStep === 'presenter' && !isRing && (
-          <>
-            <PresenterStep
-              jewelleryType={jewelleryType}
-              presenterId={presenterId}
-              onChange={setPresenterId}
-              generateRoseGold={effectiveRoseGold}
-            />
-            <div className={styles.actions}>
-              <button type="button" className={sharedStyles.button} onClick={() => setConfirmSubStep('analyse')}>
-                Back
-              </button>
-              <button
-                type="button"
-                className={sharedStyles.buttonPrimary}
-                onClick={() => setConfirmSubStep('prompts')}
-              >
-                Continue to Review Prompts
-              </button>
-            </div>
-          </>
-        )}
-
-        {job && job.status === 'awaiting_confirmation' && confirmSubStep === 'prompts' && jewelleryType && !isRing && (
-          <>
-            <ReviewPromptsStep
-              productId={productId as string}
-              jobId={jobId as string}
-              jewelleryType={jewelleryType as Exclude<JewelleryType, 'UNKNOWN'>}
-              presenterId={presenterId}
-              presenterName={presenters.find((p) => p.id === presenterId)?.displayName ?? null}
-              generateRoseGold={effectiveRoseGold}
-              promptOverrides={promptOverrides}
-              onPromptOverridesChange={setPromptOverrides}
-              customerCategory={customerCategory}
-            />
-            {confirmError && <p className={sharedStyles.error}>{confirmError}</p>}
-            <div className={styles.actions}>
-              <button type="button" className={sharedStyles.button} onClick={() => setConfirmSubStep('presenter')}>
-                Back
-              </button>
-              <button
-                type="button"
-                className={sharedStyles.buttonPrimary}
-                disabled={confirmMutation.isPending}
                 onClick={() => confirmMutation.mutate()}
               >
                 {confirmMutation.isPending ? 'Starting…' : `Confirm & Generate ${generateCount} Images`}

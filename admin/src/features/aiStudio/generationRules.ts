@@ -12,6 +12,9 @@ const RING_ASSET_TYPES: AssetType[] = [
   'RING_HAND_2',
 ];
 const LEGACY_RING_ASSET_TYPES: AssetType[] = ['RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
+// Every other category (9karet): four Yellow Gold catalogue views then two
+// AI-described model shots.
+const STANDARD_ASSET_TYPES: AssetType[] = ['GOLD_HERO', 'GOLD_FRONT', 'GOLD_SIDE', 'GOLD_MACRO', 'MODEL_1', 'MODEL_2'];
 const RING_ASSET_TYPE_SET = new Set<AssetType>([...RING_ASSET_TYPES, ...LEGACY_RING_ASSET_TYPES]);
 
 // Best-effort keyword match from a free-text product category name (e.g.
@@ -48,15 +51,14 @@ export function inferJewelleryTypeFromCategory(categoryName: string | null): Jew
 // a completely separate, fixed 6-image output structure (Hero, Front, Side,
 // Macro, Hand Pose 1, Hand Pose 2 — Yellow Gold only) — ignores both
 // toggles, since Rings never use a Presenter or rose gold.
-// Mirrors backend effectiveGenerateRoseGold — Necklace always gets the full
-// Yellow + Rose set regardless of the Rose Gold toggle.
-export function isRoseGoldForced(jewelleryType?: JewelleryType | ''): boolean {
-  return jewelleryType === 'NECKLACE';
+// Mirrors backend effectiveGenerateRoseGold — 9karet sells no rose gold, so
+// it is never forced on and always unavailable, for every category.
+export function isRoseGoldForced(_jewelleryType?: JewelleryType | ''): boolean {
+  return false;
 }
 
-// Mirrors backend effectiveGenerateRoseGold — 9karet has no rose gold for Ring.
-export function isRoseGoldUnavailable(jewelleryType?: JewelleryType | ''): boolean {
-  return jewelleryType === 'RING';
+export function isRoseGoldUnavailable(_jewelleryType?: JewelleryType | ''): boolean {
+  return true;
 }
 
 export function resolveAssetTypesForJob({
@@ -69,6 +71,7 @@ export function resolveAssetTypesForJob({
   jewelleryType?: JewelleryType | '';
 }): AssetType[] {
   if (jewelleryType === 'RING') return [...RING_ASSET_TYPES];
+  if (jewelleryType) return [...STANDARD_ASSET_TYPES];
   const types: AssetType[] = ['YELLOW_FRONT', 'YELLOW_HERO_45'];
   if (generateRoseGold) types.push('ROSE_FRONT', 'ROSE_HERO_45');
   if (hasPresenter) {
@@ -85,6 +88,10 @@ export function catalogueCount(types: AssetType[]): number {
       t === 'YELLOW_HERO_45' ||
       t === 'ROSE_FRONT' ||
       t === 'ROSE_HERO_45' ||
+      t === 'GOLD_HERO' ||
+      t === 'GOLD_FRONT' ||
+      t === 'GOLD_SIDE' ||
+      t === 'GOLD_MACRO' ||
       t === 'RING_GOLD_HERO' ||
       t === 'RING_GOLD_FRONT' ||
       t === 'RING_GOLD_SIDE' ||
@@ -95,7 +102,13 @@ export function catalogueCount(types: AssetType[]): number {
 }
 
 export function presenterCount(types: AssetType[]): number {
-  return types.filter((t) => t.startsWith('PRESENTER_')).length;
+  return types.filter((t) => isModelShot(t)).length;
+}
+
+// Shots of a person wearing the piece — older presenter slots and the new
+// model slots.
+export function isModelShot(assetType: AssetType): boolean {
+  return assetType.startsWith('PRESENTER_') || assetType.startsWith('MODEL_');
 }
 
 export function handShotCount(types: AssetType[]): number {
@@ -103,6 +116,12 @@ export function handShotCount(types: AssetType[]): number {
 }
 
 export const SHOT_LABELS: Record<AssetType, string> = {
+  GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',
+  GOLD_FRONT: 'Yellow Gold — Front View',
+  GOLD_SIDE: 'Yellow Gold — Side-Profile View',
+  GOLD_MACRO: 'Yellow Gold — Macro Detail View',
+  MODEL_1: 'Yellow Gold — Model 1',
+  MODEL_2: 'Yellow Gold — Model 2',
   YELLOW_FRONT: 'Yellow Gold — Front Catalogue',
   YELLOW_HERO_45: 'Yellow Gold — 45° Hero Angle',
   ROSE_FRONT: 'Rose Gold — Front Catalogue',
@@ -130,7 +149,7 @@ export type AssetGroup = 'Yellow Gold' | 'Rose Gold' | 'Presenter' | 'Ring';
 
 export function groupForAssetType(assetType: AssetType): AssetGroup {
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'Ring';
-  if (assetType.startsWith('PRESENTER_')) return 'Presenter';
+  if (isModelShot(assetType)) return 'Presenter';
   return assetType.startsWith('ROSE_') ? 'Rose Gold' : 'Yellow Gold';
 }
 

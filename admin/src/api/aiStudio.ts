@@ -42,6 +42,9 @@ export const CUSTOMER_CATEGORIES: CustomerCategory[] = ['WOMEN', 'GENTS', 'KIDS'
 // instead of being a separate per-job field — a job can produce both Yellow
 // and Rose Gold shots side by side.
 //
+// GOLD_* / MODEL_* are the standard set every non-Ring category gets (four
+// Yellow Gold catalogue views + two AI-described model shots); the older
+// YELLOW_* / ROSE_* / PRESENTER_* types remain only for earlier jobs.
 // The RING_GOLD_* types are a completely separate, Ring-only output
 // structure — four Yellow Gold views (Hero, Front, Side, Macro) plus two
 // Yellow Gold hand shots (RING_HAND_*); see generationRules.ts's
@@ -55,6 +58,12 @@ export type AssetType =
   | 'PRESENTER_YELLOW_1'
   | 'PRESENTER_YELLOW_2'
   | 'PRESENTER_ROSE'
+  | 'GOLD_HERO'
+  | 'GOLD_FRONT'
+  | 'GOLD_SIDE'
+  | 'GOLD_MACRO'
+  | 'MODEL_1'
+  | 'MODEL_2'
   | 'RING_GOLD_HERO'
   | 'RING_GOLD_FRONT'
   | 'RING_GOLD_SIDE'

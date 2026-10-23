@@ -3,7 +3,14 @@ import sharedStyles from '../../styles/shared.module.css';
 import type { StudioAsset, StudioJob, PromptCreativeOverride } from '../../api/aiStudio';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
-import { SHOT_LABELS, ringShotLabel, metalColorForAssetType, catalogueCount, presenterCount } from './generationRules';
+import {
+  SHOT_LABELS,
+  ringShotLabel,
+  metalColorForAssetType,
+  catalogueCount,
+  presenterCount,
+  isModelShot,
+} from './generationRules';
 import styles from './ReviewImportStep.module.css';
 
 type ImportState = 'idle' | 'importing' | 'completed' | 'partially_failed';
@@ -75,9 +82,12 @@ export function ReviewImportStep({
   const featured = assets.find((a) => a.isFeatured);
   const assetTypes = assets.map((a) => a.assetType);
   const isRing = job.jewelleryType === 'RING';
+  // The fixed six-image sets (Ring, and the standard set every other category
+  // now gets) share the numbered review grid; older jobs keep the old layout.
+  const isFixedSet = isRing || assets.some((a) => a.assetType.startsWith('GOLD_'));
   const regeneratableAssetIds = assets.filter((a) => ['READY', 'FAILED'].includes(a.status)).map((a) => a.id);
   const isGents = job.customerCategory === 'GENTS';
-  const presenterAssetIds = assets.filter((a) => a.assetType.startsWith('PRESENTER_')).map((a) => a.id);
+  const presenterAssetIds = assets.filter((a) => isModelShot(a.assetType)).map((a) => a.id);
 
   async function runImport(targets: StudioAsset[]) {
     setImportState('importing');
@@ -142,9 +152,9 @@ export function ReviewImportStep({
     <div>
       <p className={styles.disclaimer}>AI output requires human verification before import.</p>
 
-      {isRing && (
+      {isFixedSet && (
         <div className={styles.ringHeader}>
-          <h2 className={styles.ringHeading}>Generated Ring Images</h2>
+          <h2 className={styles.ringHeading}>Generated {isRing ? 'Ring' : 'Catalogue & Model'} Images</h2>
           <p className={styles.ringSubheading}>{assets.length} images ready for review</p>
           <span className={sharedStyles.badgeNeutral}>Ring · Yellow Gold</span>
           <button
@@ -178,7 +188,7 @@ export function ReviewImportStep({
         </div>
       )}
 
-      <div className={isRing ? styles.ringGrid : styles.grid}>
+      <div className={isFixedSet ? styles.ringGrid : styles.grid}>
         {assets.map((asset) => {
           const needsReview =
             !!asset.validationStatus && asset.validationStatus !== 'passed' && !asset.validationAccepted;
@@ -187,7 +197,7 @@ export function ReviewImportStep({
           return (
             <div key={asset.id} className={styles.tile}>
               <div className={styles.tileHeader}>
-                {isRing && <span className={styles.imageNumber}>{asset.displayOrder + 1}</span>}
+                {isFixedSet && <span className={styles.imageNumber}>{asset.displayOrder + 1}</span>}
                 {!needsReview && (
                   <label className={styles.selectLabel}>
                     <input
@@ -299,13 +309,13 @@ export function ReviewImportStep({
       <div className={styles.summary}>
         <h3 className={styles.summaryTitle}>Import Summary</h3>
         <dl className={styles.summaryList}>
-          {!isRing && (
+          {!isFixedSet && (
             <div className={styles.summaryRow}>
               <dt>Presenter</dt>
               <dd>{job.presenter ? job.presenter.displayName : 'No Presenter'}</dd>
             </div>
           )}
-          {!isRing && (
+          {!isFixedSet && (
             <div className={styles.summaryRow}>
               <dt>Rose Gold</dt>
               <dd>{job.generateRoseGold ? 'On' : 'Off'}</dd>
@@ -321,8 +331,8 @@ export function ReviewImportStep({
           </div>
           {!isRing && (
             <div className={styles.summaryRow}>
-              <dt>Selected Presenter Images</dt>
-              <dd>{selected.filter((a) => a.assetType.startsWith('PRESENTER_')).length} / {presenterCount(assetTypes)}</dd>
+              <dt>Selected Model Images</dt>
+              <dd>{selected.filter((a) => isModelShot(a.assetType)).length} / {presenterCount(assetTypes)}</dd>
             </div>
           )}
           <div className={styles.summaryRowTotal}>
