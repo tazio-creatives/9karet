@@ -9,6 +9,7 @@ import {
   validateGeneratedImage,
   metalColorForAssetType,
   generateGentsMasterPresenter,
+  IDENTITY_SOURCES,
 } from '../services/aiStudioService.js';
 import {
   findJobById,
@@ -92,7 +93,7 @@ async function ensureDefaultFeatured(jobId, assets, outputManifest) {
 // validation fails, regenerate the affected image automatically." Capped at
 // exactly one extra attempt (not an unbounded loop) since each attempt is a
 // real, billed OpenAI image-edit + vision call.
-const RING_HAND_AUTO_RETRY_TYPES = new Set(['RING_HAND_1', 'RING_HAND_2']);
+const RING_HAND_AUTO_RETRY_TYPES = new Set(['RING_HAND_1', 'RING_HAND_2', 'RING_HAND_ROSE']);
 
 // Gents/Kids describe the presenter demographic purely in text (see
 // audiencePresenterOverrideFor in aiStudioService.js) — the presenter
@@ -103,6 +104,58 @@ const RING_HAND_AUTO_RETRY_TYPES = new Set(['RING_HAND_1', 'RING_HAND_2']);
 // presenter shots at all" choice (picking a presenter vs. "No Presenter")
 // is unaffected.
 const AUDIENCE_OVERRIDE_CATEGORIES = new Set(['GENTS', 'KIDS']);
+
+// Which reference images a slot is generated with.
+//   Six-slot jobs follow the slot's resolved identity (see buildJobPlan):
+//     PRESENTER_PHOTO → the chosen presenter's photo for this pose
+//     GENTS_MASTER    → the job's male identity portrait
+//     FIRST_OUTPUT    → the first presenter image, for the second slot only
+//   Older jobs keep their original rule (presenter photo unless Gents/Kids,
+//   Gents master for PRESENTER_* shots).
+async function referencesFor({
+  asset,
+  outputSlot,
+  presenter,
+  confirmedCustomerCategory,
+  gentsMasterPresenterBuffer,
+  chainedIdentityBuffer,
+}) {
+  const poseKey = presenterReferenceKeyFor(asset.asset_type);
+  const identity = outputSlot?.identity;
+  if (identity) {
+    if (identity.source === IDENTITY_SOURCES.PRESENTER_PHOTO && presenter && poseKey) {
+      return { presenterReferenceBuffer: await storageProvider.read(keyFromUrl(presenter[poseKey])) };
+    }
+    if (identity.source === IDENTITY_SOURCES.GENTS_MASTER) {
+      return { identityReferenceBuffer: gentsMasterPresenterBuffer, identityKind: 'GENTS_MASTER' };
+    }
+    if (identity.referenceSlot) {
+      return { identityReferenceBuffer: chainedIdentityBuffer, identityKind: identity.subject === 'HAND' ? 'HAND' : 'CHILD' };
+    }
+    return {};
+  }
+
+  const result = {};
+  if (presenter && poseKey && !AUDIENCE_OVERRIDE_CATEGORIES.has(confirmedCustomerCategory)) {
+    result.presenterReferenceBuffer = await storageProvider.read(keyFromUrl(presenter[poseKey]));
+  }
+  if (confirmedCustomerCategory === 'GENTS' && asset.asset_type.startsWith('PRESENTER_')) {
+    result.identityReferenceBuffer = gentsMasterPresenterBuffer;
+    result.identityKind = 'GENTS_MASTER';
+  }
+  return result;
+}
+
+// Six-slot jobs whose presenter identity is chained (Kids without a saved
+// child reference, and every Ring hand pair) generate in two waves: every
+// other slot first, in parallel; then the second presenter image, once the
+// first one has finished, using it as the identity reference.
+export function splitGenerationWaves(targets, outputManifest) {
+  if (!outputManifest) return { firstWave: targets, chained: [] };
+  const slotOf = (a) => outputManifest.find((m) => m.slotKey === a.slot_key);
+  const chained = targets.filter((a) => slotOf(a)?.identity?.referenceSlot);
+  return { firstWave: targets.filter((a) => !chained.includes(a)), chained };
+}
 
 async function generateOneAsset({
   jobId,
@@ -116,6 +169,10 @@ async function generateOneAsset({
   generateRoseGold,
   confirmedCustomerCategory,
   gentsMasterPresenterBuffer,
+  // Six-slot jobs: this asset's manifest slot, and — for a chained second
+  // presenter image — the first presenter image to use as its identity.
+  outputSlot,
+  chainedIdentityBuffer,
 }) {
   // A cancelled job's late-arriving results are discarded, never written
   // back (plan §12) — checked immediately before each write, not just once
@@ -126,19 +183,14 @@ async function generateOneAsset({
   await updateAsset(asset.id, { status: 'GENERATING', generation_started_at: new Date() });
 
   try {
-    let presenterReferenceBuffer = null;
-    const poseKey = presenterReferenceKeyFor(asset.asset_type);
-    if (presenter && poseKey && !AUDIENCE_OVERRIDE_CATEGORIES.has(confirmedCustomerCategory)) {
-      presenterReferenceBuffer = await storageProvider.read(keyFromUrl(presenter[poseKey]));
-    }
-
-    // Gents identity lock — only the two PRESENTER_* shots get the master
-    // identity photo; catalogue shots and every other category never see it,
-    // even though the buffer itself is passed down to every asset in the job
-    // uniformly (see generateHandler).
-    const isGentsPresenterAsset =
-      confirmedCustomerCategory === 'GENTS' && asset.asset_type.startsWith('PRESENTER_');
-    const identityReferenceBuffer = isGentsPresenterAsset ? gentsMasterPresenterBuffer : null;
+    const { presenterReferenceBuffer, identityReferenceBuffer, identityKind } = await referencesFor({
+      asset,
+      outputSlot,
+      presenter,
+      confirmedCustomerCategory,
+      gentsMasterPresenterBuffer,
+      chainedIdentityBuffer,
+    });
 
     // A retry after a failed/warning validation gets a fresh prompt with the
     // prior failure folded in as a correction instruction, instead of
@@ -164,6 +216,7 @@ async function generateOneAsset({
         promptOverride: priorFailure ? undefined : (asset.assembled_final_prompt ?? undefined),
         generateRoseGold,
         confirmedCustomerCategory,
+        outputSlot,
       });
 
       // Post-generation validation (Problems 1 & 2) — never lets a failure
@@ -183,6 +236,7 @@ async function generateOneAsset({
           confirmedCustomerCategory,
           identityReferenceBuffer,
           identityReferenceMimetype: identityReferenceBuffer ? 'image/png' : null,
+          identityKind,
         });
         validationStatus = result.validationStatus;
         validationResult = result;
@@ -271,8 +325,12 @@ async function generateHandler(jobs) {
     // explicitly cleared by "Change Gents Presenter" (see
     // changeGentsPresenter in aiStudio.controller.js).
     let gentsMasterPresenterBuffer = null;
+    const manifest = aiStudioJob.output_manifest;
+    const slotOf = (a) => manifest?.find((m) => m.slotKey === a.slot_key);
     const isGents = aiStudioJob.customer_category === 'GENTS';
-    const hasGentsPresenterTarget = isGents && targets.some((a) => a.asset_type.startsWith('PRESENTER_'));
+    const hasGentsPresenterTarget = manifest
+      ? targets.some((a) => slotOf(a)?.identity?.source === IDENTITY_SOURCES.GENTS_MASTER)
+      : isGents && targets.some((a) => a.asset_type.startsWith('PRESENTER_'));
     if (hasGentsPresenterTarget) {
       if (aiStudioJob.gents_master_presenter_key) {
         gentsMasterPresenterBuffer = await storageProvider.read(aiStudioJob.gents_master_presenter_key);
@@ -287,21 +345,40 @@ async function generateHandler(jobs) {
       }
     }
 
-    await runWithConcurrency(targets, env.aiStudioGenerationConcurrency, (asset) =>
-      generateOneAsset({
-        jobId,
-        asset,
-        referenceBuffer,
-        mimetype,
-        template,
-        confirmedType: aiStudioJob.jewellery_type,
-        presenter,
-        imageModel: env.openaiImageModel,
-        generateRoseGold: aiStudioJob.generate_rose_gold,
-        confirmedCustomerCategory: aiStudioJob.customer_category,
-        gentsMasterPresenterBuffer,
-      }),
+    const shared = {
+      jobId,
+      referenceBuffer,
+      mimetype,
+      template,
+      confirmedType: aiStudioJob.jewellery_type,
+      presenter,
+      imageModel: env.openaiImageModel,
+      generateRoseGold: aiStudioJob.generate_rose_gold,
+      confirmedCustomerCategory: aiStudioJob.customer_category,
+      gentsMasterPresenterBuffer,
+    };
+    const { firstWave, chained } = splitGenerationWaves(targets, manifest);
+
+    await runWithConcurrency(firstWave, env.aiStudioGenerationConcurrency, (asset) =>
+      generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset) }),
     );
+
+    // Second presenter images wait for the first, then use it as identity.
+    for (const asset of chained) {
+      if ((await findJobById(jobId)).status === 'cancelled') return;
+      const outputSlot = slotOf(asset);
+      const reference = (await findAssetsByJobId(jobId)).find((a) => a.slot_key === outputSlot.identity.referenceSlot);
+      if (reference?.status !== 'READY' || !reference.image_key) {
+        await updateAsset(asset.id, {
+          status: 'FAILED',
+          error: 'The first presenter image did not succeed, so this one was not generated — retry the first one, then this one.',
+          generation_completed_at: new Date(),
+        });
+        continue;
+      }
+      const chainedIdentityBuffer = await storageProvider.read(reference.image_key);
+      await generateOneAsset({ ...shared, asset, outputSlot, chainedIdentityBuffer });
+    }
 
     const refreshedJob = await findJobById(jobId);
     if (refreshedJob.status === 'cancelled') return;

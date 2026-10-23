@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 import sharedStyles from '../../styles/shared.module.css';
 import type { StudioAsset, StudioJob, JewelleryType } from '../../api/aiStudio';
 import summaryStyles from './GenerationSummary.module.css';
-import { SHOT_LABELS, ringShotLabel, groupForAssetType, metalColorForAssetType, type AssetGroup } from './generationRules';
+import {
+  SHOT_LABELS,
+  ringShotLabel,
+  groupForAssetType,
+  metalColorForAssetType,
+  referenceSlotFor,
+  type AssetGroup,
+} from './generationRules';
 import styles from './GenerateStep.module.css';
 
 const GROUP_ORDER: AssetGroup[] = ['Yellow Gold', 'Rose Gold', 'Presenter'];
@@ -20,13 +27,22 @@ interface GenerateStepProps {
   generateRoseGold?: boolean;
   // Six-slot jobs: completed slots out of 6 (null on older jobs).
   progress?: StudioJob['progress'];
+  outputManifest?: StudioJob['outputManifest'];
   onRegenerate: (_assetId: string) => void;
   regeneratingAssetIds: Set<string>;
 }
 
 // No fixed time estimate — real per-asset start/complete timestamps are
 // recorded server-side, and this just ticks a clock against them.
-export function GenerateStep({ assets, jewelleryType, generateRoseGold, progress, onRegenerate, regeneratingAssetIds }: GenerateStepProps) {
+export function GenerateStep({
+  assets,
+  jewelleryType,
+  generateRoseGold,
+  progress,
+  outputManifest,
+  onRegenerate,
+  regeneratingAssetIds,
+}: GenerateStepProps) {
   const [, forceTick] = useState(0);
   const isRing = jewelleryType === 'RING';
   // Six-slot jobs list their images in slot order, like Ring.
@@ -71,6 +87,7 @@ export function GenerateStep({ assets, jewelleryType, generateRoseGold, progress
                 metalLabel={`${metalColorForAssetType(asset.assetType, generateRoseGold ?? true)} Gold`}
                 onRegenerate={onRegenerate}
                 isRegenerating={regeneratingAssetIds.has(asset.id)}
+                waitsForFirst={!!referenceSlotFor(outputManifest ?? null, asset.slotKey)}
               />
             ))}
           </div>
@@ -108,12 +125,15 @@ function GenerateTile({
   metalLabel,
   onRegenerate,
   isRegenerating,
+  waitsForFirst = false,
 }: {
   asset: StudioAsset;
   label: string;
   metalLabel: string;
   onRegenerate: (_assetId: string) => void;
   isRegenerating: boolean;
+  // A second presenter image that waits for the first before generating.
+  waitsForFirst?: boolean;
 }) {
   return (
     <div className={styles.tile}>
@@ -133,7 +153,9 @@ function GenerateTile({
       )}
       {asset.status === 'READY' && <span className={sharedStyles.badgeSuccess}>Ready</span>}
       {asset.status === 'FAILED' && <span className={sharedStyles.badgeDanger}>Failed</span>}
-      {asset.status === 'PENDING' && <span className={sharedStyles.badgeNeutral}>Waiting…</span>}
+      {asset.status === 'PENDING' && (
+        <span className={sharedStyles.badgeNeutral}>{waitsForFirst ? 'Queued — waits for presenter image 1' : 'Waiting…'}</span>
+      )}
 
       {['READY', 'FAILED'].includes(asset.status) && (
         <button

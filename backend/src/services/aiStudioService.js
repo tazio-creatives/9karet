@@ -217,65 +217,149 @@ export function effectiveGenerateRoseGold(_confirmedType, requested) {
   return requested === true;
 }
 
-// The six output slots, in gallery order. Slot keys are what the job's
-// output_manifest stores; asset types pick the prompt. Rose Gold ON keeps
-// the first two catalogue views and repeats exactly those two in rose gold,
-// so customers compare the same angles in both metals.
-const MANIFEST_PLANS = {
-  RING: {
-    off: [
-      ['yellow_catalogue_1', 'RING_GOLD_HERO'],
-      ['yellow_catalogue_2', 'RING_GOLD_FRONT'],
-      ['yellow_catalogue_3', 'RING_GOLD_PROFILE'],
-      ['yellow_catalogue_4', 'RING_GOLD_MACRO'],
-      ['yellow_presenter_1', 'RING_HAND_1'],
-      ['yellow_presenter_2', 'RING_HAND_2'],
-    ],
-    on: [
-      ['yellow_catalogue_1', 'RING_GOLD_HERO'],
-      ['yellow_catalogue_2', 'RING_GOLD_FRONT'],
-      ['rose_catalogue_1', 'RING_ROSE_HERO'],
-      ['rose_catalogue_2', 'RING_ROSE_FRONT'],
-      ['yellow_presenter_1', 'RING_HAND_1'],
-      ['rose_presenter_1', 'RING_HAND_ROSE'],
-    ],
-  },
-  STANDARD: {
-    off: [
-      ['yellow_catalogue_1', 'YELLOW_FRONT'],
-      ['yellow_catalogue_2', 'YELLOW_HERO_45'],
-      ['yellow_catalogue_3', 'YELLOW_SIDE'],
-      ['yellow_catalogue_4', 'YELLOW_MACRO'],
-      ['yellow_presenter_1', 'PRESENTER_YELLOW_1'],
-      ['yellow_presenter_2', 'PRESENTER_YELLOW_2'],
-    ],
-    on: [
-      ['yellow_catalogue_1', 'YELLOW_FRONT'],
-      ['yellow_catalogue_2', 'YELLOW_HERO_45'],
-      ['rose_catalogue_1', 'ROSE_FRONT'],
-      ['rose_catalogue_2', 'ROSE_HERO_45'],
-      ['yellow_presenter_1', 'PRESENTER_YELLOW_1'],
-      ['rose_presenter_1', 'PRESENTER_ROSE'],
-    ],
-  },
-};
+// ---------------------------------------------------------------------------
+// Six-slot job planning (9karet). Four separate decisions, kept apart:
+//   buildOutputManifest(generateRoseGold)    → how many images, which kind, which metal
+//   resolveCatalogueViews(jewelleryCategory) → which catalogue angles
+//   resolvePresenter(customerCategory, …)    → whose identity the presenter images use
+//   buildGenerationRequest(…)                → the images + prompt sent for one slot
+// buildJobPlan combines them into the manifest stored on the job.
+// ---------------------------------------------------------------------------
 
 export const MANIFEST_SIZE = 6;
 
-// Builds (and checks) the complete six-slot manifest before anything is
-// generated — progress, retries and import all work from this, never from
-// counting whatever images happen to exist.
-export function buildOutputManifest({ confirmedType, generateRoseGold }) {
-  const plan = MANIFEST_PLANS[confirmedType === 'RING' ? 'RING' : 'STANDARD'][generateRoseGold ? 'on' : 'off'];
-  const manifest = plan.map(([slotKey, assetType], index) => ({
-    slotKey,
-    assetType,
-    index,
-    metal: slotKey.startsWith('rose_') ? 'ROSE' : 'YELLOW',
-    kind: slotKey.includes('_catalogue_') ? 'catalogue' : 'presenter',
-  }));
-  assertValidManifest(manifest, { generateRoseGold });
-  return manifest;
+// Metal distribution only — the same for every jewellery and customer
+// category. `position` is the catalogue view (1-4) or presenter pose (1-2) a
+// slot uses; rose slots reuse the yellow positions so both metals can be
+// compared on the same view and pose.
+export function buildOutputManifest(generateRoseGold) {
+  const slots = generateRoseGold
+    ? [
+        ['yellow_catalogue_1', 'catalogue', 'YELLOW', 1],
+        ['yellow_catalogue_2', 'catalogue', 'YELLOW', 2],
+        ['rose_catalogue_1', 'catalogue', 'ROSE', 1],
+        ['rose_catalogue_2', 'catalogue', 'ROSE', 2],
+        ['yellow_presenter_1', 'presenter', 'YELLOW', 1],
+        ['rose_presenter_1', 'presenter', 'ROSE', 1],
+      ]
+    : [
+        ['yellow_catalogue_1', 'catalogue', 'YELLOW', 1],
+        ['yellow_catalogue_2', 'catalogue', 'YELLOW', 2],
+        ['yellow_catalogue_3', 'catalogue', 'YELLOW', 3],
+        ['yellow_catalogue_4', 'catalogue', 'YELLOW', 4],
+        ['yellow_presenter_1', 'presenter', 'YELLOW', 1],
+        ['yellow_presenter_2', 'presenter', 'YELLOW', 2],
+      ];
+  return slots.map(([slotKey, kind, metal, position], index) => ({ slotKey, index, kind, metal, position }));
+}
+
+// Catalogue angles per jewellery category, in priority order — Rose Gold ON
+// uses the first two. Ring: hero, front/top, side profile, macro. Every other
+// category keeps its existing Front and 45° Hero views and adds a side
+// profile and a macro view.
+const CATALOGUE_VIEWS = {
+  RING: [
+    { view: 'HERO', YELLOW: 'RING_GOLD_HERO', ROSE: 'RING_ROSE_HERO' },
+    { view: 'FRONT_TOP', YELLOW: 'RING_GOLD_FRONT', ROSE: 'RING_ROSE_FRONT' },
+    { view: 'SIDE_PROFILE', YELLOW: 'RING_GOLD_PROFILE' },
+    { view: 'MACRO', YELLOW: 'RING_GOLD_MACRO' },
+  ],
+  STANDARD: [
+    { view: 'FRONT', YELLOW: 'YELLOW_FRONT', ROSE: 'ROSE_FRONT' },
+    { view: 'HERO_45', YELLOW: 'YELLOW_HERO_45', ROSE: 'ROSE_HERO_45' },
+    { view: 'SIDE_PROFILE', YELLOW: 'YELLOW_SIDE' },
+    { view: 'MACRO', YELLOW: 'YELLOW_MACRO' },
+  ],
+};
+
+export function resolveCatalogueViews(jewelleryCategory, generateRoseGold) {
+  const views = CATALOGUE_VIEWS[jewelleryCategory === 'RING' ? 'RING' : 'STANDARD'];
+  return generateRoseGold ? views.slice(0, 2) : views;
+}
+
+// How a presenter image is shown — also a jewellery-category decision: Ring
+// is a hand-wearing shot (no face required), everything else is worn by a
+// presenter. Pose 2 of yellow is a second pose; the rose shot repeats pose 1.
+const PRESENTER_SHOTS = {
+  RING: { YELLOW: ['RING_HAND_1', 'RING_HAND_2'], ROSE: ['RING_HAND_ROSE'] },
+  STANDARD: { YELLOW: ['PRESENTER_YELLOW_1', 'PRESENTER_YELLOW_2'], ROSE: ['PRESENTER_ROSE'] },
+};
+
+// Where a presenter identity comes from.
+export const IDENTITY_SOURCES = {
+  // The chosen presenter's own reference photos, attached to both requests.
+  PRESENTER_PHOTO: 'PRESENTER_PHOTO',
+  // One AI-generated male identity portrait per job, attached to both.
+  GENTS_MASTER: 'GENTS_MASTER',
+  // No saved reference: the first presenter image is generated, then used
+  // as the identity reference for the second (generated afterwards).
+  FIRST_OUTPUT: 'FIRST_OUTPUT',
+};
+
+// Presenter identity only — never changes counts, metals, views or order.
+//   Ring (any customer category): a hand, chained from the first hand image.
+//   Gents: the job's fixed male identity portrait.
+//   Kids: the chosen child presenter's photo if one is picked, otherwise
+//         chained from the first generated child image.
+//   Women / Unisex: the chosen presenter's photos (required).
+export function resolvePresenter({ customerCategory, selectedPresenter, jewelleryCategory, requirePresenter = true }) {
+  const audience = customerCategory ?? DEFAULT_CUSTOMER_CATEGORY;
+  if (jewelleryCategory === 'RING') {
+    return { audience, subject: 'HAND', source: IDENTITY_SOURCES.FIRST_OUTPUT, presenterId: null };
+  }
+  if (audience === 'GENTS') {
+    return { audience, subject: 'PERSON', source: IDENTITY_SOURCES.GENTS_MASTER, presenterId: null };
+  }
+  if (audience === 'KIDS') {
+    return selectedPresenter
+      ? { audience, subject: 'CHILD', source: IDENTITY_SOURCES.PRESENTER_PHOTO, presenterId: selectedPresenter.id }
+      : { audience, subject: 'CHILD', source: IDENTITY_SOURCES.FIRST_OUTPUT, presenterId: null };
+  }
+  if (!selectedPresenter && requirePresenter) {
+    throw new AppError(400, 'Choose a presenter — both presenter images use the selected presenter.');
+  }
+  return {
+    audience,
+    subject: 'PERSON',
+    source: IDENTITY_SOURCES.PRESENTER_PHOTO,
+    presenterId: selectedPresenter?.id ?? null,
+  };
+}
+
+function assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold) {
+  const views = resolveCatalogueViews(jewelleryCategory, generateRoseGold);
+  const shots = PRESENTER_SHOTS[jewelleryCategory === 'RING' ? 'RING' : 'STANDARD'];
+  return manifest.map((slot) => {
+    if (slot.kind === 'catalogue') {
+      const view = views[slot.position - 1];
+      return { view: view?.view, assetType: view?.[slot.metal] };
+    }
+    const list = shots[slot.metal];
+    return { view: `POSE_${slot.position}`, assetType: slot.metal === 'ROSE' ? list[0] : list[slot.position - 1] };
+  });
+}
+
+// The complete plan stored on the job: every slot with its asset type, view
+// and presenter identity — built and validated before anything generates.
+export function buildJobPlan({
+  jewelleryCategory,
+  generateRoseGold,
+  customerCategory,
+  selectedPresenter,
+  requirePresenter = true,
+}) {
+  const manifest = buildOutputManifest(generateRoseGold);
+  const types = assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold);
+  const presenter = resolvePresenter({ customerCategory, selectedPresenter, jewelleryCategory, requirePresenter });
+  const firstPresenterSlot = manifest.find((m) => m.kind === 'presenter').slotKey;
+  const plan = manifest.map((slot, i) => {
+    const base = { ...slot, ...types[i] };
+    if (slot.kind === 'catalogue') return base;
+    const chained = presenter.source === IDENTITY_SOURCES.FIRST_OUTPUT && slot.slotKey !== firstPresenterSlot;
+    return { ...base, identity: { ...presenter, referenceSlot: chained ? firstPresenterSlot : null } };
+  });
+  assertValidManifest(plan, { generateRoseGold });
+  return plan;
 }
 
 export function assertValidManifest(manifest, { generateRoseGold }) {
@@ -284,7 +368,8 @@ export function assertValidManifest(manifest, { generateRoseGold }) {
   };
   if (!Array.isArray(manifest) || manifest.length !== MANIFEST_SIZE) fail(`expected ${MANIFEST_SIZE} slots`);
   if (new Set(manifest.map((m) => m.slotKey)).size !== manifest.length) fail('slot keys must be unique');
-  if (new Set(manifest.map((m) => m.assetType)).size !== manifest.length) fail('asset types must be unique');
+  if (manifest.some((m) => !m.assetType)) fail('every slot needs an image type');
+  if (new Set(manifest.map((m) => m.assetType)).size !== manifest.length) fail('image types must be unique');
   const count = (pred) => manifest.filter(pred).length;
   if (count((m) => m.kind === 'catalogue') !== 4) fail('expected 4 catalogue slots');
   if (count((m) => m.kind === 'presenter') !== 2) fail('expected 2 presenter slots');
@@ -293,10 +378,45 @@ export function assertValidManifest(manifest, { generateRoseGold }) {
   for (const m of manifest) {
     if (metalColorForAssetType(m.assetType, generateRoseGold) !== m.metal) fail(`${m.slotKey} has the wrong metal`);
   }
+  // Both presenter images must resolve to one identity.
+  const presenters = manifest.filter((m) => m.kind === 'presenter');
+  if (presenters.some((m) => !m.identity)) fail('presenter slots need an identity');
+  const [first, second] = presenters;
+  const same = (k) => first.identity[k] === second.identity[k];
+  if (!same('source') || !same('presenterId') || !same('audience') || !same('subject')) {
+    fail('both presenter images must use the same presenter identity');
+  }
+  if (first.identity.referenceSlot) fail('the first presenter image cannot depend on another image');
+  if (first.identity.source === IDENTITY_SOURCES.FIRST_OUTPUT && second.identity.referenceSlot !== first.slotKey) {
+    fail('the second presenter image must use the first as its identity reference');
+  }
 }
 
+// Asset types for a job, without a presenter decision (labels, counts).
 export function resolveAssetTypesForJob({ generateRoseGold, confirmedType }) {
-  return buildOutputManifest({ confirmedType, generateRoseGold }).map((m) => m.assetType);
+  return assetTypesForSlots(buildOutputManifest(generateRoseGold), confirmedType, generateRoseGold).map((t) => t.assetType);
+}
+
+// One generation request: the images to attach, in order, and the prompt.
+//   chained / Gents slot → [identity reference, jewellery]
+//   presenter-photo slot → [jewellery, presenter photo]
+//   catalogue slot       → [jewellery]
+// The original jewellery reference is always attached.
+export function buildGenerationRequest({ outputSlot, jewelleryReference, presenterReference, identityReference, prompt }) {
+  if (!jewelleryReference?.buffer) throw new AppError(500, 'The jewellery reference is required');
+  if (outputSlot?.identity?.referenceSlot && !identityReference) {
+    throw new AppError(409, 'The first presenter image must be generated before this one');
+  }
+  const jewellery = { role: 'jewellery', ...jewelleryReference };
+  let images;
+  if (identityReference) {
+    images = [{ role: 'identity', filename: 'presenter-identity.png', mimetype: 'image/png', ...identityReference }, jewellery];
+  } else if (presenterReference) {
+    images = [jewellery, { role: 'presenter', filename: 'presenter.jpeg', mimetype: 'image/jpeg', ...presenterReference }];
+  } else {
+    images = [jewellery];
+  }
+  return { images, prompt };
 }
 
 // RING_HAND_2's metal depends on the Rose Gold toggle (Rose when required,
@@ -522,6 +642,23 @@ function extraCatalogueView(assetType, categoryLabel) {
   }
 }
 
+// The second presenter image of a chained job (Kids without a saved child
+// reference, and every Ring hand pair): the first generated image is
+// attached first, as the identity reference.
+const CHAINED_CHILD_IDENTITY_NOTE =
+  "The first attached image is the first presenter image from this same set — reproduce exactly the same child: the same face, apparent age, skin tone, hairstyle, clothing and body proportions, so it is recognisably the same child. The second attached image is the exact jewellery product — it controls only the jewellery design, never the child's appearance.";
+const CHAINED_HAND_IDENTITY_NOTE =
+  "The first attached image is the first hand image from this same set — reproduce exactly the same hand: the same skin tone, finger proportions, nail length, nail shape and nail colour, the same lighting and the same background style. The second attached image is the exact ring product — it controls only the ring design, never the hand's appearance.";
+const CHAINED_SAME_POSE_NOTE =
+  'Keep the same pose, crop, lighting and composition as the first image so the two can be compared — change only the jewellery metal colour.';
+const CHAINED_NEW_POSE_NOTE = 'Use a different, suitable pose or crop from the first image, keeping the same identity.';
+
+function chainedIdentityNote(identity, metal) {
+  if (!identity?.referenceSlot) return '';
+  const who = identity.subject === 'HAND' ? CHAINED_HAND_IDENTITY_NOTE : CHAINED_CHILD_IDENTITY_NOTE;
+  return ` ${who} ${metal === 'ROSE' ? CHAINED_SAME_POSE_NOTE : CHAINED_NEW_POSE_NOTE}`;
+}
+
 // Both presenter images of one job show the same person (9karet).
 const PRESENTER_SAME_IDENTITY_NOTE =
   'Both presenter images in this set show the same person — the same face, skin tone, apparent age, hairstyle, body proportions, photography style, background and lighting. Do not generate a different person.';
@@ -718,6 +855,8 @@ function buildAssetPromptSections({
   priorFailure,
   generateRoseGold,
   confirmedCustomerCategory,
+  // Six-slot jobs: the presenter slot's resolved identity (see buildJobPlan).
+  identity,
 }) {
   const metalColor = metalColorForAssetType(assetType, generateRoseGold);
   const metalColourNote = `The metal colour is ${metalColor.toLowerCase()} gold — preserve it exactly.`;
@@ -827,6 +966,10 @@ function buildAssetPromptSections({
         presenterPoseText = `Worn naturally by the same adult male presenter shown in the first attached identity reference photo — ${GENTS_PRESENTER_DESCRIPTOR}.`;
         backgroundNote = GENTS_PRESENTER_BACKGROUND_NOTE;
         categoryPlacement = `${categoryPlacement} ${GENTS_IDENTITY_LOCK_NOTE}`;
+      } else if (confirmedCustomerCategory === 'KIDS' && identity?.source === IDENTITY_SOURCES.PRESENTER_PHOTO) {
+        // A chosen child presenter: their photo is attached to both images.
+        presenterPoseText = `Worn naturally by ${KIDS_PRESENTER_DESCRIPTOR}, matching the attached child presenter reference photo.`;
+        backgroundNote = KIDS_PRESENTER_BACKGROUND_NOTE;
       } else if (audienceOverride) {
         presenterPoseText = `Worn naturally by ${audienceOverride.descriptor}.`;
         backgroundNote = audienceOverride.background;
@@ -844,7 +987,7 @@ function buildAssetPromptSections({
         cameraAngle: '',
         additionalInstructions: '',
       };
-      categoryPlacement = `${categoryPlacement} ${PRESENTER_SAME_IDENTITY_NOTE}`;
+      categoryPlacement = `${categoryPlacement} ${PRESENTER_SAME_IDENTITY_NOTE}${chainedIdentityNote(identity, metalColor)}`;
       if (assetType === 'PRESENTER_YELLOW_2') {
         categoryPlacement = `${categoryPlacement} Use a clearly different, category-appropriate pose or crop from Presenter Image 1.`;
       } else if (assetType === 'PRESENTER_ROSE') {
@@ -879,7 +1022,7 @@ function buildAssetPromptSections({
         ...RING_HAND_PLACEMENT_NEGATIVES,
       );
       if (audienceHand) negativeParts.push(audienceHand.negative);
-      categoryPlacement = `${categoryPlacement} ${RING_HAND_SAME_IDENTITY_NOTE}`;
+      categoryPlacement = `${categoryPlacement} ${RING_HAND_SAME_IDENTITY_NOTE}${chainedIdentityNote(identity, metalColor)}`;
       if (assetType === 'RING_HAND_ROSE') {
         categoryPlacement = `${categoryPlacement} This is the rose-gold comparison of Hand Image 1: keep the pose, crop and lighting the same so only the metal colour differs.`;
       }
@@ -906,7 +1049,7 @@ function buildAssetPromptSections({
         ...RING_HAND_PLACEMENT_NEGATIVES,
       );
       if (audienceHand) negativeParts.push(audienceHand.negative);
-      categoryPlacement = `${categoryPlacement} ${RING_HAND_SAME_IDENTITY_NOTE}`;
+      categoryPlacement = `${categoryPlacement} ${RING_HAND_SAME_IDENTITY_NOTE}${chainedIdentityNote(identity, metalColor)}`;
       break;
     }
     case 'RING_GOLD_FRONT':
@@ -1014,6 +1157,7 @@ function buildPrompt({
   priorFailure,
   generateRoseGold,
   confirmedCustomerCategory,
+  identity,
 }) {
   return assemblePrompt(
     buildAssetPromptSections({
@@ -1025,6 +1169,7 @@ function buildPrompt({
       priorFailure,
       generateRoseGold,
       confirmedCustomerCategory,
+      identity,
     }),
   );
 }
@@ -1042,9 +1187,17 @@ export function previewPromptsForJob({
   generateRoseGold,
   overridesByAssetType,
   confirmedCustomerCategory,
+  // Preview may run before a presenter is picked; confirm requires one.
+  requirePresenter = false,
 }) {
-  const manifest = buildOutputManifest({ confirmedType, generateRoseGold });
-  return manifest.map(({ slotKey, assetType, kind }) => {
+  const plan = buildJobPlan({
+    jewelleryCategory: confirmedType,
+    generateRoseGold,
+    customerCategory: confirmedCustomerCategory,
+    selectedPresenter: presenter,
+    requirePresenter,
+  });
+  return plan.map(({ slotKey, assetType, kind, view, identity }) => {
     const override = overridesByAssetType?.[assetType];
     const sections = buildAssetPromptSections({
       assetType,
@@ -1054,10 +1207,13 @@ export function previewPromptsForJob({
       creative: override,
       generateRoseGold,
       confirmedCustomerCategory,
+      identity,
     });
     return {
       slotKey,
       kind,
+      view,
+      identity: identity ?? null,
       assetType,
       metalColor: metalColorForAssetType(assetType, generateRoseGold),
       mode: override ? 'customised' : 'recommended',
@@ -1103,6 +1259,7 @@ export async function generateShot({
   promptOverride,
   generateRoseGold,
   confirmedCustomerCategory,
+  outputSlot,
 }) {
   const openai = getClient();
   const extension = extensionFor(mimetype);
@@ -1122,24 +1279,24 @@ export async function generateShot({
       priorFailure,
       generateRoseGold,
       confirmedCustomerCategory,
+      identity: outputSlot?.identity,
     });
 
+  // Identity reference (Gents master or the first presenter image) goes
+  // first, then the jewellery — the order the identity notes describe.
+  const request = buildGenerationRequest({
+    outputSlot,
+    jewelleryReference: { buffer: referenceBuffer, mimetype, filename: `reference.${extension}` },
+    presenterReference: presenterReferenceBuffer ? { buffer: presenterReferenceBuffer } : null,
+    identityReference: identityReferenceBuffer ? { buffer: identityReferenceBuffer } : null,
+    prompt,
+  });
+
   try {
-    const referenceFile = await toFile(referenceBuffer, `reference.${extension}`, { type: mimetype });
-    // Gents identity lock: Image 1 = presenter identity, Image 2 = jewellery
-    // (see GENTS_IDENTITY_LOCK_NOTE, which tells the model this exact
-    // ordering) — the reverse role order from the ordinary presenterReference
-    // path below, and mutually exclusive with it (a Gents shot never also
-    // carries a presenterReferenceBuffer — see aiStudioJob.js).
-    let image;
-    if (identityReferenceBuffer) {
-      const identityFile = await toFile(identityReferenceBuffer, 'presenter-identity.png', { type: 'image/png' });
-      image = [identityFile, referenceFile];
-    } else if (presenterReferenceBuffer) {
-      image = [referenceFile, await toFile(presenterReferenceBuffer, `presenter.jpeg`, { type: 'image/jpeg' })];
-    } else {
-      image = referenceFile;
-    }
+    const files = await Promise.all(
+      request.images.map((img) => toFile(img.buffer, img.filename, { type: img.mimetype })),
+    );
+    const image = files.length === 1 ? files[0] : files;
 
     const response = await openai.images.edit({
       model: env.openaiImageModel,
@@ -1278,6 +1435,8 @@ export async function validateGeneratedImage({
   // pairwise comparison between the two generated shots themselves).
   identityReferenceBuffer,
   identityReferenceMimetype,
+  // 'GENTS_MASTER' (default) | 'CHILD' | 'HAND' — what the third image is.
+  identityKind = 'GENTS_MASTER',
 }) {
   if (!env.openaiVisionModel) {
     throw new AppError(503, 'AI validation is not configured');
@@ -1294,7 +1453,17 @@ export async function validateGeneratedImage({
     { type: 'image_url', image_url: { url: `data:${referenceMimetype};base64,${referenceBase64}`, detail: 'high' } },
   ];
 
-  if (identityReferenceBuffer) {
+  if (identityReferenceBuffer && identityKind !== 'GENTS_MASTER') {
+    text +=
+      identityKind === 'HAND'
+        ? ' A third image is also attached — the first hand image from this same set. Verify the hand in the GENERATED result (first image) is the same hand: same skin tone, finger proportions, nail length, nail shape and nail colour. If it is clearly a different hand, this is a "Presenter Identity Mismatch" — set validationStatus to "failed" and say so explicitly in validationMessages.'
+        : ' A third image is also attached — the first presenter image from this same set. Verify the child in the GENERATED result (first image) is the same child: same face, apparent age, skin tone, hairstyle, clothing and body proportions. If it is clearly a different child, this is a "Presenter Identity Mismatch" — set validationStatus to "failed" and say so explicitly in validationMessages.';
+    content[0].text = text;
+    content.push({
+      type: 'image_url',
+      image_url: { url: `data:${identityReferenceMimetype ?? 'image/png'};base64,${identityReferenceBuffer.toString('base64')}`, detail: 'high' },
+    });
+  } else if (identityReferenceBuffer) {
     text +=
       ' A third image is also attached — the fixed master presenter identity reference for this generation job. Verify the presenter shown in the GENERATED result (first image) is unambiguously the same man shown in this third identity reference image: matching face shape, facial features, skin tone, apparent age, hairline, hair colour, hairstyle, and beard/moustache. If the presenter appears to be a different person, a different apparent age, or has different facial hair than the identity reference, this is a "Presenter Identity Mismatch" — set validationStatus to "failed" and say so explicitly in validationMessages, e.g. "Presenter Identity Mismatch: generated presenter\'s face/beard do not match the identity reference."';
     content[0].text = text;

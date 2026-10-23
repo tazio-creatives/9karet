@@ -279,7 +279,12 @@ export function AnalyseConfirmStep({
           label="Generate Rose Gold"
           helperText="Off: 6 Yellow Gold images. On: 3 Yellow Gold + the same views in Rose Gold. Always 6 images."
         />
-        <GenerationSummary generateRoseGold={generateRoseGold} />
+        <GenerationSummary
+          generateRoseGold={generateRoseGold}
+          customerCategory={customerCategory}
+          jewelleryType={jewelleryType}
+          hasPresenter={false}
+        />
         {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
       </section>
 

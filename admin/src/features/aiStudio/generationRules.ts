@@ -115,20 +115,59 @@ export function isValidManifest(manifest: ManifestSlot[], generateRoseGold: bool
   );
 }
 
-// The ✓ / ✕ lines of the pre-generation summary.
-export function manifestSummary(generateRoseGold: boolean): { label: string; included: boolean }[] {
+// The ✓ / ✕ lines of the pre-generation summary. Rose Gold sets the metal
+// split; the customer category only names the presenter type.
+export function manifestSummary(
+  generateRoseGold: boolean,
+  customerCategory: CustomerCategory | '' = '',
+): { label: string; included: boolean }[] {
+  const who = customerCategory ? `${formatCustomerCategory(customerCategory)} ` : '';
   return generateRoseGold
     ? [
         { label: '2 Yellow Gold catalogue images', included: true },
         { label: '2 Rose Gold catalogue images', included: true },
-        { label: '1 Yellow Gold presenter image', included: true },
-        { label: '1 Rose Gold presenter image', included: true },
+        { label: `1 Yellow Gold ${who}presenter image`, included: true },
+        { label: `1 Rose Gold ${who}presenter image`, included: true },
       ]
     : [
         { label: '4 Yellow Gold catalogue images', included: true },
-        { label: '2 Yellow Gold presenter images', included: true },
+        { label: `2 Yellow Gold ${who}presenter images`, included: true },
         { label: 'Rose Gold images', included: false },
       ];
+}
+
+// The catalogue angles — the jewellery category's only effect on the plan.
+// Mirrors backend resolveCatalogueViews.
+export function catalogueViewLabels(jewelleryType: JewelleryType | '', generateRoseGold: boolean): string[] {
+  const views =
+    jewelleryType === 'RING'
+      ? ['Hero three-quarter', 'Front/top', 'Side profile', 'Macro detail']
+      : ['Front', '45° hero', 'Side profile', 'Macro detail'];
+  return generateRoseGold ? views.slice(0, 2) : views;
+}
+
+// How the two presenter images keep one identity — the customer category's
+// only effect on the plan. Mirrors backend resolvePresenter.
+export function presenterIdentityLabel(
+  jewelleryType: JewelleryType | '',
+  customerCategory: CustomerCategory | '',
+  hasPresenter: boolean,
+): string {
+  if (jewelleryType === 'RING') return 'Hand images — the second uses the first as its hand reference';
+  if (customerCategory === 'GENTS') return 'The same AI-generated male presenter in both images';
+  if (customerCategory === 'KIDS') {
+    return hasPresenter
+      ? 'The selected child presenter in both images'
+      : 'The same child — the second image uses the first as its reference';
+  }
+  return hasPresenter ? 'The selected presenter in both images' : 'Choose a presenter — it is used in both images';
+}
+
+// A second presenter image generated from the first (Kids without a saved
+// child presenter, and Ring hands) — the slot it takes its identity from.
+export function referenceSlotFor(manifest: ManifestSlot[] | null, slotKey: string | null): string | null {
+  if (!manifest || !slotKey) return null;
+  return manifest.find((m) => m.slotKey === slotKey)?.identity?.referenceSlot ?? null;
 }
 
 // Women/Unisex presenter images are composited onto a chosen presenter's

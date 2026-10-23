@@ -209,6 +209,16 @@ export interface ManifestSlot {
   index: number;
   metal: 'YELLOW' | 'ROSE';
   kind: 'catalogue' | 'presenter';
+  view?: string;
+  // Presenter slots only: whose identity the image uses. referenceSlot is
+  // set on a second presenter image generated from the first one.
+  identity?: {
+    audience: CustomerCategory;
+    subject: 'PERSON' | 'CHILD' | 'HAND';
+    source: 'PRESENTER_PHOTO' | 'GENTS_MASTER' | 'FIRST_OUTPUT';
+    presenterId: string | null;
+    referenceSlot: string | null;
+  };
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';

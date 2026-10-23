@@ -9,7 +9,7 @@ import {
   effectiveGenerateRoseGold,
   JEWELLERY_TYPES,
   previewPromptsForJob,
-  buildOutputManifest,
+  buildJobPlan,
   assertValidManifest,
   metalColorForAssetType,
   MANIFEST_SIZE,
@@ -360,20 +360,24 @@ export async function confirmJob(req, res, next) {
     const generateRoseGold = effectiveGenerateRoseGold(input.jewelleryType, input.generateRoseGold ?? false);
     const customerCategory = input.customerCategory ?? DEFAULT_CUSTOMER_CATEGORY;
 
-    // Both presenter images are always generated now. Women/Unisex shots are
-    // composited onto the chosen presenter's photos, so one must be picked;
-    // Gents/Kids describe the model in text (Gents with one fixed identity).
-    if (!isRing && !presenter && !['GENTS', 'KIDS'].includes(customerCategory)) {
-      throw new AppError(400, 'Choose a presenter — every generation includes 2 presenter images.');
-    }
-
-    // The complete six-slot plan, built and checked before anything starts.
-    const manifest = buildOutputManifest({ confirmedType: input.jewelleryType, generateRoseGold });
+    // The complete six-slot plan — counts and metals from the Rose Gold
+    // switch, views from the jewellery category, presenter identity from the
+    // customer category — built and validated before anything starts.
+    // Women/Unisex without a presenter are rejected here.
+    const manifest = buildJobPlan({
+      jewelleryCategory: input.jewelleryType,
+      generateRoseGold,
+      customerCategory,
+      selectedPresenter: presenter,
+    });
+    const presenterReferenceId = manifest.find((m) => m.kind === 'presenter').identity.presenterId;
 
     await updateJob(job.id, {
       jewellery_type: input.jewelleryType,
       category_id: input.categoryId ?? null,
-      presenter_id: isRing ? null : (input.presenterId ?? null),
+      // The presenter whose photos the presenter images actually use (null
+      // when the identity is AI-generated or chained from the first image).
+      presenter_id: presenterReferenceId,
       generate_rose_gold: generateRoseGold,
       output_manifest: JSON.stringify(manifest),
       customer_category: customerCategory,
@@ -482,6 +486,15 @@ export async function retryAsset(req, res, next) {
     if (!asset || asset.job_id !== job.id) throw new NotFoundError('Asset not found');
     if (!['FAILED', 'READY'].includes(asset.status)) {
       throw new AppError(409, 'Only a failed or completed asset can be regenerated');
+    }
+    // A chained second presenter image is regenerated from the first one,
+    // so the first must have succeeded. Only this one slot is regenerated.
+    const referenceSlot = job.output_manifest?.find((m) => m.slotKey === asset.slot_key)?.identity?.referenceSlot;
+    if (referenceSlot) {
+      const reference = (await findAssetsByJobId(job.id)).find((a) => a.slot_key === referenceSlot);
+      if (reference?.status !== 'READY') {
+        throw new AppError(409, 'Generate the first presenter image successfully before regenerating this one.');
+      }
     }
 
     await resetAssetForRetry(asset.id);

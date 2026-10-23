@@ -12,6 +12,7 @@ const sent = [];
 const originalSend = boss.send;
 const created = [];
 let productId;
+let presenterId;
 
 before(async () => {
   boss.send = async (name, data) => {
@@ -27,11 +28,20 @@ before(async () => {
      LIMIT 1`,
   );
   productId = rows[0].id;
+  const presenter = await query(
+    `INSERT INTO presenters (display_name, style_label, main_preview_image_url, front_portrait_url, face_45_url,
+                             side_profile_url, jewellery_placement_url, supported_jewellery_types)
+     VALUES ('Test Presenter', 'Test', 'http://x/p.jpg', 'http://x/f.jpg', 'http://x/45.jpg', 'http://x/s.jpg',
+             'http://x/j.jpg', ARRAY['PENDANT','RING','EARRINGS','BRACELET'])
+     RETURNING id`,
+  );
+  presenterId = presenter.rows[0].id;
 });
 
 after(async () => {
   boss.send = originalSend;
   if (created.length) await query('DELETE FROM ai_studio_jobs WHERE id = ANY($1)', [created]);
+  if (presenterId) await query('DELETE FROM presenters WHERE id = $1', [presenterId]);
 });
 
 // Runs an Express handler and resolves with what it sent (or the error it
@@ -114,6 +124,78 @@ describe('six-slot AI Studio jobs', () => {
         'rose_presenter_1=RING_HAND_ROSE',
       ],
     );
+    await closeJob(job.id);
+  });
+
+  // The eight required customer category × Rose Gold combinations, through
+  // the real confirm endpoint. Women/Unisex use the chosen presenter; Gents
+  // the fixed male identity; Kids (no child presenter) the first image.
+  for (const customerCategory of ['WOMEN', 'UNISEX', 'GENTS', 'KIDS']) {
+    for (const generateRoseGold of [false, true]) {
+      test(`${customerCategory} + Rose Gold ${generateRoseGold ? 'ON' : 'OFF'}: six slots with the right metals and one identity`, async () => {
+        const job = await newJob();
+        const needsPresenter = customerCategory === 'WOMEN' || customerCategory === 'UNISEX';
+        const res = await confirm(job, {
+          jewelleryType: 'PENDANT',
+          customerCategory,
+          generateRoseGold,
+          presenterId: needsPresenter ? presenterId : null,
+        });
+        assert.equal(res.status, 202, res.error?.message);
+
+        const saved = await findJobById(job.id);
+        assert.equal(saved.generate_rose_gold, generateRoseGold);
+        assert.equal(saved.customer_category, customerCategory);
+        assert.equal(saved.jewellery_type, 'PENDANT');
+        assert.equal(saved.presenter_id, needsPresenter ? presenterId : null);
+
+        const assets = await findAssetsByJobId(job.id);
+        const slots = saved.output_manifest;
+        const n = (kind, metal) => slots.filter((m) => m.kind === kind && m.metal === metal).length;
+        assert.equal(assets.length, 6);
+        assert.deepEqual(
+          [n('catalogue', 'YELLOW'), n('catalogue', 'ROSE'), n('presenter', 'YELLOW'), n('presenter', 'ROSE')],
+          generateRoseGold ? [2, 2, 1, 1] : [4, 0, 2, 0],
+        );
+        assert.equal(assets.filter((a) => /ROSE/.test(a.asset_type)).length, generateRoseGold ? 3 : 0);
+
+        const [p1, p2] = slots.filter((m) => m.kind === 'presenter');
+        assert.equal(p1.identity.source, p2.identity.source);
+        assert.equal(p1.identity.presenterId, p2.identity.presenterId);
+        assert.equal(
+          p1.identity.source,
+          { WOMEN: 'PRESENTER_PHOTO', UNISEX: 'PRESENTER_PHOTO', GENTS: 'GENTS_MASTER', KIDS: 'FIRST_OUTPUT' }[customerCategory],
+        );
+        assert.equal(p2.identity.referenceSlot, customerCategory === 'KIDS' ? p1.slotKey : null);
+        await closeJob(job.id);
+      });
+    }
+  }
+
+  test('a chained second presenter image can only be regenerated once the first has succeeded', async () => {
+    const job = await newJob();
+    await confirm(job, { jewelleryType: 'RING', generateRoseGold: true });
+    const assets = await findAssetsByJobId(job.id);
+    const first = assets.find((a) => a.slot_key === 'yellow_presenter_1');
+    const second = assets.find((a) => a.slot_key === 'rose_presenter_1');
+    for (const a of assets) {
+      await query("UPDATE ai_studio_assets SET status = 'READY', image_key = $2 WHERE id = $1", [a.id, `k/${a.slot_key}.png`]);
+    }
+    await query("UPDATE ai_studio_assets SET status = 'FAILED' WHERE id = ANY($1)", [[first.id, second.id]]);
+    await query("UPDATE ai_studio_jobs SET status = 'partially_failed' WHERE id = $1", [job.id]);
+
+    const blocked = await call(retryAsset, { params: { id: productId, jobId: job.id, assetId: second.id } });
+    assert.equal(blocked.status, 409);
+    assert.match(blocked.error.message, /first presenter image/i);
+
+    await query("UPDATE ai_studio_assets SET status = 'READY' WHERE id = $1", [first.id]);
+    sent.length = 0;
+    const ok = await call(retryAsset, { params: { id: productId, jobId: job.id, assetId: second.id } });
+    assert.equal(ok.status, 202);
+    assert.deepEqual(sent.map((s) => s.data.assetIds), [[second.id]]);
+    const after = await findAssetsByJobId(job.id);
+    assert.equal(after.find((a) => a.id === first.id).image_key, 'k/yellow_presenter_1.png');
+    assert.equal(after.find((a) => a.id === first.id).status, 'READY');
     await closeJob(job.id);
   });
 

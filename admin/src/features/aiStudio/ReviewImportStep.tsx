@@ -3,7 +3,14 @@ import sharedStyles from '../../styles/shared.module.css';
 import type { StudioAsset, StudioJob, PromptCreativeOverride } from '../../api/aiStudio';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Modal } from '../../components/Modal';
-import { SHOT_LABELS, ringShotLabel, metalColorForAssetType, catalogueCount, presenterCount } from './generationRules';
+import {
+  SHOT_LABELS,
+  ringShotLabel,
+  metalColorForAssetType,
+  catalogueCount,
+  presenterCount,
+  referenceSlotFor,
+} from './generationRules';
 import styles from './ReviewImportStep.module.css';
 
 type ImportState = 'idle' | 'importing' | 'completed' | 'partially_failed';
@@ -186,6 +193,10 @@ export function ReviewImportStep({
             !!asset.validationStatus && asset.validationStatus !== 'passed' && !asset.validationAccepted;
           const shotLabel = isRing ? ringShotLabel(asset.assetType, job.generateRoseGold) : SHOT_LABELS[asset.assetType];
           const isRegenerating = regeneratingAssetIds.has(asset.id);
+          // A second presenter image regenerates from the first one, so the
+          // first must have succeeded; the first image itself is never touched.
+          const referenceSlot = referenceSlotFor(job.outputManifest, asset.slotKey);
+          const referenceReady = assets.some((a) => a.slotKey === referenceSlot && a.status === 'READY');
           return (
             <div key={asset.id} className={styles.tile}>
               <div className={styles.tileHeader}>
@@ -263,10 +274,17 @@ export function ReviewImportStep({
                   <button
                     type="button"
                     className={sharedStyles.buttonLink}
-                    disabled={isRegenerating}
+                    disabled={isRegenerating || (!!referenceSlot && !referenceReady)}
+                    title={referenceSlot && !referenceReady ? 'The first presenter image must succeed first' : undefined}
                     onClick={() => onRegenerate(asset.id)}
                   >
-                    {isRegenerating ? 'Requesting…' : asset.status === 'FAILED' ? 'Retry' : 'Regenerate'}
+                    {isRegenerating
+                      ? 'Requesting…'
+                      : referenceSlot
+                        ? 'Regenerate Second Presenter Using First as Reference'
+                        : asset.status === 'FAILED'
+                          ? 'Retry'
+                          : 'Regenerate'}
                   </button>
                 )}
               </div>
@@ -276,10 +294,10 @@ export function ReviewImportStep({
                   <button
                     type="button"
                     className={sharedStyles.buttonLink}
-                    disabled={isRegenerating}
+                    disabled={isRegenerating || (!!referenceSlot && !referenceReady)}
                     onClick={() => onRegenerate(asset.id)}
                   >
-                    Regenerate Automatically
+                    {referenceSlot ? 'Regenerate Second Presenter Using First as Reference' : 'Regenerate Automatically'}
                   </button>
                   <button type="button" className={sharedStyles.buttonLink} onClick={() => openEditPrompt(asset)}>
                     Edit Prompt & Regenerate

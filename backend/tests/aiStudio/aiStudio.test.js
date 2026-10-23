@@ -9,7 +9,13 @@ import {
   buildOutputManifest,
   assertValidManifest,
   effectiveGenerateRoseGold,
+  buildJobPlan,
+  resolveCatalogueViews,
+  resolvePresenter,
+  buildGenerationRequest,
+  IDENTITY_SOURCES,
 } from '../../src/services/aiStudioService.js';
+import { splitGenerationWaves } from '../../src/jobs/aiStudioJob.js';
 import { query } from '../../src/config/db.js';
 import { insertJob, findCategoryTemplate } from '../../src/repositories/aiStudio.repository.js';
 
@@ -75,89 +81,156 @@ describe('confirmSchema (plan §5: UNKNOWN and low-confidence handling)', () => 
   });
 });
 
-describe('output manifest — always exactly 6 slots (9karet)', () => {
-  const plan = (confirmedType, generateRoseGold) =>
-    buildOutputManifest({ confirmedType, generateRoseGold }).map((m) => `${m.slotKey}=${m.assetType}`);
+describe('six-slot planning — separated responsibilities (9karet)', () => {
+  const PRESENTER = { id: '00000000-0000-4000-8000-0000000000aa' };
+  const CUSTOMERS = ['WOMEN', 'UNISEX', 'GENTS', 'KIDS'];
+  const plan = (jewelleryCategory, generateRoseGold, customerCategory = 'WOMEN', selectedPresenter = PRESENTER) =>
+    buildJobPlan({ jewelleryCategory, generateRoseGold, customerCategory, selectedPresenter });
+  const keys = (p) => p.map((m) => `${m.slotKey}=${m.assetType}`);
 
-  test('Rose Gold OFF, non-Ring: 4 yellow catalogue + 2 yellow presenter, existing Front/45° first', () => {
-    assert.deepEqual(plan('EARRINGS', false), [
-      'yellow_catalogue_1=YELLOW_FRONT',
-      'yellow_catalogue_2=YELLOW_HERO_45',
-      'yellow_catalogue_3=YELLOW_SIDE',
-      'yellow_catalogue_4=YELLOW_MACRO',
-      'yellow_presenter_1=PRESENTER_YELLOW_1',
-      'yellow_presenter_2=PRESENTER_YELLOW_2',
-    ]);
+  test('buildOutputManifest decides only count, kind and metal', () => {
+    assert.deepEqual(
+      buildOutputManifest(false).map((m) => `${m.slotKey}:${m.kind}:${m.metal}`),
+      [
+        'yellow_catalogue_1:catalogue:YELLOW',
+        'yellow_catalogue_2:catalogue:YELLOW',
+        'yellow_catalogue_3:catalogue:YELLOW',
+        'yellow_catalogue_4:catalogue:YELLOW',
+        'yellow_presenter_1:presenter:YELLOW',
+        'yellow_presenter_2:presenter:YELLOW',
+      ],
+    );
+    assert.deepEqual(
+      buildOutputManifest(true).map((m) => `${m.slotKey}:${m.kind}:${m.metal}`),
+      [
+        'yellow_catalogue_1:catalogue:YELLOW',
+        'yellow_catalogue_2:catalogue:YELLOW',
+        'rose_catalogue_1:catalogue:ROSE',
+        'rose_catalogue_2:catalogue:ROSE',
+        'yellow_presenter_1:presenter:YELLOW',
+        'rose_presenter_1:presenter:ROSE',
+      ],
+    );
   });
 
-  test('Rose Gold ON, non-Ring: 2 yellow + the same 2 views in rose, then a yellow and a rose presenter', () => {
-    assert.deepEqual(plan('EARRINGS', true), [
-      'yellow_catalogue_1=YELLOW_FRONT',
-      'yellow_catalogue_2=YELLOW_HERO_45',
-      'rose_catalogue_1=ROSE_FRONT',
-      'rose_catalogue_2=ROSE_HERO_45',
-      'yellow_presenter_1=PRESENTER_YELLOW_1',
-      'rose_presenter_1=PRESENTER_ROSE',
-    ]);
+  test('resolveCatalogueViews decides only the angles: Ring hero/front-top/side/macro, others front/45°/side/macro', () => {
+    assert.deepEqual(resolveCatalogueViews('RING', false).map((v) => v.view), ['HERO', 'FRONT_TOP', 'SIDE_PROFILE', 'MACRO']);
+    assert.deepEqual(resolveCatalogueViews('BRACELET', false).map((v) => v.view), ['FRONT', 'HERO_45', 'SIDE_PROFILE', 'MACRO']);
+    assert.deepEqual(resolveCatalogueViews('RING', true).map((v) => v.view), ['HERO', 'FRONT_TOP']);
   });
 
-  test('Rose Gold OFF, Ring: hero, front/top, side profile, macro, then two yellow hand shots', () => {
-    assert.deepEqual(plan('RING', false), [
-      'yellow_catalogue_1=RING_GOLD_HERO',
-      'yellow_catalogue_2=RING_GOLD_FRONT',
-      'yellow_catalogue_3=RING_GOLD_PROFILE',
-      'yellow_catalogue_4=RING_GOLD_MACRO',
-      'yellow_presenter_1=RING_HAND_1',
-      'yellow_presenter_2=RING_HAND_2',
-    ]);
+  test('resolvePresenter decides only the identity', () => {
+    assert.equal(resolvePresenter({ customerCategory: 'WOMEN', selectedPresenter: PRESENTER }).source, IDENTITY_SOURCES.PRESENTER_PHOTO);
+    assert.equal(resolvePresenter({ customerCategory: 'UNISEX', selectedPresenter: PRESENTER }).source, IDENTITY_SOURCES.PRESENTER_PHOTO);
+    assert.equal(resolvePresenter({ customerCategory: 'GENTS', selectedPresenter: null }).source, IDENTITY_SOURCES.GENTS_MASTER);
+    assert.equal(resolvePresenter({ customerCategory: 'KIDS', selectedPresenter: PRESENTER }).source, IDENTITY_SOURCES.PRESENTER_PHOTO);
+    assert.equal(resolvePresenter({ customerCategory: 'KIDS', selectedPresenter: null }).source, IDENTITY_SOURCES.FIRST_OUTPUT);
+    const ring = resolvePresenter({ customerCategory: 'GENTS', selectedPresenter: null, jewelleryCategory: 'RING' });
+    assert.deepEqual([ring.source, ring.subject], [IDENTITY_SOURCES.FIRST_OUTPUT, 'HAND']);
+    assert.throws(() => resolvePresenter({ customerCategory: 'WOMEN', selectedPresenter: null }), /choose a presenter/i);
   });
 
-  test('Rose Gold ON, Ring: yellow hero + front, rose hero + front, yellow hand, rose hand', () => {
-    assert.deepEqual(plan('RING', true), [
-      'yellow_catalogue_1=RING_GOLD_HERO',
-      'yellow_catalogue_2=RING_GOLD_FRONT',
-      'rose_catalogue_1=RING_ROSE_HERO',
-      'rose_catalogue_2=RING_ROSE_FRONT',
-      'yellow_presenter_1=RING_HAND_1',
-      'rose_presenter_1=RING_HAND_ROSE',
-    ]);
-  });
+  // The eight required combinations, for a non-ring and a ring product.
+  for (const customer of CUSTOMERS) {
+    for (const rose of [false, true]) {
+      test(`${customer} + Rose Gold ${rose ? 'ON' : 'OFF'}: ${rose ? '2+2 catalogue, 1+1 presenter' : '4 yellow catalogue, 2 yellow presenter'}, one identity`, () => {
+        for (const category of ['BRACELET', 'RING']) {
+          const p = plan(category, rose, customer);
+          const n = (pred) => p.filter(pred).length;
+          assert.equal(p.length, 6);
+          assert.equal(n((m) => m.kind === 'catalogue' && m.metal === 'YELLOW'), rose ? 2 : 4);
+          assert.equal(n((m) => m.kind === 'catalogue' && m.metal === 'ROSE'), rose ? 2 : 0);
+          assert.equal(n((m) => m.kind === 'presenter' && m.metal === 'YELLOW'), rose ? 1 : 2);
+          assert.equal(n((m) => m.kind === 'presenter' && m.metal === 'ROSE'), rose ? 1 : 0);
+          const [p1, p2] = p.filter((m) => m.kind === 'presenter');
+          assert.equal(p1.identity.audience, customer);
+          assert.equal(p1.identity.source, p2.identity.source);
+          assert.equal(p1.identity.presenterId, p2.identity.presenterId);
+        }
+      });
+    }
+  }
 
-  test('every category, both modes: 6 unique slots, 4 catalogue + 2 presenter, 0 or 3 rose, metals match the asset type', () => {
-    for (const type of JEWELLERY_TYPES.filter((t) => t !== 'UNKNOWN')) {
+  test('customer category never changes slots, metals, views or order — only the presenter identity', () => {
+    for (const category of ['RING', 'NECKLACE']) {
       for (const rose of [false, true]) {
-        const m = buildOutputManifest({ confirmedType: type, generateRoseGold: rose });
-        assert.equal(m.length, 6);
-        assert.equal(new Set(m.map((x) => x.slotKey)).size, 6);
-        assert.equal(m.filter((x) => x.kind === 'catalogue').length, 4);
-        assert.equal(m.filter((x) => x.kind === 'presenter').length, 2);
-        assert.equal(m.filter((x) => x.metal === 'ROSE').length, rose ? 3 : 0);
-        assert.equal(m.filter((x) => x.metal === 'YELLOW').length, rose ? 3 : 6);
-        assert.deepEqual(m.map((x) => x.index), [0, 1, 2, 3, 4, 5]);
-        for (const x of m) assert.equal(metalColorForAssetType(x.assetType, rose), x.metal, `${type} ${x.slotKey}`);
+        const base = keys(plan(category, rose, 'WOMEN'));
+        for (const customer of CUSTOMERS) assert.deepEqual(keys(plan(category, rose, customer)), base, `${category} ${customer}`);
       }
     }
   });
 
-  test('rose views repeat exactly the first two yellow views', () => {
-    for (const type of ['RING', 'NECKLACE']) {
-      const m = buildOutputManifest({ confirmedType: type, generateRoseGold: true });
-      assert.deepEqual(
-        m.slice(2, 4).map((x) => x.assetType.replace('ROSE', 'GOLD').replace(/^GOLD_/, 'YELLOW_')),
-        m.slice(0, 2).map((x) => x.assetType),
-      );
+  test('jewellery category never changes the count or the metal split', () => {
+    for (const rose of [false, true]) {
+      const shape = (p) => p.map((m) => `${m.slotKey}:${m.kind}:${m.metal}`);
+      const base = shape(plan('EARRINGS', rose));
+      for (const category of JEWELLERY_TYPES.filter((t) => t !== 'UNKNOWN')) {
+        assert.deepEqual(shape(plan(category, rose)), base, category);
+      }
     }
   });
 
-  test('assertValidManifest rejects a wrong count, duplicate slots and rose slots in an OFF plan', () => {
-    const good = buildOutputManifest({ confirmedType: 'PENDANT', generateRoseGold: false });
-    assert.throws(() => assertValidManifest(good.slice(0, 5), { generateRoseGold: false }), /6 slots/);
-    assert.throws(() => assertValidManifest([...good.slice(0, 5), good[0]], { generateRoseGold: false }), /unique/);
-    const withRose = buildOutputManifest({ confirmedType: 'PENDANT', generateRoseGold: true });
-    assert.throws(() => assertValidManifest(withRose, { generateRoseGold: false }), /rose-gold slot/);
+  test('rose catalogue and presenter slots repeat the first yellow view and pose', () => {
+    for (const category of ['RING', 'PENDANT']) {
+      const p = plan(category, true);
+      assert.deepEqual([p[2].view, p[3].view], [p[0].view, p[1].view]);
+      assert.equal(p[5].view, p[4].view);
+    }
   });
 
-  test('the switch is exactly what the admin chose — no category forces rose gold any more', () => {
+  test('Kids without a child presenter and every Ring pair chain the second presenter to the first', () => {
+    for (const p of [plan('EARRINGS', false, 'KIDS', null), plan('EARRINGS', true, 'KIDS', null), plan('RING', false, 'WOMEN', null), plan('RING', true, 'KIDS', null)]) {
+      const [p1, p2] = p.filter((m) => m.kind === 'presenter');
+      assert.equal(p1.identity.referenceSlot, null);
+      assert.equal(p2.identity.referenceSlot, p1.slotKey);
+    }
+    for (const p of [plan('EARRINGS', false, 'KIDS', PRESENTER), plan('EARRINGS', false, 'WOMEN'), plan('EARRINGS', true, 'GENTS', null)]) {
+      assert.ok(p.filter((m) => m.kind === 'presenter').every((m) => !m.identity.referenceSlot));
+    }
+  });
+
+  test('validation rejects bad plans: wrong count, duplicates, rose in OFF, two identities', () => {
+    const good = plan('PENDANT', false);
+    assert.throws(() => assertValidManifest(good.slice(0, 5), { generateRoseGold: false }), /6 slots/);
+    assert.throws(() => assertValidManifest([...good.slice(0, 5), good[0]], { generateRoseGold: false }), /unique/);
+    assert.throws(() => assertValidManifest(plan('PENDANT', true), { generateRoseGold: false }), /rose-gold slot/);
+    const twoPeople = good.map((m) => (m.slotKey === 'yellow_presenter_2' ? { ...m, identity: { ...m.identity, presenterId: 'someone-else' } } : m));
+    assert.throws(() => assertValidManifest(twoPeople, { generateRoseGold: false }), /same presenter identity/);
+  });
+
+  test('buildGenerationRequest: chained slots send [first image, jewellery]; photo slots send [jewellery, presenter]', () => {
+    const jewelleryReference = { buffer: Buffer.from('j'), mimetype: 'image/jpeg', filename: 'reference.jpg' };
+    const [, chainedSlot] = plan('RING', true).filter((m) => m.kind === 'presenter');
+    assert.throws(() => buildGenerationRequest({ outputSlot: chainedSlot, jewelleryReference, prompt: 'p' }), /first presenter image/i);
+    const chained = buildGenerationRequest({ outputSlot: chainedSlot, jewelleryReference, identityReference: { buffer: Buffer.from('first') }, prompt: 'p' });
+    assert.deepEqual(chained.images.map((i) => i.role), ['identity', 'jewellery']);
+    const photo = buildGenerationRequest({ outputSlot: plan('EARRINGS', false)[4], jewelleryReference, presenterReference: { buffer: Buffer.from('ph') }, prompt: 'p' });
+    assert.deepEqual(photo.images.map((i) => i.role), ['jewellery', 'presenter']);
+    assert.deepEqual(buildGenerationRequest({ outputSlot: plan('EARRINGS', false)[0], jewelleryReference, prompt: 'p' }).images.map((i) => i.role), ['jewellery']);
+  });
+
+  test('generation waves: chained second presenter runs after everything else', () => {
+    const manifest = plan('RING', false);
+    const assets = manifest.map((m) => ({ id: m.slotKey, slot_key: m.slotKey }));
+    const { firstWave, chained } = splitGenerationWaves(assets, manifest);
+    assert.deepEqual(chained.map((a) => a.id), ['yellow_presenter_2']);
+    assert.equal(firstWave.length, 5);
+    // Older jobs (no manifest) run everything together, as before.
+    assert.equal(splitGenerationWaves(assets, null).firstWave.length, 6);
+  });
+
+  test('chained prompts reuse the first image: same child / same hand; rose keeps the pose, yellow changes it', () => {
+    const T = { front_prompt: 'F', hero_45_prompt: 'H', presenter_placement: 'p', presenter_crop: 'c' };
+    const kids = previewPromptsForJob({ confirmedType: 'EARRINGS', template: T, presenter: null, generateRoseGold: false, confirmedCustomerCategory: 'KIDS' });
+    assert.match(kids[5].finalPrompt, /reproduce exactly the same child/i);
+    assert.match(kids[5].finalPrompt, /different, suitable pose/i);
+    assert.doesNotMatch(kids[4].finalPrompt, /reproduce exactly the same child/i);
+    const ring = previewPromptsForJob({ confirmedType: 'RING', template: T, presenter: null, generateRoseGold: true });
+    assert.match(ring[5].finalPrompt, /reproduce exactly the same hand/i);
+    assert.match(ring[5].finalPrompt, /change only the jewellery metal colour/i);
+  });
+
+  test('the switch is exactly what the admin chose — no category forces rose gold', () => {
     for (const type of ['RING', 'NECKLACE', 'EARRINGS']) {
       assert.equal(effectiveGenerateRoseGold(type, false), false);
       assert.equal(effectiveGenerateRoseGold(type, undefined), false);
@@ -165,19 +238,16 @@ describe('output manifest — always exactly 6 slots (9karet)', () => {
     }
   });
 
-  test('Rose Gold OFF prompts never ask for rose gold', () => {
+  test('Rose Gold OFF prompts never ask for rose gold, for any customer category', () => {
+    const T = { front_prompt: 'F', hero_45_prompt: 'H', presenter_placement: 'p', presenter_crop: 'c' };
     for (const type of ['RING', 'EARRINGS', 'NECKLACE']) {
-      const previews = previewPromptsForJob({
-        confirmedType: type,
-        template: { front_prompt: 'FRONT', hero_45_prompt: 'HERO', presenter_placement: 'p', presenter_crop: 'c' },
-        presenter: null,
-        generateRoseGold: false,
-        overridesByAssetType: undefined,
-      });
-      assert.equal(previews.length, 6);
-      for (const p of previews) {
-        assert.equal(p.metalColor, 'YELLOW');
-        assert.doesNotMatch(p.finalPrompt, /rose gold|rose-gold tone/i, `${type} ${p.assetType}`);
+      for (const customer of CUSTOMERS) {
+        const previews = previewPromptsForJob({ confirmedType: type, template: T, presenter: PRESENTER, generateRoseGold: false, confirmedCustomerCategory: customer });
+        assert.equal(previews.length, 6);
+        for (const p of previews) {
+          assert.equal(p.metalColor, 'YELLOW');
+          assert.doesNotMatch(p.finalPrompt, /rose gold|rose-gold tone/i, `${type} ${customer} ${p.assetType}`);
+        }
       }
     }
   });

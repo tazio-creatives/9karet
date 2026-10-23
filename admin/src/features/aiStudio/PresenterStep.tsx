@@ -43,7 +43,9 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
       <p>
         {required
           ? 'Choose the presenter for both presenter images — the same person appears in both.'
-          : 'The presenter images use an AI-described model for this customer category. Picking a presenter is optional.'}
+          : customerCategory === 'KIDS'
+            ? 'Optionally pick a child presenter as the reference for both images. Without one, the first child image is generated and then used as the reference for the second.'
+            : 'The presenter images use one AI-generated male presenter for both images. Picking a presenter is optional.'}
       </p>
       {required && presenters.length === 0 && (
         <p className={sharedStyles.error}>No presenters are set up yet. Add one under AI Studio → Presenters first.</p>
@@ -59,8 +61,10 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
         >
           {presenterId === null && <span className={styles.checkmark}>✓</span>}
           <div className={styles.noPresenterPreview}>No Presenter</div>
-          <p className={styles.cardTitle}>AI-described model</p>
-          <p className={styles.cardBody}>Use the model described for this customer category.</p>
+          <p className={styles.cardTitle}>{customerCategory === 'KIDS' ? 'No child presenter' : 'AI-generated presenter'}</p>
+          <p className={styles.cardBody}>
+            {customerCategory === 'KIDS' ? 'The first image becomes the reference for the second.' : 'One generated identity, used in both images.'}
+          </p>
         </button>
         )}
 
@@ -91,7 +95,12 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
             <dd>{generateRoseGold ? 'On' : 'Off'}</dd>
           </div>
         </dl>
-        <GenerationSummary generateRoseGold={generateRoseGold} />
+        <GenerationSummary
+          generateRoseGold={generateRoseGold}
+          customerCategory={customerCategory}
+          jewelleryType={jewelleryType}
+          hasPresenter={!!presenterId}
+        />
       </div>
 
       {viewingPresenterId && viewingData && (

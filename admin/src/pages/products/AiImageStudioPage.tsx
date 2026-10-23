@@ -473,6 +473,7 @@ export function AiImageStudioPage() {
             jewelleryType={job.jewelleryType}
             generateRoseGold={job.generateRoseGold}
             progress={job.progress}
+            outputManifest={job.outputManifest}
             onRegenerate={regenerateAsset}
             regeneratingAssetIds={regeneratingAssetIds}
           />
