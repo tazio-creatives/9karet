@@ -299,7 +299,7 @@ const PRESENTER_BACKGROUND_NOTE =
 // and Rose Gold. Kept as two constants keyed by metal colour so the call
 // sites stay unchanged. Model/presenter/hand/lifestyle shots are unaffected.
 const WHITE_CATALOGUE_BACKGROUND_NOTE =
-  ' Use a seamless, pure white (#FFFFFF) studio background — evenly lit, with no fabric, folds, texture, gradient, vignette or colour tint. Add only a soft, natural contact shadow directly beneath the jewellery so it sits grounded on the surface. Keep clear separation between the metal and the white background, and do not let the background tint the metal or the gemstones.';
+  ' Use a seamless, pure white (#FFFFFF) studio background — evenly lit, with no fabric, folds, texture, gradient, vignette or colour tint. The background must read as bright pure white everywhere except the shadow, not light grey or off-white. Add only a soft, natural contact shadow directly beneath the jewellery so it sits grounded on the surface. Keep clear separation between the metal and the white background, and do not let the background tint the metal or the gemstones.';
 const RING_GOLD_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
 const RING_ROSE_CATALOGUE_BACKGROUND_NOTE = WHITE_CATALOGUE_BACKGROUND_NOTE;
 const RING_CATALOGUE_LIGHTING_NOTE =
@@ -1023,8 +1023,13 @@ const VALIDATION_SYSTEM_PROMPT = `You are a jewellery product-photo quality revi
 // front-facing — which in practice catches the same "these two look the
 // same" failure mode the client described, without a separate cross-asset
 // validation pass.
+// The background check is deliberately lenient: the image model's "white"
+// usually comes back near-white with a grey shadow falloff, and a strict
+// "plain white" rule failed almost every catalogue shot. Only a clearly
+// coloured or dark backdrop is worth a warning; metal colour and stray
+// hands are still hard failures.
 const RING_VALIDATION_COMMON =
-  ' The background must be plain clean white — set validationStatus to "failed" for a coloured, gradient or textured background, for a rose-gold or white-gold ring (yellow gold only), or for any hand, finger or person.';
+  ' The background is a white studio background: a soft contact shadow, a slight light-grey falloff or an off-white tone are expected and must NOT be flagged at all. Only if the background is clearly coloured (e.g. beige, pink, blue), dark, patterned or a fabric/texture, report it as "warning", never "failed". Set validationStatus to "failed" for a rose-gold or white-gold ring (yellow gold only), or for any hand, finger or person.';
 const RING_VALIDATION_CONTEXT = {
   RING_GOLD_HERO:
     ' This is the Ring HERO THREE-QUARTER VIEW — the ring stands upright at an approximately 40-45 degree three-quarter angle, showing the centre stone, the decorative top and the band, centred with balanced white space. Set validationStatus to "failed" if any part of the ring is cropped out of frame, or if this is a flat top-down view or a pure side profile instead of a three-quarter view.',
