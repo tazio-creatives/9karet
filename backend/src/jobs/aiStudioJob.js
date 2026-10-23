@@ -8,8 +8,6 @@ import {
   presenterReferenceKeyFor,
   validateGeneratedImage,
   metalColorForAssetType,
-  RING_OUTPUT_NAMES,
-  isModelShot,
   generateGentsMasterPresenter,
 } from '../services/aiStudioService.js';
 import {
@@ -70,25 +68,25 @@ export function deriveJobStatus(assets) {
   return null; // still in flight
 }
 
-// Defaults the featured/primary catalogue image the first time a job has any
-// READY assets and none is featured yet — the hero view (the spec's primary
-// product and product-list image), otherwise the older YELLOW_FRONT — a no-op on
+// Defaults the featured/primary catalogue image to YELLOW_FRONT the first
+// time a job has any READY assets and none is featured yet — a no-op on
 // every subsequent call (including after an individual regenerate), so it
 // never overrides an admin's later "Set as Featured" choice from Step 5.
 async function ensureDefaultFeatured(jobId, assets) {
   if (assets.some((a) => a.is_featured)) return;
-  const ready = assets.filter((a) => a.status === 'READY');
-  const primary =
-    ready.find((a) => a.asset_type === 'RING_GOLD_HERO' || a.asset_type === 'GOLD_HERO') ??
-    ready.find((a) => a.asset_type === 'YELLOW_FRONT' || a.asset_type === 'RING_GOLD_FRONT');
-  if (primary) await updateAsset(primary.id, { is_featured: true });
+  const front = assets.find(
+    (a) => (a.asset_type === 'YELLOW_FRONT' || a.asset_type === 'RING_GOLD_FRONT') && a.status === 'READY',
+  );
+  if (front) await updateAsset(front.id, { is_featured: true });
 }
 
-// Ring and standard-set images get one automatic retry when validation fails, before falling
-// back to the normal manual "Accept Anyway / Regenerate" flow. Capped at
+// Ring's two hand-wearing lifestyle shots get one automatic retry when
+// validation fails, before falling back to the normal manual "Accept Anyway /
+// Regenerate" flow every other asset type already has — client spec: "If
+// validation fails, regenerate the affected image automatically." Capped at
 // exactly one extra attempt (not an unbounded loop) since each attempt is a
-// real, billed OpenAI image-edit + vision call. Covers all six shots of both sets.
-const RING_AUTO_RETRY_TYPES = new Set(Object.keys(RING_OUTPUT_NAMES));
+// real, billed OpenAI image-edit + vision call.
+const RING_HAND_AUTO_RETRY_TYPES = new Set(['RING_HAND_1', 'RING_HAND_2']);
 
 // Gents/Kids describe the presenter demographic purely in text (see
 // audiencePresenterOverrideFor in aiStudioService.js) — the presenter
@@ -133,7 +131,7 @@ async function generateOneAsset({
     // even though the buffer itself is passed down to every asset in the job
     // uniformly (see generateHandler).
     const isGentsPresenterAsset =
-      confirmedCustomerCategory === 'GENTS' && isModelShot(asset.asset_type);
+      confirmedCustomerCategory === 'GENTS' && asset.asset_type.startsWith('PRESENTER_');
     const identityReferenceBuffer = isGentsPresenterAsset ? gentsMasterPresenterBuffer : null;
 
     // A retry after a failed/warning validation gets a fresh prompt with the
@@ -189,7 +187,7 @@ async function generateOneAsset({
     }
 
     let attempt = await attemptOnce(initialPriorFailure);
-    if (RING_AUTO_RETRY_TYPES.has(asset.asset_type) && attempt.validationStatus === 'failed') {
+    if (RING_HAND_AUTO_RETRY_TYPES.has(asset.asset_type) && attempt.validationStatus === 'failed') {
       const autoRetryFailure = (attempt.validationResult?.validationMessages ?? []).join('; ') || initialPriorFailure;
       attempt = await attemptOnce(autoRetryFailure);
     }
@@ -198,10 +196,8 @@ async function generateOneAsset({
     const stillActive = await findJobById(jobId);
     if (stillActive.status === 'cancelled') return;
 
-    // Ring outputs carry their slot name (yellow_gold_hero, …) in the key.
-    const outputName = RING_OUTPUT_NAMES[asset.asset_type];
     const saved = await storageProvider.save(
-      `products/ai-studio/${jobId}/${outputName ? `${outputName}-` : ''}${crypto.randomUUID()}.png`,
+      `products/ai-studio/${jobId}/${crypto.randomUUID()}.png`,
       buffer,
     );
 
@@ -270,7 +266,7 @@ async function generateHandler(jobs) {
     // changeGentsPresenter in aiStudio.controller.js).
     let gentsMasterPresenterBuffer = null;
     const isGents = aiStudioJob.customer_category === 'GENTS';
-    const hasGentsPresenterTarget = isGents && targets.some((a) => isModelShot(a.asset_type));
+    const hasGentsPresenterTarget = isGents && targets.some((a) => a.asset_type.startsWith('PRESENTER_'));
     if (hasGentsPresenterTarget) {
       if (aiStudioJob.gents_master_presenter_key) {
         gentsMasterPresenterBuffer = await storageProvider.read(aiStudioJob.gents_master_presenter_key);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CUSTOMER_CATEGORIES, REAL_JEWELLERY_TYPES, type CustomerCategory, type JewelleryType, type StudioJob } from '../../api/aiStudio';
 import { Toggle } from '../../components/Toggle';
-import { isRoseGoldForced, isRoseGoldUnavailable, formatCustomerCategory, inferJewelleryTypeFromCategory, presenterDemographicSummary } from './generationRules';
+import { isRoseGoldForced, formatCustomerCategory, inferJewelleryTypeFromCategory, presenterDemographicSummary } from './generationRules';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './AnalyseConfirmStep.module.css';
 
@@ -270,24 +270,21 @@ export function AnalyseConfirmStep({
         )}
       </section>
 
-      {/* Ring has a fixed plan (no rose gold to choose), so the section is hidden for it. */}
-      {!isRoseGoldUnavailable(jewelleryType) && (
-        <section className={styles.generationPlan}>
-          <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
-          <Toggle
-            checked={generateRoseGold}
-            onChange={onGenerateRoseGoldChange}
-            disabled={isRoseGoldForced(jewelleryType)}
-            label="Generate Rose Gold Version"
-            helperText={
-              isRoseGoldForced(jewelleryType)
-                ? 'Always on for Necklace — 2 Yellow + 2 Rose catalogue images, plus 1 Yellow + 1 Rose presenter image when a presenter is selected.'
-                : 'Creates Rose Gold catalogue and presenter images in addition to the Yellow Gold images.'
-            }
-          />
-          {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
-        </section>
-      )}
+      <section className={styles.generationPlan}>
+        <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
+        <Toggle
+          checked={generateRoseGold}
+          onChange={onGenerateRoseGoldChange}
+          disabled={isRoseGoldForced(jewelleryType)}
+          label="Generate Rose Gold Version"
+          helperText={
+            isRoseGoldForced(jewelleryType)
+              ? 'Always on for Necklace — 2 Yellow + 2 Rose catalogue images, plus 1 Yellow + 1 Rose presenter image when a presenter is selected.'
+              : 'Creates Rose Gold catalogue and presenter images in addition to the Yellow Gold images.'
+          }
+        />
+        {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
+      </section>
 
       <section className={styles.generationPlan}>
         <Toggle

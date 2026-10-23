@@ -1,21 +1,14 @@
 import type { AssetType, CustomerCategory, JewelleryType } from '../../api/aiStudio';
 
-// Ring (9karet): four Yellow Gold catalogue views then two Yellow Gold hand
-// shots, in output order. The rose-gold slots are legacy — only older jobs
-// have them.
 const RING_ASSET_TYPES: AssetType[] = [
-  'RING_GOLD_HERO',
-  'RING_GOLD_FRONT',
-  'RING_GOLD_SIDE',
-  'RING_GOLD_MACRO',
   'RING_HAND_1',
   'RING_HAND_2',
+  'RING_GOLD_FRONT',
+  'RING_GOLD_SIDE',
+  'RING_ROSE_FRONT',
+  'RING_ROSE_SIDE',
 ];
-const LEGACY_RING_ASSET_TYPES: AssetType[] = ['RING_ROSE_FRONT', 'RING_ROSE_SIDE'];
-// Every other category (9karet): four Yellow Gold catalogue views then two
-// AI-described model shots.
-const STANDARD_ASSET_TYPES: AssetType[] = ['GOLD_HERO', 'GOLD_FRONT', 'GOLD_SIDE', 'GOLD_MACRO', 'MODEL_1', 'MODEL_2'];
-const RING_ASSET_TYPE_SET = new Set<AssetType>([...RING_ASSET_TYPES, ...LEGACY_RING_ASSET_TYPES]);
+const RING_ASSET_TYPE_SET = new Set<AssetType>(RING_ASSET_TYPES);
 
 // Best-effort keyword match from a free-text product category name (e.g.
 // "Ruby Rings", "Rose Gold Bangle") to the fixed jewellery-type
@@ -48,17 +41,13 @@ export function inferJewelleryTypeFromCategory(categoryName: string | null): Jew
 // duplicated intentionally (same pattern as SHOT_LABELS being duplicated
 // across GenerateStep/ReviewImportStep) so Step 3's live Generation Summary
 // can compute counts reactively without a round-trip to the server. Ring is
-// a completely separate, fixed 6-image output structure (Hero, Front, Side,
-// Macro, Hand Pose 1, Hand Pose 2 — Yellow Gold only) — ignores both
-// toggles, since Rings never use a Presenter or rose gold.
-// Mirrors backend effectiveGenerateRoseGold — 9karet sells no rose gold, so
-// it is never forced on and always unavailable, for every category.
-export function isRoseGoldForced(_jewelleryType?: JewelleryType | ''): boolean {
-  return false;
-}
-
-export function isRoseGoldUnavailable(_jewelleryType?: JewelleryType | ''): boolean {
-  return true;
+// a completely separate, fixed 4/6-image output structure (Hand Pose 1/2 +
+// Front/Side, no 45° Hero) — ignores hasPresenter entirely, since Rings
+// never use a Presenter.
+// Mirrors backend effectiveGenerateRoseGold — Necklace always gets the full
+// Yellow + Rose set regardless of the Rose Gold toggle.
+export function isRoseGoldForced(jewelleryType?: JewelleryType | ''): boolean {
+  return jewelleryType === 'NECKLACE';
 }
 
 export function resolveAssetTypesForJob({
@@ -70,8 +59,11 @@ export function resolveAssetTypesForJob({
   hasPresenter: boolean;
   jewelleryType?: JewelleryType | '';
 }): AssetType[] {
-  if (jewelleryType === 'RING') return [...RING_ASSET_TYPES];
-  if (jewelleryType) return [...STANDARD_ASSET_TYPES];
+  if (jewelleryType === 'RING') {
+    const types: AssetType[] = ['RING_HAND_1', 'RING_HAND_2', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE'];
+    if (generateRoseGold) types.push('RING_ROSE_FRONT', 'RING_ROSE_SIDE');
+    return types;
+  }
   const types: AssetType[] = ['YELLOW_FRONT', 'YELLOW_HERO_45'];
   if (generateRoseGold) types.push('ROSE_FRONT', 'ROSE_HERO_45');
   if (hasPresenter) {
@@ -88,27 +80,15 @@ export function catalogueCount(types: AssetType[]): number {
       t === 'YELLOW_HERO_45' ||
       t === 'ROSE_FRONT' ||
       t === 'ROSE_HERO_45' ||
-      t === 'GOLD_HERO' ||
-      t === 'GOLD_FRONT' ||
-      t === 'GOLD_SIDE' ||
-      t === 'GOLD_MACRO' ||
-      t === 'RING_GOLD_HERO' ||
       t === 'RING_GOLD_FRONT' ||
       t === 'RING_GOLD_SIDE' ||
-      t === 'RING_GOLD_MACRO' ||
       t === 'RING_ROSE_FRONT' ||
       t === 'RING_ROSE_SIDE',
   ).length;
 }
 
 export function presenterCount(types: AssetType[]): number {
-  return types.filter((t) => isModelShot(t)).length;
-}
-
-// Shots of a person wearing the piece — older presenter slots and the new
-// model slots.
-export function isModelShot(assetType: AssetType): boolean {
-  return assetType.startsWith('PRESENTER_') || assetType.startsWith('MODEL_');
+  return types.filter((t) => t.startsWith('PRESENTER_')).length;
 }
 
 export function handShotCount(types: AssetType[]): number {
@@ -116,12 +96,6 @@ export function handShotCount(types: AssetType[]): number {
 }
 
 export const SHOT_LABELS: Record<AssetType, string> = {
-  GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',
-  GOLD_FRONT: 'Yellow Gold — Front View',
-  GOLD_SIDE: 'Yellow Gold — Side-Profile View',
-  GOLD_MACRO: 'Yellow Gold — Macro Detail View',
-  MODEL_1: 'Yellow Gold — Model 1',
-  MODEL_2: 'Yellow Gold — Model 2',
   YELLOW_FRONT: 'Yellow Gold — Front Catalogue',
   YELLOW_HERO_45: 'Yellow Gold — 45° Hero Angle',
   ROSE_FRONT: 'Rose Gold — Front Catalogue',
@@ -129,19 +103,19 @@ export const SHOT_LABELS: Record<AssetType, string> = {
   PRESENTER_YELLOW_1: 'Yellow Gold — Presenter',
   PRESENTER_YELLOW_2: 'Yellow Gold — Presenter (Alt Angle)',
   PRESENTER_ROSE: 'Rose Gold — Presenter',
-  RING_GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',
-  RING_GOLD_FRONT: 'Yellow Gold — Front/Top View',
-  RING_GOLD_SIDE: 'Yellow Gold — Side-Profile View',
-  RING_GOLD_MACRO: 'Yellow Gold — Macro Detail View',
   RING_HAND_1: 'Yellow Gold — Hand Pose 1',
-  RING_HAND_2: 'Yellow Gold — Hand Pose 2',
+  RING_HAND_2: 'Rose Gold — Hand Pose 2',
+  RING_GOLD_FRONT: 'Yellow Gold — True Front View',
+  RING_GOLD_SIDE: 'Yellow Gold — Three-Quarter Side View',
   RING_ROSE_FRONT: 'Rose Gold — True Front View',
   RING_ROSE_SIDE: 'Rose Gold — Three-Quarter Side View',
 };
 
-// Every Ring label is fixed (both hand shots are Yellow Gold); the toggle
-// argument is kept so call sites stay unchanged.
-export function ringShotLabel(assetType: AssetType, _generateRoseGold?: boolean): string {
+// RING_HAND_2's label depends on the Rose Gold toggle (its static SHOT_LABELS
+// entry above assumes Rose Gold is on, the common case) — every other Ring
+// label is fixed regardless of the toggle.
+export function ringShotLabel(assetType: AssetType, generateRoseGold: boolean): string {
+  if (assetType === 'RING_HAND_2' && !generateRoseGold) return 'Yellow Gold — Hand Pose 2';
   return SHOT_LABELS[assetType];
 }
 
@@ -149,13 +123,16 @@ export type AssetGroup = 'Yellow Gold' | 'Rose Gold' | 'Presenter' | 'Ring';
 
 export function groupForAssetType(assetType: AssetType): AssetGroup {
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'Ring';
-  if (isModelShot(assetType)) return 'Presenter';
+  if (assetType.startsWith('PRESENTER_')) return 'Presenter';
   return assetType.startsWith('ROSE_') ? 'Rose Gold' : 'Yellow Gold';
 }
 
-// Every asset type's metal is unambiguous from its name alone (Ring hand
-// shots are always Yellow Gold), so the toggle argument is a no-op.
-export function metalColorForAssetType(assetType: AssetType, _generateRoseGold?: boolean): 'YELLOW' | 'ROSE' {
+// RING_HAND_2's metal follows the Rose Gold toggle (Rose when required, Gold
+// otherwise) — every other asset type is unambiguous from its name alone, so
+// the extra param is a no-op for them. Defaults to true (Rose Gold on) to
+// match the previous no-arg call sites' assumption.
+export function metalColorForAssetType(assetType: AssetType, generateRoseGold = true): 'YELLOW' | 'ROSE' {
+  if (assetType === 'RING_HAND_2') return generateRoseGold ? 'ROSE' : 'YELLOW';
   if (assetType.startsWith('RING_ROSE_')) return 'ROSE';
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'YELLOW';
   return assetType.startsWith('ROSE_') || assetType === 'PRESENTER_ROSE' ? 'ROSE' : 'YELLOW';
