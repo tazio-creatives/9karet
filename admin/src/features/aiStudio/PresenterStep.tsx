@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPresenters, fetchPresenter, type PresenterSummary } from '../../api/presenters';
-import type { JewelleryType } from '../../api/aiStudio';
+import type { CustomerCategory, JewelleryType } from '../../api/aiStudio';
 import { Modal } from '../../components/Modal';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './PresenterStep.module.css';
-import { resolveAssetTypesForJob, catalogueCount, presenterCount } from './generationRules';
+import { presenterRequired } from './generationRules';
+import { GenerationSummary } from './GenerationSummary';
 
 interface PresenterStepProps {
   jewelleryType: JewelleryType | '';
   presenterId: string | null;
   onChange: (_v: string | null) => void;
   generateRoseGold: boolean;
+  customerCategory: CustomerCategory | '';
 }
 
-export function PresenterStep({ jewelleryType, presenterId, onChange, generateRoseGold }: PresenterStepProps) {
+export function PresenterStep({ jewelleryType, presenterId, onChange, generateRoseGold, customerCategory }: PresenterStepProps) {
   const [viewingPresenterId, setViewingPresenterId] = useState<string | null>(null);
 
   // Fetch every active presenter (not filtered server-side) — unsupported
@@ -32,15 +34,23 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
   });
 
   const selectedPresenter = presenters.find((p) => p.id === presenterId) ?? null;
-  const assetTypes = resolveAssetTypesForJob({ generateRoseGold, hasPresenter: !!presenterId, jewelleryType });
-  const catalogue = catalogueCount(assetTypes);
-  const presenterShots = presenterCount(assetTypes);
+  // Every job includes 2 presenter images, so for Women/Unisex a presenter
+  // must be picked; Gents/Kids models are described by the AI instead.
+  const required = presenterRequired(jewelleryType, customerCategory);
 
   return (
     <div>
-      <p>Presenter generation is optional — pick a saved presenter, or generate catalogue images only.</p>
+      <p>
+        {required
+          ? 'Choose the presenter for both presenter images — the same person appears in both.'
+          : 'The presenter images use an AI-described model for this customer category. Picking a presenter is optional.'}
+      </p>
+      {required && presenters.length === 0 && (
+        <p className={sharedStyles.error}>No presenters are set up yet. Add one under AI Studio → Presenters first.</p>
+      )}
 
       <div className={styles.grid}>
+        {!required && (
         <button
           type="button"
           className={presenterId === null ? styles.cardSelected : styles.card}
@@ -49,9 +59,10 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
         >
           {presenterId === null && <span className={styles.checkmark}>✓</span>}
           <div className={styles.noPresenterPreview}>No Presenter</div>
-          <p className={styles.cardTitle}>No Presenter</p>
-          <p className={styles.cardBody}>Generate catalogue images only.</p>
+          <p className={styles.cardTitle}>AI-described model</p>
+          <p className={styles.cardBody}>Use the model described for this customer category.</p>
         </button>
+        )}
 
         {presenters.map((presenter) => {
           const supported = !jewelleryType || presenter.supportedJewelleryTypes.includes(jewelleryType);
@@ -73,25 +84,14 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
         <dl className={styles.summaryList}>
           <div className={styles.summaryRow}>
             <dt>Presenter</dt>
-            <dd>{selectedPresenter ? selectedPresenter.displayName : 'No Presenter'}</dd>
+            <dd>{selectedPresenter ? selectedPresenter.displayName : required ? 'Not chosen yet' : 'AI-described model'}</dd>
           </div>
           <div className={styles.summaryRow}>
             <dt>Rose Gold</dt>
             <dd>{generateRoseGold ? 'On' : 'Off'}</dd>
           </div>
-          <div className={styles.summaryRow}>
-            <dt>Catalogue Images</dt>
-            <dd>{catalogue}</dd>
-          </div>
-          <div className={styles.summaryRow}>
-            <dt>Presenter Images</dt>
-            <dd>{presenterShots}</dd>
-          </div>
-          <div className={styles.summaryRowTotal}>
-            <dt>Total Images</dt>
-            <dd>{assetTypes.length}</dd>
-          </div>
         </dl>
+        <GenerationSummary generateRoseGold={generateRoseGold} />
       </div>
 
       {viewingPresenterId && viewingData && (

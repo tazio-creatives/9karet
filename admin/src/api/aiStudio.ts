@@ -54,6 +54,20 @@ export type AssetType =
   | 'PRESENTER_YELLOW_1'
   | 'PRESENTER_YELLOW_2'
   | 'PRESENTER_ROSE'
+  | 'YELLOW_SIDE'
+  | 'YELLOW_MACRO'
+  | 'RING_GOLD_HERO'
+  | 'RING_GOLD_PROFILE'
+  | 'RING_GOLD_MACRO'
+  | 'RING_ROSE_HERO'
+  | 'RING_HAND_ROSE'
+  // Images from the short-lived 22–23 Oct 2026 workflow, kept readable.
+  | 'GOLD_HERO'
+  | 'GOLD_FRONT'
+  | 'GOLD_SIDE'
+  | 'GOLD_MACRO'
+  | 'MODEL_1'
+  | 'MODEL_2'
   | 'RING_HAND_1'
   | 'RING_HAND_2'
   | 'RING_GOLD_FRONT'
@@ -136,6 +150,8 @@ export interface ValidationResult {
 
 export interface StudioAsset {
   id: string;
+  // The six-slot output slot (e.g. "yellow_catalogue_1"); null on older jobs.
+  slotKey: string | null;
   assetType: AssetType;
   displayOrder: number;
   status: AssetStatus;
@@ -180,7 +196,19 @@ export interface StudioJob {
   categoryConfirmedAt: string | null;
   completedAt: string | null;
   generationVersion: number;
+  // Six-slot jobs only (null on older jobs): the planned outputs, in order,
+  // and progress measured against them — always out of 6.
+  outputManifest: ManifestSlot[] | null;
+  progress: { completed: number; expected: number; percent: number } | null;
   assets: StudioAsset[];
+}
+
+export interface ManifestSlot {
+  slotKey: string;
+  assetType: AssetType;
+  index: number;
+  metal: 'YELLOW' | 'ROSE';
+  kind: 'catalogue' | 'presenter';
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';

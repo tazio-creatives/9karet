@@ -1,0 +1,54 @@
+.summary {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.total {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.list li + li {
+  margin-top: 4px;
+}
+
+.included {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.excluded {
+  color: var(--color-text-muted);
+}
+
+.progress {
+  margin: var(--space-3) 0;
+}
+
+.progressBar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-success);
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}

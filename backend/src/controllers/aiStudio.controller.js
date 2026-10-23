@@ -8,8 +8,11 @@ import { JOB_AI_STUDIO_ANALYSE, JOB_AI_STUDIO_GENERATE, resetAssetForRetry } fro
 import {
   effectiveGenerateRoseGold,
   JEWELLERY_TYPES,
-  ASSET_DISPLAY_ORDER,
   previewPromptsForJob,
+  buildOutputManifest,
+  assertValidManifest,
+  metalColorForAssetType,
+  MANIFEST_SIZE,
   CUSTOMER_CATEGORIES,
   DEFAULT_CUSTOMER_CATEGORY,
 } from '../services/aiStudioService.js';
@@ -53,6 +56,12 @@ const CATALOGUE_ASSET_TYPES = [
   'RING_GOLD_SIDE',
   'RING_ROSE_FRONT',
   'RING_ROSE_SIDE',
+  'YELLOW_SIDE',
+  'YELLOW_MACRO',
+  'RING_GOLD_HERO',
+  'RING_GOLD_PROFILE',
+  'RING_GOLD_MACRO',
+  'RING_ROSE_HERO',
 ];
 
 // The only fields a "Customise Prompt" admin can edit (Review Prompts panel)
@@ -104,6 +113,7 @@ const selectionSchema = z.object({
 function assetDto(asset) {
   return {
     id: asset.id,
+    slotKey: asset.slot_key,
     assetType: asset.asset_type,
     displayOrder: asset.display_order,
     status: asset.status,
@@ -152,8 +162,21 @@ function jobDto(job, assets, presenter) {
     categoryConfirmedAt: job.category_confirmed_at,
     completedAt: job.completed_at,
     generationVersion: job.generation_version,
+    outputManifest: job.output_manifest,
+    progress: progressFor(job, assets),
     assets: assets.map(assetDto),
   };
+}
+
+// Six-slot jobs report progress against the manifest — always out of 6 —
+// never against however many images happen to exist yet.
+function progressFor(job, assets) {
+  if (!job.output_manifest) return null;
+  const expected = job.output_manifest.length;
+  const completed = job.output_manifest.filter((slot) =>
+    assets.some((a) => a.slot_key === slot.slotKey && a.status === 'READY'),
+  ).length;
+  return { completed, expected, percent: Math.round((completed / expected) * 100) };
 }
 
 async function validateImageFile(file) {
@@ -332,14 +355,27 @@ export async function confirmJob(req, res, next) {
       }
     }
 
-    const generateRoseGold = effectiveGenerateRoseGold(input.jewelleryType, input.generateRoseGold ?? true);
+    // Saved on the job and the only thing the backend goes by — OFF unless
+    // the admin turned it on for this generation.
+    const generateRoseGold = effectiveGenerateRoseGold(input.jewelleryType, input.generateRoseGold ?? false);
     const customerCategory = input.customerCategory ?? DEFAULT_CUSTOMER_CATEGORY;
+
+    // Both presenter images are always generated now. Women/Unisex shots are
+    // composited onto the chosen presenter's photos, so one must be picked;
+    // Gents/Kids describe the model in text (Gents with one fixed identity).
+    if (!isRing && !presenter && !['GENTS', 'KIDS'].includes(customerCategory)) {
+      throw new AppError(400, 'Choose a presenter — every generation includes 2 presenter images.');
+    }
+
+    // The complete six-slot plan, built and checked before anything starts.
+    const manifest = buildOutputManifest({ confirmedType: input.jewelleryType, generateRoseGold });
 
     await updateJob(job.id, {
       jewellery_type: input.jewelleryType,
       category_id: input.categoryId ?? null,
       presenter_id: isRing ? null : (input.presenterId ?? null),
       generate_rose_gold: generateRoseGold,
+      output_manifest: JSON.stringify(manifest),
       customer_category: customerCategory,
       customer_category_confirmed_at: new Date(),
       confirmed_at: new Date(),
@@ -362,7 +398,7 @@ export async function confirmJob(req, res, next) {
 
     const insertedAssets = await insertAssets(
       job.id,
-      previews.map((p) => ({ assetType: p.assetType, displayOrder: ASSET_DISPLAY_ORDER[p.assetType] })),
+      manifest.map((slot) => ({ assetType: slot.assetType, displayOrder: slot.index, slotKey: slot.slotKey })),
     );
     await Promise.all(
       insertedAssets.map((asset) => {
@@ -411,7 +447,7 @@ export async function previewPrompts(req, res, next) {
 
     const generateRoseGold = effectiveGenerateRoseGold(
       jewelleryType,
-      input.generateRoseGold ?? job.generate_rose_gold ?? true,
+      input.generateRoseGold ?? job.generate_rose_gold ?? false,
     );
     const customerCategory = input.customerCategory ?? job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY;
 
@@ -628,6 +664,9 @@ export async function importAsset(req, res, next) {
       if (asset.validation_status && asset.validation_status !== 'passed' && !asset.validation_accepted) {
         throw new AppError(400, 'This image failed validation and has not been accepted — accept it before importing');
       }
+      if (job.output_manifest) {
+        await assertManifestReadyForImport(client, job, asset);
+      }
 
       if (job.status !== 'importing') await updateJobTx(client, jobId, { status: 'importing' });
       if (asset.is_featured) await clearPrimaryForProductTx(client, productId);
@@ -654,6 +693,25 @@ export async function importAsset(req, res, next) {
     res.json({ imported: true, alreadyImported: result.alreadyImported, asset: assetDto(result.asset) });
   } catch (err) {
     next(err);
+  }
+}
+
+// Six-slot jobs import only once all six slots have succeeded, and each
+// image must sit in the slot (type and metal) the manifest planned for it.
+async function assertManifestReadyForImport(client, job, asset) {
+  const manifest = job.output_manifest;
+  assertValidManifest(manifest, { generateRoseGold: job.generate_rose_gold });
+  const slot = manifest.find((m) => m.slotKey === asset.slot_key);
+  if (!slot || slot.assetType !== asset.asset_type) {
+    throw new AppError(409, 'This image does not match its planned output slot');
+  }
+  if (metalColorForAssetType(asset.asset_type, job.generate_rose_gold) !== slot.metal) {
+    throw new AppError(409, 'This image has the wrong metal colour for its slot');
+  }
+  const assets = await findAssetsByJobIdTx(client, job.id);
+  const ready = manifest.filter((m) => assets.some((a) => a.slot_key === m.slotKey && a.status === 'READY')).length;
+  if (ready !== MANIFEST_SIZE) {
+    throw new AppError(409, `All ${MANIFEST_SIZE} images must be generated successfully before importing (${ready} of ${MANIFEST_SIZE} ready).`);
   }
 }
 

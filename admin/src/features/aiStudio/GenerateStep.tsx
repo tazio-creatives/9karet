@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import sharedStyles from '../../styles/shared.module.css';
-import type { StudioAsset, JewelleryType } from '../../api/aiStudio';
+import type { StudioAsset, StudioJob, JewelleryType } from '../../api/aiStudio';
+import summaryStyles from './GenerationSummary.module.css';
 import { SHOT_LABELS, ringShotLabel, groupForAssetType, metalColorForAssetType, type AssetGroup } from './generationRules';
 import styles from './GenerateStep.module.css';
 
@@ -17,15 +18,19 @@ interface GenerateStepProps {
   assets: StudioAsset[];
   jewelleryType?: JewelleryType | null;
   generateRoseGold?: boolean;
+  // Six-slot jobs: completed slots out of 6 (null on older jobs).
+  progress?: StudioJob['progress'];
   onRegenerate: (_assetId: string) => void;
   regeneratingAssetIds: Set<string>;
 }
 
 // No fixed time estimate — real per-asset start/complete timestamps are
 // recorded server-side, and this just ticks a clock against them.
-export function GenerateStep({ assets, jewelleryType, generateRoseGold, onRegenerate, regeneratingAssetIds }: GenerateStepProps) {
+export function GenerateStep({ assets, jewelleryType, generateRoseGold, progress, onRegenerate, regeneratingAssetIds }: GenerateStepProps) {
   const [, forceTick] = useState(0);
   const isRing = jewelleryType === 'RING';
+  // Six-slot jobs list their images in slot order, like Ring.
+  const isSlotted = isRing || assets.some((a) => a.slotKey);
 
   useEffect(() => {
     const anyInFlight = assets.some((a) => a.status === 'GENERATING');
@@ -37,16 +42,32 @@ export function GenerateStep({ assets, jewelleryType, generateRoseGold, onRegene
   return (
     <div>
       <p>Generating {assets.length} image{assets.length === 1 ? '' : 's'} — this typically takes a few minutes per image.</p>
+      {progress && (
+        <div className={summaryStyles.progress}>
+          <p className={summaryStyles.progressLabel}>
+            {progress.completed} of {progress.expected} images ready ({progress.percent}%)
+          </p>
+          <div
+            className={summaryStyles.progressBar}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={progress.expected}
+            aria-valuenow={progress.completed}
+          >
+            <div className={summaryStyles.progressFill} style={{ width: `${progress.percent}%` }} />
+          </div>
+        </div>
+      )}
 
-      {isRing ? (
+      {isSlotted ? (
         <div className={styles.group}>
-          <h3 className={styles.groupTitle}>Ring</h3>
+          <h3 className={styles.groupTitle}>{isRing ? 'Ring' : 'Images'}</h3>
           <div className={styles.grid}>
             {assets.map((asset) => (
               <GenerateTile
                 key={asset.id}
                 asset={asset}
-                label={ringShotLabel(asset.assetType, generateRoseGold ?? true)}
+                label={`${asset.displayOrder + 1}. ${ringShotLabel(asset.assetType, generateRoseGold ?? true)}`}
                 metalLabel={`${metalColorForAssetType(asset.assetType, generateRoseGold ?? true)} Gold`}
                 onRegenerate={onRegenerate}
                 isRegenerating={regeneratingAssetIds.has(asset.id)}

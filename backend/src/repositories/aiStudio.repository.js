@@ -114,13 +114,13 @@ export async function findCategoryTemplate(jewelleryType) {
 
 export async function insertAssets(jobId, rows) {
   const inserted = [];
-  for (const { assetType, displayOrder } of rows) {
+  for (const { assetType, displayOrder, slotKey } of rows) {
     const {
       rows: [row],
     } = await query(
-      `INSERT INTO ai_studio_assets (job_id, asset_type, display_order)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [jobId, assetType, displayOrder],
+      `INSERT INTO ai_studio_assets (job_id, asset_type, display_order, slot_key)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [jobId, assetType, displayOrder, slotKey ?? null],
     );
     inserted.push(row);
   }

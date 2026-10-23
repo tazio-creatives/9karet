@@ -1,4 +1,4 @@
-import type { AssetType, CustomerCategory, JewelleryType } from '../../api/aiStudio';
+import type { AssetType, CustomerCategory, JewelleryType, ManifestSlot } from '../../api/aiStudio';
 
 const RING_ASSET_TYPES: AssetType[] = [
   'RING_HAND_1',
@@ -7,6 +7,11 @@ const RING_ASSET_TYPES: AssetType[] = [
   'RING_GOLD_SIDE',
   'RING_ROSE_FRONT',
   'RING_ROSE_SIDE',
+  'RING_GOLD_HERO',
+  'RING_GOLD_PROFILE',
+  'RING_GOLD_MACRO',
+  'RING_ROSE_HERO',
+  'RING_HAND_ROSE',
 ];
 const RING_ASSET_TYPE_SET = new Set<AssetType>(RING_ASSET_TYPES);
 
@@ -44,33 +49,103 @@ export function inferJewelleryTypeFromCategory(categoryName: string | null): Jew
 // a completely separate, fixed 4/6-image output structure (Hand Pose 1/2 +
 // Front/Side, no 45° Hero) — ignores hasPresenter entirely, since Rings
 // never use a Presenter.
-// Mirrors backend effectiveGenerateRoseGold — Necklace always gets the full
-// Yellow + Rose set regardless of the Rose Gold toggle.
-export function isRoseGoldForced(jewelleryType?: JewelleryType | ''): boolean {
-  return jewelleryType === 'NECKLACE';
+// 9karet: every job is exactly six images — 4 catalogue + 2 presenter — and
+// the Rose Gold switch (default OFF) only changes the metal split. No
+// category forces rose gold any more. Mirrors backend buildOutputManifest.
+const MANIFEST_PLANS: Record<'RING' | 'STANDARD', Record<'off' | 'on', [string, AssetType][]>> = {
+  RING: {
+    off: [
+      ['yellow_catalogue_1', 'RING_GOLD_HERO'],
+      ['yellow_catalogue_2', 'RING_GOLD_FRONT'],
+      ['yellow_catalogue_3', 'RING_GOLD_PROFILE'],
+      ['yellow_catalogue_4', 'RING_GOLD_MACRO'],
+      ['yellow_presenter_1', 'RING_HAND_1'],
+      ['yellow_presenter_2', 'RING_HAND_2'],
+    ],
+    on: [
+      ['yellow_catalogue_1', 'RING_GOLD_HERO'],
+      ['yellow_catalogue_2', 'RING_GOLD_FRONT'],
+      ['rose_catalogue_1', 'RING_ROSE_HERO'],
+      ['rose_catalogue_2', 'RING_ROSE_FRONT'],
+      ['yellow_presenter_1', 'RING_HAND_1'],
+      ['rose_presenter_1', 'RING_HAND_ROSE'],
+    ],
+  },
+  STANDARD: {
+    off: [
+      ['yellow_catalogue_1', 'YELLOW_FRONT'],
+      ['yellow_catalogue_2', 'YELLOW_HERO_45'],
+      ['yellow_catalogue_3', 'YELLOW_SIDE'],
+      ['yellow_catalogue_4', 'YELLOW_MACRO'],
+      ['yellow_presenter_1', 'PRESENTER_YELLOW_1'],
+      ['yellow_presenter_2', 'PRESENTER_YELLOW_2'],
+    ],
+    on: [
+      ['yellow_catalogue_1', 'YELLOW_FRONT'],
+      ['yellow_catalogue_2', 'YELLOW_HERO_45'],
+      ['rose_catalogue_1', 'ROSE_FRONT'],
+      ['rose_catalogue_2', 'ROSE_HERO_45'],
+      ['yellow_presenter_1', 'PRESENTER_YELLOW_1'],
+      ['rose_presenter_1', 'PRESENTER_ROSE'],
+    ],
+  },
+};
+
+export function buildOutputManifest(jewelleryType: JewelleryType | '' | null | undefined, generateRoseGold: boolean): ManifestSlot[] {
+  const plan = MANIFEST_PLANS[jewelleryType === 'RING' ? 'RING' : 'STANDARD'][generateRoseGold ? 'on' : 'off'];
+  return plan.map(([slotKey, assetType], index) => ({
+    slotKey,
+    assetType,
+    index,
+    metal: slotKey.startsWith('rose_') ? 'ROSE' : 'YELLOW',
+    kind: slotKey.includes('_catalogue_') ? 'catalogue' : 'presenter',
+  }));
+}
+
+// Same checks the backend runs before generating: six unique slots, 4
+// catalogue + 2 presenter, and zero (OFF) or three (ON) rose-gold slots.
+export function isValidManifest(manifest: ManifestSlot[], generateRoseGold: boolean): boolean {
+  const rose = manifest.filter((m) => m.metal === 'ROSE').length;
+  return (
+    manifest.length === 6 &&
+    new Set(manifest.map((m) => m.slotKey)).size === 6 &&
+    manifest.filter((m) => m.kind === 'catalogue').length === 4 &&
+    manifest.filter((m) => m.kind === 'presenter').length === 2 &&
+    rose === (generateRoseGold ? 3 : 0)
+  );
+}
+
+// The ✓ / ✕ lines of the pre-generation summary.
+export function manifestSummary(generateRoseGold: boolean): { label: string; included: boolean }[] {
+  return generateRoseGold
+    ? [
+        { label: '2 Yellow Gold catalogue images', included: true },
+        { label: '2 Rose Gold catalogue images', included: true },
+        { label: '1 Yellow Gold presenter image', included: true },
+        { label: '1 Rose Gold presenter image', included: true },
+      ]
+    : [
+        { label: '4 Yellow Gold catalogue images', included: true },
+        { label: '2 Yellow Gold presenter images', included: true },
+        { label: 'Rose Gold images', included: false },
+      ];
+}
+
+// Women/Unisex presenter images are composited onto a chosen presenter's
+// photos, so one must be picked; Gents/Kids models are described in text.
+export function presenterRequired(jewelleryType: JewelleryType | '', customerCategory: CustomerCategory | ''): boolean {
+  return jewelleryType !== 'RING' && customerCategory !== 'GENTS' && customerCategory !== 'KIDS';
 }
 
 export function resolveAssetTypesForJob({
   generateRoseGold,
-  hasPresenter,
   jewelleryType,
 }: {
   generateRoseGold: boolean;
-  hasPresenter: boolean;
+  hasPresenter?: boolean;
   jewelleryType?: JewelleryType | '';
 }): AssetType[] {
-  if (jewelleryType === 'RING') {
-    const types: AssetType[] = ['RING_HAND_1', 'RING_HAND_2', 'RING_GOLD_FRONT', 'RING_GOLD_SIDE'];
-    if (generateRoseGold) types.push('RING_ROSE_FRONT', 'RING_ROSE_SIDE');
-    return types;
-  }
-  const types: AssetType[] = ['YELLOW_FRONT', 'YELLOW_HERO_45'];
-  if (generateRoseGold) types.push('ROSE_FRONT', 'ROSE_HERO_45');
-  if (hasPresenter) {
-    types.push('PRESENTER_YELLOW_1');
-    types.push(generateRoseGold ? 'PRESENTER_ROSE' : 'PRESENTER_YELLOW_2');
-  }
-  return types;
+  return buildOutputManifest(jewelleryType, generateRoseGold).map((m) => m.assetType);
 }
 
 export function catalogueCount(types: AssetType[]): number {
@@ -80,6 +155,16 @@ export function catalogueCount(types: AssetType[]): number {
       t === 'YELLOW_HERO_45' ||
       t === 'ROSE_FRONT' ||
       t === 'ROSE_HERO_45' ||
+      t === 'YELLOW_SIDE' ||
+      t === 'YELLOW_MACRO' ||
+      t === 'RING_GOLD_HERO' ||
+      t === 'RING_GOLD_PROFILE' ||
+      t === 'RING_GOLD_MACRO' ||
+      t === 'RING_ROSE_HERO' ||
+      t === 'GOLD_HERO' ||
+      t === 'GOLD_FRONT' ||
+      t === 'GOLD_SIDE' ||
+      t === 'GOLD_MACRO' ||
       t === 'RING_GOLD_FRONT' ||
       t === 'RING_GOLD_SIDE' ||
       t === 'RING_ROSE_FRONT' ||
@@ -88,11 +173,11 @@ export function catalogueCount(types: AssetType[]): number {
 }
 
 export function presenterCount(types: AssetType[]): number {
-  return types.filter((t) => t.startsWith('PRESENTER_')).length;
+  return types.filter((t) => t.startsWith('PRESENTER_') || t.startsWith('MODEL_')).length;
 }
 
 export function handShotCount(types: AssetType[]): number {
-  return types.filter((t) => t === 'RING_HAND_1' || t === 'RING_HAND_2').length;
+  return types.filter((t) => t === 'RING_HAND_1' || t === 'RING_HAND_2' || t === 'RING_HAND_ROSE').length;
 }
 
 export const SHOT_LABELS: Record<AssetType, string> = {
@@ -109,6 +194,19 @@ export const SHOT_LABELS: Record<AssetType, string> = {
   RING_GOLD_SIDE: 'Yellow Gold — Three-Quarter Side View',
   RING_ROSE_FRONT: 'Rose Gold — True Front View',
   RING_ROSE_SIDE: 'Rose Gold — Three-Quarter Side View',
+  YELLOW_SIDE: 'Yellow Gold — Side-Profile View',
+  YELLOW_MACRO: 'Yellow Gold — Macro Detail View',
+  RING_GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',
+  RING_GOLD_PROFILE: 'Yellow Gold — Side-Profile View',
+  RING_GOLD_MACRO: 'Yellow Gold — Macro Detail View',
+  RING_ROSE_HERO: 'Rose Gold — Hero Three-Quarter View',
+  RING_HAND_ROSE: 'Rose Gold — Hand Pose',
+  GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',
+  GOLD_FRONT: 'Yellow Gold — Front View',
+  GOLD_SIDE: 'Yellow Gold — Side-Profile View',
+  GOLD_MACRO: 'Yellow Gold — Macro Detail View',
+  MODEL_1: 'Yellow Gold — Model 1',
+  MODEL_2: 'Yellow Gold — Model 2',
 };
 
 // RING_HAND_2's label depends on the Rose Gold toggle (its static SHOT_LABELS
@@ -123,7 +221,7 @@ export type AssetGroup = 'Yellow Gold' | 'Rose Gold' | 'Presenter' | 'Ring';
 
 export function groupForAssetType(assetType: AssetType): AssetGroup {
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'Ring';
-  if (assetType.startsWith('PRESENTER_')) return 'Presenter';
+  if (assetType.startsWith('PRESENTER_') || assetType.startsWith('MODEL_')) return 'Presenter';
   return assetType.startsWith('ROSE_') ? 'Rose Gold' : 'Yellow Gold';
 }
 
@@ -133,6 +231,7 @@ export function groupForAssetType(assetType: AssetType): AssetGroup {
 // match the previous no-arg call sites' assumption.
 export function metalColorForAssetType(assetType: AssetType, generateRoseGold = true): 'YELLOW' | 'ROSE' {
   if (assetType === 'RING_HAND_2') return generateRoseGold ? 'ROSE' : 'YELLOW';
+  if (assetType === 'RING_HAND_ROSE') return 'ROSE';
   if (assetType.startsWith('RING_ROSE_')) return 'ROSE';
   if (RING_ASSET_TYPE_SET.has(assetType)) return 'YELLOW';
   return assetType.startsWith('ROSE_') || assetType === 'PRESENTER_ROSE' ? 'ROSE' : 'YELLOW';

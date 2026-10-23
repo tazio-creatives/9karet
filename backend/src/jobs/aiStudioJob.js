@@ -72,8 +72,14 @@ export function deriveJobStatus(assets) {
 // time a job has any READY assets and none is featured yet — a no-op on
 // every subsequent call (including after an individual regenerate), so it
 // never overrides an admin's later "Set as Featured" choice from Step 5.
-async function ensureDefaultFeatured(jobId, assets) {
+async function ensureDefaultFeatured(jobId, assets, outputManifest) {
   if (assets.some((a) => a.is_featured)) return;
+  // Six-slot jobs: the first yellow-gold catalogue slot is the primary image.
+  if (outputManifest) {
+    const first = assets.find((a) => a.slot_key === outputManifest[0].slotKey && a.status === 'READY');
+    if (first) await updateAsset(first.id, { is_featured: true });
+    return;
+  }
   const front = assets.find(
     (a) => (a.asset_type === 'YELLOW_FRONT' || a.asset_type === 'RING_GOLD_FRONT') && a.status === 'READY',
   );
@@ -301,7 +307,7 @@ async function generateHandler(jobs) {
     if (refreshedJob.status === 'cancelled') return;
 
     const refreshedAssets = await findAssetsByJobId(jobId);
-    await ensureDefaultFeatured(jobId, refreshedAssets);
+    await ensureDefaultFeatured(jobId, refreshedAssets, refreshedJob.output_manifest);
     const derived = deriveJobStatus(refreshedAssets);
     if (derived) await updateJob(jobId, { status: derived });
   } catch (err) {

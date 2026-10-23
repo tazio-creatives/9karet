@@ -33,15 +33,13 @@ import { ReviewImportStep } from '../../features/aiStudio/ReviewImportStep';
 import {
   resolveAssetTypesForJob,
   inferJewelleryTypeFromCategory,
-  isRoseGoldForced,
+  presenterRequired,
+  buildOutputManifest,
+  isValidManifest,
 } from '../../features/aiStudio/generationRules';
 import sharedStyles from '../../styles/shared.module.css';
 import styles from './AiImageStudioPage.module.css';
 
-// The admin's last Rose Gold choice, remembered as a device-local default
-// for the next product (spec: "use it as the default for the next product,
-// the administrator must still be able to change it for each product").
-const ROSE_GOLD_PREF_KEY = 'aiStudio.defaultGenerateRoseGold';
 
 export function AiImageStudioPage() {
   const { id: productId } = useParams<{ id: string }>();
@@ -75,12 +73,11 @@ export function AiImageStudioPage() {
   // rationale as Problem 1's category-confirmation audit trail).
   const [customerCategory, setCustomerCategory] = useState<CustomerCategory | ''>('');
   const [customerCategoryConfirmed, setCustomerCategoryConfirmed] = useState(false);
-  const [generateRoseGold, setGenerateRoseGold] = useState(
-    () => localStorage.getItem(ROSE_GOLD_PREF_KEY) !== 'false',
-  );
-  // Necklace always gets the Yellow + Rose set (see generationRules'
-  // isRoseGoldForced) — the saved toggle preference only applies elsewhere.
-  const effectiveRoseGold = isRoseGoldForced(jewelleryType) || generateRoseGold;
+  // "Generate Rose Gold" always starts OFF for a new generation session —
+  // never restored from a previous product or from browser storage. The
+  // backend saves the confirmed value on the job and works from that.
+  const [generateRoseGold, setGenerateRoseGold] = useState(false);
+  const effectiveRoseGold = generateRoseGold;
   const [presenterId, setPresenterId] = useState<string | null>(null);
   const [promptOverrides, setPromptOverrides] = useState<PromptOverrides>({});
   // A Set (not a single id) so "Regenerate All" — Ring-only — can show every
@@ -172,6 +169,7 @@ export function AiImageStudioPage() {
       setCustomerCategory('');
       setCustomerCategoryConfirmed(false);
       setPromptOverrides({});
+      setGenerateRoseGold(false);
     },
   });
 
@@ -276,8 +274,10 @@ export function AiImageStudioPage() {
 
   function handleGenerateRoseGoldChange(value: boolean) {
     setGenerateRoseGold(value);
-    localStorage.setItem(ROSE_GOLD_PREF_KEY, String(value));
   }
+  const needsPresenter = presenterRequired(jewelleryType, customerCategory) && !presenterId;
+  // Same six-slot check the backend runs — generation can't start on a bad plan.
+  const manifestOk = isValidManifest(buildOutputManifest(jewelleryType, effectiveRoseGold), effectiveRoseGold);
 
   const generateCount = resolveAssetTypesForJob({ generateRoseGold: effectiveRoseGold, hasPresenter: !!presenterId, jewelleryType }).length;
 
@@ -332,6 +332,7 @@ export function AiImageStudioPage() {
                   !jewelleryType ||
                   !categoryConfirmed ||
                   !customerCategoryConfirmed ||
+                  !manifestOk ||
                   (isRing && !includeProductSizeImage && confirmMutation.isPending)
                 }
                 // Ring skips both the presenter/hand-pose choice and the Review
@@ -417,6 +418,7 @@ export function AiImageStudioPage() {
               presenterId={presenterId}
               onChange={setPresenterId}
               generateRoseGold={effectiveRoseGold}
+              customerCategory={customerCategory}
             />
             <div className={styles.actions}>
               <button type="button" className={sharedStyles.button} onClick={() => setConfirmSubStep('analyse')}>
@@ -425,6 +427,8 @@ export function AiImageStudioPage() {
               <button
                 type="button"
                 className={sharedStyles.buttonPrimary}
+                disabled={needsPresenter}
+                title={needsPresenter ? 'Choose a presenter first' : undefined}
                 onClick={() => setConfirmSubStep('prompts')}
               >
                 Continue to Review Prompts
@@ -454,7 +458,7 @@ export function AiImageStudioPage() {
               <button
                 type="button"
                 className={sharedStyles.buttonPrimary}
-                disabled={confirmMutation.isPending}
+                disabled={confirmMutation.isPending || needsPresenter || !manifestOk}
                 onClick={() => confirmMutation.mutate()}
               >
                 {confirmMutation.isPending ? 'Starting…' : `Confirm & Generate ${generateCount} Images`}
@@ -468,6 +472,7 @@ export function AiImageStudioPage() {
             assets={job.assets}
             jewelleryType={job.jewelleryType}
             generateRoseGold={job.generateRoseGold}
+            progress={job.progress}
             onRegenerate={regenerateAsset}
             regeneratingAssetIds={regeneratingAssetIds}
           />

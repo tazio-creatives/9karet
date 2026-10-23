@@ -73,6 +73,10 @@ export function ReviewImportStep({
   const featured = assets.find((a) => a.isFeatured);
   const assetTypes = assets.map((a) => a.assetType);
   const isRing = job.jewelleryType === 'RING';
+  // Six-slot jobs share Ring's numbered grid, and import only once all six
+  // planned images have succeeded (the backend enforces the same rule).
+  const isSlotted = isRing || !!job.outputManifest;
+  const slotsIncomplete = !!job.progress && job.progress.completed < job.progress.expected;
   const regeneratableAssetIds = assets.filter((a) => ['READY', 'FAILED'].includes(a.status)).map((a) => a.id);
   const isGents = job.customerCategory === 'GENTS';
   const presenterAssetIds = assets.filter((a) => a.assetType.startsWith('PRESENTER_')).map((a) => a.id);
@@ -140,11 +144,11 @@ export function ReviewImportStep({
     <div>
       <p className={styles.disclaimer}>AI output requires human verification before import.</p>
 
-      {isRing && (
+      {isSlotted && (
         <div className={styles.ringHeader}>
-          <h2 className={styles.ringHeading}>Generated Ring Images</h2>
+          <h2 className={styles.ringHeading}>Generated {isRing ? 'Ring ' : ''}Images</h2>
           <p className={styles.ringSubheading}>{assets.length} images ready for review</p>
-          <span className={sharedStyles.badgeNeutral}>Ring · {job.generateRoseGold ? 'Yellow Gold & Rose Gold' : 'Yellow Gold Only'}</span>
+          <span className={sharedStyles.badgeNeutral}>{isRing ? 'Ring · ' : ''}{job.generateRoseGold ? 'Yellow Gold & Rose Gold' : 'Yellow Gold Only'}</span>
           <button
             type="button"
             className={sharedStyles.buttonLink}
@@ -176,7 +180,7 @@ export function ReviewImportStep({
         </div>
       )}
 
-      <div className={isRing ? styles.ringGrid : styles.grid}>
+      <div className={isSlotted ? styles.ringGrid : styles.grid}>
         {assets.map((asset) => {
           const needsReview =
             !!asset.validationStatus && asset.validationStatus !== 'passed' && !asset.validationAccepted;
@@ -185,7 +189,7 @@ export function ReviewImportStep({
           return (
             <div key={asset.id} className={styles.tile}>
               <div className={styles.tileHeader}>
-                {isRing && <span className={styles.imageNumber}>{asset.displayOrder + 1}</span>}
+                {isSlotted && <span className={styles.imageNumber}>{asset.displayOrder + 1}</span>}
                 {!needsReview && (
                   <label className={styles.selectLabel}>
                     <input
@@ -361,7 +365,7 @@ export function ReviewImportStep({
           <button
             type="button"
             className={sharedStyles.buttonPrimary}
-            disabled={!allSelectedReady || selected.length === 0 || importState === 'importing'}
+            disabled={!allSelectedReady || selected.length === 0 || importState === 'importing' || slotsIncomplete}
             onClick={handleImport}
           >
             {importState === 'importing' ? 'Importing…' : `Import ${selected.length} Image${selected.length === 1 ? '' : 's'} to Product`}
@@ -373,6 +377,11 @@ export function ReviewImportStep({
       </div>
       {!allSelectedReady && (
         <p className={sharedStyles.error}>All selected images must be ready before importing — retry any failed shot.</p>
+      )}
+      {slotsIncomplete && job.progress && (
+        <p className={sharedStyles.error}>
+          All {job.progress.expected} images must be generated before importing ({job.progress.completed} of {job.progress.expected} ready) — retry the failed one.
+        </p>
       )}
 
       {acceptingAssetId && (
