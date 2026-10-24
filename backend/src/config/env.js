@@ -182,6 +182,9 @@ export const env = {
   s3AccessKeyId: process.env.AWS_ACCESS_KEY_ID,
   s3SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL || null,
+  // Folder every new upload goes under (9karet: "9karet"), so this site's
+  // files are kept apart from BOX's in the shared bucket. Empty = bucket root.
+  s3KeyPrefix: (process.env.S3_KEY_PREFIX ?? '').replace(/^\/+|\/+$/g, ''),
 
   // Jewellery photo quality enhancement — OpenAI Images Edit API, called
   // directly (not through the aiImage provider registry above, which is a

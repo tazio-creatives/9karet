@@ -57,16 +57,27 @@ async function streamToBuffer(stream) {
   return Buffer.concat(chunks);
 }
 
+// New uploads go under S3_KEY_PREFIX (e.g. "9karet/products/…"). Callers
+// keep passing their usual relative keys; save() returns the full key, and
+// everything that reads or deletes later uses that full key (or one taken
+// back from the stored URL), so read()/delete() take keys as they are.
+function withPrefix(key) {
+  const prefix = env.s3KeyPrefix;
+  if (!prefix || key.startsWith(`${prefix}/`)) return key;
+  return `${prefix}/${key}`;
+}
+
 export const s3StorageProvider = {
   name: 's3',
 
   urlFor: publicUrlFor,
 
   async save(key, buffer) {
+    const fullKey = withPrefix(key);
     await getClient().send(
-      new PutObjectCommand({ Bucket: env.s3Bucket, Key: key, Body: buffer, ContentType: contentTypeFor(key) }),
+      new PutObjectCommand({ Bucket: env.s3Bucket, Key: fullKey, Body: buffer, ContentType: contentTypeFor(fullKey) }),
     );
-    return { key, url: publicUrlFor(key) };
+    return { key: fullKey, url: publicUrlFor(fullKey) };
   },
 
   async read(key) {
