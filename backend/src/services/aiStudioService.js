@@ -175,6 +175,10 @@ export const ASSET_TYPES = [
   // 9karet six-image jobs: the extra yellow catalogue views (Rose Gold OFF).
   'YELLOW_SIDE',
   'YELLOW_MACRO',
+  // Reference-safe fallbacks when no 45° / side reference was uploaded.
+  'YELLOW_SLIGHT_ANGLE',
+  'ROSE_SLIGHT_ANGLE',
+  'YELLOW_ELEVATED_DETAIL',
 ];
 
 // Ring-only output structure — 2 hand-model shots + 4 catalogue shots
@@ -194,8 +198,38 @@ export const RING_ASSET_TYPES = [
   'RING_GOLD_MACRO',
   'RING_ROSE_HERO',
   'RING_HAND_ROSE',
+  'RING_GOLD_SLIGHT_ANGLE',
+  'RING_ROSE_SLIGHT_ANGLE',
+  'RING_GOLD_ELEVATED_DETAIL',
 ];
 const RING_ASSET_TYPE_SET = new Set(RING_ASSET_TYPES);
+
+// ---------------------------------------------------------------------------
+// Reference roles (9karet). New jobs store up to three references, each with
+// its role in the object key: …/references/<uuid>-main_front.jpeg,
+// -angle_45.jpeg, -side_profile.jpeg. The main/front reference is always
+// first in reference_image_urls, so analysis and validation (which read the
+// first image) are unchanged. Older jobs have no role in their keys: their
+// first image is the main/front reference and the rest are supporting.
+// ---------------------------------------------------------------------------
+export const REFERENCE_ROLES = ['main_front', 'angle_45', 'side_profile'];
+const ROLE_IN_KEY = /-(main_front|angle_45|side_profile)\.[a-z]+$/;
+
+export function referenceRolesFor(referenceImageUrls) {
+  const urls = referenceImageUrls ?? [];
+  const tagged = urls.map((url) => ({ url, role: ROLE_IN_KEY.exec(url)?.[1] ?? null }));
+  if (tagged.some((t) => t.role)) {
+    const byRole = Object.fromEntries(tagged.filter((t) => t.role).map((t) => [t.role, t.url]));
+    return { main_front: byRole.main_front ?? urls[0] ?? null, angle_45: byRole.angle_45 ?? null, side_profile: byRole.side_profile ?? null, roleTagged: true };
+  }
+  return { main_front: urls[0] ?? null, angle_45: null, side_profile: null, roleTagged: false };
+}
+
+// Which optional references a new job has — drives the catalogue views.
+export function referenceAvailability(referenceImageUrls) {
+  const roles = referenceRolesFor(referenceImageUrls);
+  return { angle45: !!roles.angle_45, side: !!roles.side_profile };
+}
 
 // Mirrors the DB CHECK constraint in the ai_studio_presenters migration —
 // must stay in lockstep with it, this is the single source of truth on the
@@ -297,8 +331,48 @@ const CATALOGUE_VIEWS = {
   ],
 };
 
-export function resolveCatalogueViews(jewelleryCategory, generateRoseGold) {
-  const views = CATALOGUE_VIEWS[jewelleryCategory === 'RING' ? 'RING' : 'STANDARD'];
+// Reference-aware views (new jobs). Without a 45° reference the angled view
+// becomes a safe 15–25° turn of the main reference; without a side reference
+// the side view becomes a reference-faithful elevated detail view — a strict
+// side profile is only requested when a side reference exists. Each view
+// names the reference that drives its geometry; the main/front reference is
+// always attached as well, for product identity.
+const SAFE_VIEWS = {
+  STANDARD: {
+    SLIGHT_ANGLE: { view: 'SLIGHT_ANGLE', YELLOW: 'YELLOW_SLIGHT_ANGLE', ROSE: 'ROSE_SLIGHT_ANGLE' },
+    ELEVATED_DETAIL: { view: 'ELEVATED_DETAIL', YELLOW: 'YELLOW_ELEVATED_DETAIL' },
+  },
+  RING: {
+    SLIGHT_ANGLE: { view: 'SLIGHT_ANGLE', YELLOW: 'RING_GOLD_SLIGHT_ANGLE', ROSE: 'RING_ROSE_SLIGHT_ANGLE' },
+    ELEVATED_DETAIL: { view: 'ELEVATED_DETAIL', YELLOW: 'RING_GOLD_ELEVATED_DETAIL' },
+  },
+};
+
+// `references` = { angle45, side } for new jobs; omitted (older callers)
+// means the full original view set.
+export function resolveCatalogueViews(jewelleryCategory, generateRoseGold, references) {
+  const kind = jewelleryCategory === 'RING' ? 'RING' : 'STANDARD';
+  const [first, second, side, macro] = CATALOGUE_VIEWS[kind];
+  let views;
+  if (!references) {
+    views = [first, second, side, macro].map((v) => ({ ...v, geometry: 'main_front' }));
+  } else {
+    const angleView = references.angle45
+      ? { ...(kind === 'RING' ? first : second), geometry: 'angle_45' }
+      : { ...SAFE_VIEWS[kind].SLIGHT_ANGLE, geometry: 'main_front' };
+    const frontView = { ...(kind === 'RING' ? second : first), geometry: 'main_front' };
+    const sideView = references.side
+      ? { ...side, geometry: 'side_profile' }
+      : {
+          ...SAFE_VIEWS[kind].ELEVATED_DETAIL,
+          geometry: 'main_front',
+          supporting: references.angle45 ? ['angle_45'] : [],
+        };
+    const macroView = { ...macro, geometry: 'main_front' };
+    // Ring keeps its hero/angled view first (its primary image); every other
+    // category keeps the front view first.
+    views = kind === 'RING' ? [angleView, frontView, sideView, macroView] : [frontView, angleView, sideView, macroView];
+  }
   return generateRoseGold ? views.slice(0, 2) : views;
 }
 
@@ -351,13 +425,16 @@ export function resolvePresenter({ customerCategory, selectedPresenter, jeweller
   };
 }
 
-function assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold) {
-  const views = resolveCatalogueViews(jewelleryCategory, generateRoseGold);
+function assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold, references) {
+  const views = resolveCatalogueViews(jewelleryCategory, generateRoseGold, references);
   const shots = PRESENTER_SHOTS[jewelleryCategory === 'RING' ? 'RING' : 'STANDARD'];
   return manifest.map((slot) => {
     if (slot.kind === 'catalogue') {
       const view = views[slot.position - 1];
-      return { view: view?.view, assetType: view?.[slot.metal] };
+      const extra = references
+        ? { references: { geometry: view?.geometry ?? 'main_front', supporting: view?.supporting ?? [] } }
+        : {};
+      return { view: view?.view, assetType: view?.[slot.metal], ...extra };
     }
     const list = shots[slot.metal];
     return { view: `POSE_${slot.position}`, assetType: slot.metal === 'ROSE' ? list[0] : list[slot.position - 1] };
@@ -372,9 +449,11 @@ export function buildJobPlan({
   customerCategory,
   selectedPresenter,
   requirePresenter = true,
+  // { angle45, side } — which optional references the job has (new jobs).
+  references,
 }) {
   const manifest = buildOutputManifest(generateRoseGold);
-  const types = assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold);
+  const types = assetTypesForSlots(manifest, jewelleryCategory, generateRoseGold, references);
   const presenter = resolvePresenter({ customerCategory, selectedPresenter, jewelleryCategory, requirePresenter });
   const firstPresenterSlot = manifest.find((m) => m.kind === 'presenter').slotKey;
   const plan = manifest.map((slot, i) => {
@@ -418,8 +497,10 @@ export function assertValidManifest(manifest, { generateRoseGold }) {
 }
 
 // Asset types for a job, without a presenter decision (labels, counts).
-export function resolveAssetTypesForJob({ generateRoseGold, confirmedType }) {
-  return assetTypesForSlots(buildOutputManifest(generateRoseGold), confirmedType, generateRoseGold).map((t) => t.assetType);
+export function resolveAssetTypesForJob({ generateRoseGold, confirmedType, references }) {
+  return assetTypesForSlots(buildOutputManifest(generateRoseGold), confirmedType, generateRoseGold, references).map(
+    (t) => t.assetType,
+  );
 }
 
 // One generation request: the images to attach, in order, and the prompt.
@@ -427,8 +508,26 @@ export function resolveAssetTypesForJob({ generateRoseGold, confirmedType }) {
 //   presenter-photo slot → [jewellery, presenter photo]
 //   catalogue slot       → [jewellery]
 // The original jewellery reference is always attached.
-export function buildGenerationRequest({ outputSlot, jewelleryReference, presenterReference, identityReference, prompt }) {
+export function buildGenerationRequest({
+  outputSlot,
+  jewelleryReference,
+  presenterReference,
+  identityReference,
+  viewReferences = [],
+  prompt,
+}) {
   if (!jewelleryReference?.buffer) throw new AppError(500, 'The jewellery reference is required');
+  // Catalogue slots of new jobs: [main/front, view reference(s)] — the main
+  // reference stays first as the product-identity source.
+  if (outputSlot?.kind === 'catalogue' && viewReferences.length) {
+    return {
+      images: [
+        { role: 'jewellery', ...jewelleryReference },
+        ...viewReferences.map((v) => ({ role: v.role, filename: `${v.role}.jpeg`, mimetype: 'image/jpeg', buffer: v.buffer })),
+      ],
+      prompt,
+    };
+  }
   if (outputSlot?.identity?.referenceSlot && !identityReference) {
     throw new AppError(409, 'The first presenter image must be generated before this one');
   }
@@ -589,6 +688,12 @@ const NECKLACE_SET_NOTE_PRESENTER =
 const CATALOGUE_NO_PERSON_NOTE =
   'This is a product-only catalogue image: do not include any person, model, mannequin, bust, face, neck, ears, hands or other body part — show only the jewellery on the backdrop.';
 const CATALOGUE_ASSET_TYPES = new Set([
+  'YELLOW_SLIGHT_ANGLE',
+  'ROSE_SLIGHT_ANGLE',
+  'YELLOW_ELEVATED_DETAIL',
+  'RING_GOLD_SLIGHT_ANGLE',
+  'RING_ROSE_SLIGHT_ANGLE',
+  'RING_GOLD_ELEVATED_DETAIL',
   'YELLOW_FRONT',
   'YELLOW_HERO_45',
   'ROSE_FRONT',
@@ -605,6 +710,30 @@ const CATALOGUE_ASSET_TYPES = new Set([
 // stones and everything around the piece stay exactly as they are.
 const ROSE_GOLD_CONVERSION_NOTE =
   'Rose gold: convert only the metal to a realistic, premium rose-gold tone. Keep diamonds and colourless stones colourless, keep coloured gemstones their exact colour, and do not change the design, the stones or the proportions. Do not make the whole image pink, and do not add a pink colour cast to the background, the skin or the clothing.';
+
+// Catalogue prompts of new jobs (reference-role aware): a reproduction, not a
+// design task. Sits next to the general fidelity rule without repeating it.
+const PRODUCT_REPRODUCTION_NOTE =
+  'This is a product-reproduction task, not a jewellery-design task. The uploaded main reference is the definitive product specification. Reproduce the same physical jewellery. Preserve the exact stone count, stone shapes, stone sizes, stone positions, prongs, settings, metal sections, chain or band pattern, openings, thickness and visible proportions. Do not create a similar product. Do not redesign, simplify, enhance, add, remove, resize, move or reshape any component. Use the relevant angled or side reference only to understand the product geometry for that specific view. If a structural detail is not visible in any uploaded reference, do not invent it. Keep the unseen structure outside the visible composition.';
+
+const REFERENCE_ROLE_LABELS = {
+  angle_45: 'the 45° angled reference of the same jewellery',
+  side_profile: 'the side-profile reference of the same jewellery',
+};
+
+// Tells the model which attached image is which.
+function referenceOrderNote(slotReferences) {
+  if (!slotReferences) return '';
+  const extras = [slotReferences.geometry, ...(slotReferences.supporting ?? [])].filter((r) => r && r !== 'main_front');
+  if (!extras.length) return 'The attached image is the main/front reference — the definitive product.';
+  const parts = extras.map((r, i) => `attached image ${i + 2} is ${REFERENCE_ROLE_LABELS[r]}`);
+  return `Attached image 1 is the main/front reference — the definitive product. ${parts.join('; ')} — use it only to understand the geometry for this view.`;
+}
+
+const SLIGHT_ANGLE_COMPOSITION =
+  'Reference-matched alternate view. Show the exact uploaded jewellery with the camera moved only slightly — the piece rotated approximately 15–25 degrees from the main reference, the visible design still facing the camera. Do not create a complete side profile or reveal an invented reverse construction. Keep the complete piece inside the frame.';
+const ELEVATED_DETAIL_COMPOSITION =
+  'Create a reference-faithful elevated detail view of the exact uploaded jewellery. Keep the visible design facing the camera and rotate it only slightly, approximately 15–25 degrees. Do not create a complete side profile or reveal an invented reverse construction. If a structural detail is not clearly visible in the uploaded reference, do not invent it. Keep that area outside the visible composition. The result must look like the same physical jewellery photographed with a slightly adjusted camera position, not a newly designed similar product.';
 
 // Extra catalogue views for six-image jobs. Non-Ring categories keep their
 // existing Front and 45° Hero views and add these two; Ring adds a hero, a
@@ -873,6 +1002,8 @@ function buildAssetPromptSections({
   confirmedCustomerCategory,
   // Six-slot jobs: the presenter slot's resolved identity (see buildJobPlan).
   identity,
+  // New jobs, catalogue slots: { geometry, supporting } reference roles.
+  slotReferences,
 }) {
   const metalColor = metalColorForAssetType(assetType, generateRoseGold);
   const metalColourNote = `The metal colour is ${metalColor.toLowerCase()} gold — preserve it exactly.`;
@@ -893,7 +1024,10 @@ function buildAssetPromptSections({
     confirmedCustomerCategory: audienceOverride
       ? `The confirmed customer category is ${formatCustomerCategory(confirmedCustomerCategory)}.`
       : '',
-    designPreservation: fidelityBlockFor(confirmedType),
+    designPreservation:
+      slotReferences && CATALOGUE_ASSET_TYPES.has(assetType)
+        ? `${fidelityBlockFor(confirmedType)} ${PRODUCT_REPRODUCTION_NOTE} ${referenceOrderNote(slotReferences)}`
+        : fidelityBlockFor(confirmedType),
     metalColour: metalColourNote,
     outputSpecs: 'Photorealistic, premium e-commerce jewellery photography. No text, logos, or watermarks.',
   };
@@ -910,6 +1044,27 @@ function buildAssetPromptSections({
   if (metalColor === 'ROSE') negativeParts.push(ROSE_GOLD_CONVERSION_NOTE);
 
   switch (assetType) {
+    case 'YELLOW_SLIGHT_ANGLE':
+    case 'ROSE_SLIGHT_ANGLE':
+    case 'YELLOW_ELEVATED_DETAIL':
+    case 'RING_GOLD_SLIGHT_ANGLE':
+    case 'RING_ROSE_SLIGHT_ANGLE':
+    case 'RING_GOLD_ELEVATED_DETAIL': {
+      const isElevated = assetType.endsWith('ELEVATED_DETAIL');
+      creativeDefaults = {
+        background: catalogueBackgroundNote,
+        lighting: RING_CATALOGUE_LIGHTING_NOTE.trim(),
+        composition: `${assetType.startsWith('RING_') ? RING_SIZE_NOTE : CATALOGUE_SIZE_NOTE} ${isElevated ? ELEVATED_DETAIL_COMPOSITION : SLIGHT_ANGLE_COMPOSITION}`,
+        presenterPose: '',
+        cameraAngle: '',
+        additionalInstructions: '',
+      };
+      negativeParts.push(
+        'Do not add props, text, hands, packaging, flowers, fabric or decorative elements — the background must stay plain pure white.',
+        'Do not generate a full side profile or show the back of the jewellery.',
+      );
+      break;
+    }
     case 'YELLOW_SIDE':
     case 'YELLOW_MACRO':
     case 'RING_GOLD_HERO':
@@ -1174,6 +1329,7 @@ function buildPrompt({
   generateRoseGold,
   confirmedCustomerCategory,
   identity,
+  slotReferences,
 }) {
   return assemblePrompt(
     buildAssetPromptSections({
@@ -1186,6 +1342,7 @@ function buildPrompt({
       generateRoseGold,
       confirmedCustomerCategory,
       identity,
+      slotReferences,
     }),
   );
 }
@@ -1205,6 +1362,8 @@ export function previewPromptsForJob({
   confirmedCustomerCategory,
   // Preview may run before a presenter is picked; confirm requires one.
   requirePresenter = false,
+  // { angle45, side } for new jobs (see referenceAvailability).
+  references,
 }) {
   const plan = buildJobPlan({
     jewelleryCategory: confirmedType,
@@ -1212,8 +1371,9 @@ export function previewPromptsForJob({
     customerCategory: confirmedCustomerCategory,
     selectedPresenter: presenter,
     requirePresenter,
+    references,
   });
-  return plan.map(({ slotKey, assetType, kind, view, identity }) => {
+  return plan.map(({ slotKey, assetType, kind, view, identity, references: slotReferences }) => {
     const override = overridesByAssetType?.[assetType];
     const sections = buildAssetPromptSections({
       assetType,
@@ -1224,11 +1384,13 @@ export function previewPromptsForJob({
       generateRoseGold,
       confirmedCustomerCategory,
       identity,
+      slotReferences,
     });
     return {
       slotKey,
       kind,
       view,
+      references: slotReferences ?? null,
       identity: identity ?? null,
       assetType,
       metalColor: metalColorForAssetType(assetType, generateRoseGold),
@@ -1276,6 +1438,8 @@ export async function generateShot({
   generateRoseGold,
   confirmedCustomerCategory,
   outputSlot,
+  // [{ role, buffer }] — the angled/side reference(s) for this catalogue slot.
+  viewReferenceBuffers = [],
 }) {
   const openai = getClient();
   const extension = extensionFor(mimetype);
@@ -1296,6 +1460,7 @@ export async function generateShot({
       generateRoseGold,
       confirmedCustomerCategory,
       identity: outputSlot?.identity,
+      slotReferences: outputSlot?.references,
     });
 
   // Identity reference (Gents master or the first presenter image) goes
@@ -1305,6 +1470,7 @@ export async function generateShot({
     jewelleryReference: { buffer: referenceBuffer, mimetype, filename: `reference.${extension}` },
     presenterReference: presenterReferenceBuffer ? { buffer: presenterReferenceBuffer } : null,
     identityReference: identityReferenceBuffer ? { buffer: identityReferenceBuffer } : null,
+    viewReferences: viewReferenceBuffers,
     prompt,
   });
 

@@ -184,3 +184,26 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.coverage {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--space-3);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.coverage dt {
+  color: var(--color-text-muted);
+}
+
+.coverage dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.coverageNote {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

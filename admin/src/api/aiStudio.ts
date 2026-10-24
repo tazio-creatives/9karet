@@ -56,6 +56,12 @@ export type AssetType =
   | 'PRESENTER_ROSE'
   | 'YELLOW_SIDE'
   | 'YELLOW_MACRO'
+  | 'YELLOW_SLIGHT_ANGLE'
+  | 'ROSE_SLIGHT_ANGLE'
+  | 'YELLOW_ELEVATED_DETAIL'
+  | 'RING_GOLD_SLIGHT_ANGLE'
+  | 'RING_ROSE_SLIGHT_ANGLE'
+  | 'RING_GOLD_ELEVATED_DETAIL'
   | 'RING_GOLD_HERO'
   | 'RING_GOLD_PROFILE'
   | 'RING_GOLD_MACRO'
@@ -177,6 +183,13 @@ export interface StudioJob {
   productId: string;
   status: StudioJobStatus;
   referenceImageUrls: string[];
+  // Role of each reference. Older jobs: roleTagged false, first = main.
+  referenceRoles: {
+    main_front: string | null;
+    angle_45: string | null;
+    side_profile: string | null;
+    roleTagged: boolean;
+  };
   analysis: StudioAnalysis | null;
   analysisConfidence: number | null;
   categoryConfidenceThreshold: number;
@@ -225,9 +238,21 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000
 
 // Multipart upload, same reason every other image endpoint bypasses apiFetch.
 // files[0] is always the primary reference image (UploadStep.tsx enforces this).
-export async function createStudioJob(productId: string, files: File[]) {
+export type ReferenceRole = 'main_front' | 'angle_45' | 'side_profile';
+
+export interface ReferenceUpload {
+  file: File;
+  role: ReferenceRole;
+}
+
+// Each reference is sent with its role (one "roles" field per image, same
+// order), so the backend never relies on upload order.
+export async function createStudioJob(productId: string, references: ReferenceUpload[]) {
   const formData = new FormData();
-  for (const file of files) formData.append('images', file);
+  for (const { file, role } of references) {
+    formData.append('images', file);
+    formData.append('roles', role);
+  }
 
   const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/ai-studio`, {
     method: 'POST',

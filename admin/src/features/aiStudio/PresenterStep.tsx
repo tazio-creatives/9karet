@@ -14,9 +14,17 @@ interface PresenterStepProps {
   onChange: (_v: string | null) => void;
   generateRoseGold: boolean;
   customerCategory: CustomerCategory | '';
+  references?: { angle45: boolean; side: boolean };
 }
 
-export function PresenterStep({ jewelleryType, presenterId, onChange, generateRoseGold, customerCategory }: PresenterStepProps) {
+export function PresenterStep({
+  jewelleryType,
+  presenterId,
+  onChange,
+  generateRoseGold,
+  customerCategory,
+  references,
+}: PresenterStepProps) {
   const [viewingPresenterId, setViewingPresenterId] = useState<string | null>(null);
 
   // Fetch every active presenter (not filtered server-side) — unsupported
@@ -100,6 +108,7 @@ export function PresenterStep({ jewelleryType, presenterId, onChange, generateRo
           customerCategory={customerCategory}
           jewelleryType={jewelleryType}
           hasPresenter={!!presenterId}
+          references={references}
         />
       </div>
 

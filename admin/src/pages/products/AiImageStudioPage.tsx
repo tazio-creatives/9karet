@@ -16,6 +16,7 @@ import {
   type CustomerCategory,
   type PromptOverrides,
   type PromptCreativeOverride,
+  type ReferenceUpload,
 } from '../../api/aiStudio';
 import { fetchAdminCategories } from '../../api/categories';
 import { fetchAdminProduct } from '../../api/products';
@@ -161,7 +162,7 @@ export function AiImageStudioPage() {
   }, [job?.analysis]);
 
   const createMutation = useMutation({
-    mutationFn: (files: File[]) => createStudioJob(productId as string, files),
+    mutationFn: (references: ReferenceUpload[]) => createStudioJob(productId as string, references),
     onSuccess: (res) => {
       setJobId(res.jobId);
       setConfirmSubStep('analyse');
@@ -299,7 +300,7 @@ export function AiImageStudioPage() {
 
       <section className={sharedStyles.cardPadded}>
         {!job && (
-          <UploadStep onSubmit={(files) => createMutation.mutate(files)} isPending={createMutation.isPending} error={createError} />
+          <UploadStep onSubmit={(references) => createMutation.mutate(references)} isPending={createMutation.isPending} error={createError} />
         )}
 
         {job && job.status === 'analysing' && <p>Analysing the reference photo…</p>}
@@ -419,6 +420,11 @@ export function AiImageStudioPage() {
               onChange={setPresenterId}
               generateRoseGold={effectiveRoseGold}
               customerCategory={customerCategory}
+              references={
+                job.referenceRoles.roleTagged
+                  ? { angle45: !!job.referenceRoles.angle_45, side: !!job.referenceRoles.side_profile }
+                  : undefined
+              }
             />
             <div className={styles.actions}>
               <button type="button" className={sharedStyles.button} onClick={() => setConfirmSubStep('analyse')}>

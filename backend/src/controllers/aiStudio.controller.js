@@ -11,6 +11,9 @@ import {
   previewPromptsForJob,
   buildJobPlan,
   assertValidManifest,
+  REFERENCE_ROLES,
+  referenceRolesFor,
+  referenceAvailability,
   metalColorForAssetType,
   MANIFEST_SIZE,
   CUSTOMER_CATEGORIES,
@@ -62,6 +65,12 @@ const CATALOGUE_ASSET_TYPES = [
   'RING_GOLD_PROFILE',
   'RING_GOLD_MACRO',
   'RING_ROSE_HERO',
+  'YELLOW_SLIGHT_ANGLE',
+  'ROSE_SLIGHT_ANGLE',
+  'YELLOW_ELEVATED_DETAIL',
+  'RING_GOLD_SLIGHT_ANGLE',
+  'RING_ROSE_SLIGHT_ANGLE',
+  'RING_GOLD_ELEVATED_DETAIL',
 ];
 
 // The only fields a "Customise Prompt" admin can edit (Review Prompts panel)
@@ -141,6 +150,9 @@ function jobDto(job, assets, presenter) {
     productId: job.product_id,
     status: job.status,
     referenceImageUrls: job.reference_image_urls,
+    // Role of each reference (new jobs: from the stored key; older jobs:
+    // first = main/front, no optional roles).
+    referenceRoles: referenceRolesFor(job.reference_image_urls),
     analysis: job.analysis,
     analysisConfidence: job.analysis_confidence == null ? null : Number(job.analysis_confidence),
     categoryConfidenceThreshold: env.aiStudioCategoryConfidenceThreshold,
@@ -203,6 +215,26 @@ async function validateImageFile(file) {
 // partial unique index, so a double-click race still fails cleanly rather
 // than 500ing (plan §8). The first file in the array is always the primary
 // image (UploadStep.tsx puts it first).
+// `roles` arrives as one multipart field per file (or a comma list). Returns
+// null when absent (older clients); otherwise validates: one role per file,
+// no duplicates, main_front present, at most the three known roles.
+export function parseReferenceRoles(raw, fileCount) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const roles = (Array.isArray(raw) ? raw : String(raw).split(',')).map((r) => String(r).trim());
+  if (roles.length !== fileCount) throw new AppError(400, 'Each reference image needs a role');
+  if (roles.some((r) => !REFERENCE_ROLES.includes(r))) throw new AppError(400, 'Unknown reference image role');
+  if (new Set(roles).size !== roles.length) throw new AppError(400, 'Each reference role can only be used once');
+  if (!roles.includes('main_front')) throw new AppError(400, 'The main/front reference image is required');
+  return roles;
+}
+
+// New (role-tagged) jobs choose catalogue views from the references they
+// have; older jobs keep the original view set.
+function referencesForPlan(job) {
+  const roles = referenceRolesFor(job.reference_image_urls);
+  return roles.roleTagged ? referenceAvailability(job.reference_image_urls) : undefined;
+}
+
 export async function createJob(req, res, next) {
   try {
     const productId = req.params.id;
@@ -223,6 +255,10 @@ export async function createJob(req, res, next) {
     const files = req.files ?? [];
     if (files.length === 0) throw new AppError(400, 'A primary reference image is required');
     if (files.length > 4) throw new AppError(400, 'At most 1 primary + 3 supporting images are allowed');
+    // New clients send one role per file (main_front required; angle_45 and
+    // side_profile optional). Without roles the old behaviour applies: the
+    // first file is the main reference and the rest are supporting.
+    const roles = parseReferenceRoles(req.body?.roles, files.length);
 
     const existing = await findActiveJobByProduct(productId);
     if (existing) {
@@ -231,12 +267,18 @@ export async function createJob(req, res, next) {
 
     for (const file of files) await validateImageFile(file);
 
-    // Metadata stripped by the sharp re-encode; random key, no client-derived filename.
+    // Metadata stripped by the sharp re-encode; random key, no client-derived
+    // filename. A role-tagged upload keeps its role in the key and is saved
+    // main/front first, so everything that reads the first reference
+    // (analysis, validation) still gets the main image.
+    const ordered = files
+      .map((file, i) => ({ file, role: roles?.[i] ?? null }))
+      .sort((a, b) => (a.role && b.role ? REFERENCE_ROLES.indexOf(a.role) - REFERENCE_ROLES.indexOf(b.role) : 0));
     const referenceImageUrls = [];
-    for (const file of files) {
+    for (const { file, role } of ordered) {
       const normalized = await sharp(file.buffer).jpeg({ quality: 92 }).toBuffer();
       const saved = await storageProvider.save(
-        `products/ai-studio/${productId}/references/${crypto.randomUUID()}.jpeg`,
+        `products/ai-studio/${productId}/references/${crypto.randomUUID()}${role ? `-${role}` : ''}.jpeg`,
         normalized,
       );
       referenceImageUrls.push(saved.url);
@@ -364,11 +406,13 @@ export async function confirmJob(req, res, next) {
     // switch, views from the jewellery category, presenter identity from the
     // customer category — built and validated before anything starts.
     // Women/Unisex without a presenter are rejected here.
+    const references = referencesForPlan(job);
     const manifest = buildJobPlan({
       jewelleryCategory: input.jewelleryType,
       generateRoseGold,
       customerCategory,
       selectedPresenter: presenter,
+      references,
     });
     const presenterReferenceId = manifest.find((m) => m.kind === 'presenter').identity.presenterId;
 
@@ -398,6 +442,7 @@ export async function confirmJob(req, res, next) {
       generateRoseGold,
       overridesByAssetType: input.promptOverrides,
       confirmedCustomerCategory: customerCategory,
+      references,
     });
 
     const insertedAssets = await insertAssets(
@@ -462,6 +507,7 @@ export async function previewPrompts(req, res, next) {
       generateRoseGold,
       overridesByAssetType: input.promptOverrides,
       confirmedCustomerCategory: customerCategory,
+      references: referencesForPlan(job),
     });
 
     res.json({ prompts: previews });
@@ -580,6 +626,7 @@ export async function updateAssetSelection(req, res, next) {
         // Preserve the confirmed category during regeneration (spec) —
         // individual regeneration never re-derives or resets it.
         confirmedCustomerCategory: job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY,
+        references: referencesForPlan(job),
       });
       const preview = previews.find((p) => p.assetType === asset.asset_type);
       if (!preview) throw new AppError(400, 'This asset type is not part of the current generation plan');

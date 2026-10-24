@@ -10,6 +10,7 @@ import {
   metalColorForAssetType,
   generateGentsMasterPresenter,
   IDENTITY_SOURCES,
+  referenceRolesFor,
 } from '../services/aiStudioService.js';
 import {
   findJobById,
@@ -173,6 +174,7 @@ async function generateOneAsset({
   // presenter image — the first presenter image to use as its identity.
   outputSlot,
   chainedIdentityBuffer,
+  viewReferenceBuffers,
 }) {
   // A cancelled job's late-arriving results are discarded, never written
   // back (plan §12) — checked immediately before each write, not just once
@@ -217,6 +219,7 @@ async function generateOneAsset({
         generateRoseGold,
         confirmedCustomerCategory,
         outputSlot,
+        viewReferenceBuffers: viewReferenceBuffers ?? [],
       });
 
       // Post-generation validation (Problems 1 & 2) — never lets a failure
@@ -345,6 +348,26 @@ async function generateHandler(jobs) {
       }
     }
 
+    // New jobs: the angled / side references a catalogue slot needs, read
+    // once per run. The main/front reference (referenceBuffer) is always
+    // sent first; these follow it.
+    const roleUrls = referenceRolesFor(referenceUrls);
+    const roleBuffers = {};
+    for (const role of ['angle_45', 'side_profile']) {
+      const needed = targets.some((a) => {
+        const refs = slotOf(a)?.references;
+        return refs && (refs.geometry === role || refs.supporting?.includes(role));
+      });
+      if (needed && roleUrls[role]) roleBuffers[role] = await storageProvider.read(keyFromUrl(roleUrls[role]));
+    }
+    const viewReferencesFor = (asset) => {
+      const refs = slotOf(asset)?.references;
+      if (!refs) return [];
+      return [refs.geometry, ...(refs.supporting ?? [])]
+        .filter((role) => role !== 'main_front' && roleBuffers[role])
+        .map((role) => ({ role, buffer: roleBuffers[role] }));
+    };
+
     const shared = {
       jobId,
       referenceBuffer,
@@ -360,7 +383,7 @@ async function generateHandler(jobs) {
     const { firstWave, chained } = splitGenerationWaves(targets, manifest);
 
     await runWithConcurrency(firstWave, env.aiStudioGenerationConcurrency, (asset) =>
-      generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset) }),
+      generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset), viewReferenceBuffers: viewReferencesFor(asset) }),
     );
 
     // Second presenter images wait for the first, then use it as identity.

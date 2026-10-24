@@ -138,11 +138,17 @@ export function manifestSummary(
 
 // The catalogue angles — the jewellery category's only effect on the plan.
 // Mirrors backend resolveCatalogueViews.
-export function catalogueViewLabels(jewelleryType: JewelleryType | '', generateRoseGold: boolean): string[] {
-  const views =
-    jewelleryType === 'RING'
-      ? ['Hero three-quarter', 'Front/top', 'Side profile', 'Macro detail']
-      : ['Front', '45° hero', 'Side profile', 'Macro detail'];
+// `references` (new jobs): which optional references were uploaded — a
+// missing 45° reference gives a slight 15–25° angle instead, a missing side
+// reference an elevated detail view. Mirrors backend resolveCatalogueViews.
+export function catalogueViewLabels(
+  jewelleryType: JewelleryType | '',
+  generateRoseGold: boolean,
+  references?: { angle45: boolean; side: boolean },
+): string[] {
+  const angled = !references || references.angle45 ? (jewelleryType === 'RING' ? 'Hero three-quarter' : '45° hero') : 'Slight 15–25° angle';
+  const side = !references || references.side ? 'Side profile' : 'Elevated detail';
+  const views = jewelleryType === 'RING' ? [angled, 'Front/top', side, 'Macro detail'] : ['Front', angled, side, 'Macro detail'];
   return generateRoseGold ? views.slice(0, 2) : views;
 }
 
@@ -195,6 +201,12 @@ export function catalogueCount(types: AssetType[]): number {
       t === 'ROSE_FRONT' ||
       t === 'ROSE_HERO_45' ||
       t === 'YELLOW_SIDE' ||
+      t === 'YELLOW_SLIGHT_ANGLE' ||
+      t === 'ROSE_SLIGHT_ANGLE' ||
+      t === 'YELLOW_ELEVATED_DETAIL' ||
+      t === 'RING_GOLD_SLIGHT_ANGLE' ||
+      t === 'RING_ROSE_SLIGHT_ANGLE' ||
+      t === 'RING_GOLD_ELEVATED_DETAIL' ||
       t === 'YELLOW_MACRO' ||
       t === 'RING_GOLD_HERO' ||
       t === 'RING_GOLD_PROFILE' ||
@@ -233,6 +245,12 @@ export const SHOT_LABELS: Record<AssetType, string> = {
   RING_GOLD_SIDE: 'Yellow Gold — Three-Quarter Side View',
   RING_ROSE_FRONT: 'Rose Gold — True Front View',
   RING_ROSE_SIDE: 'Rose Gold — Three-Quarter Side View',
+  YELLOW_SLIGHT_ANGLE: 'Yellow Gold — Slight Alternate Angle',
+  ROSE_SLIGHT_ANGLE: 'Rose Gold — Slight Alternate Angle',
+  YELLOW_ELEVATED_DETAIL: 'Yellow Gold — Elevated Detail View',
+  RING_GOLD_SLIGHT_ANGLE: 'Yellow Gold — Slight Alternate Angle',
+  RING_ROSE_SLIGHT_ANGLE: 'Rose Gold — Slight Alternate Angle',
+  RING_GOLD_ELEVATED_DETAIL: 'Yellow Gold — Elevated Detail View',
   YELLOW_SIDE: 'Yellow Gold — Side-Profile View',
   YELLOW_MACRO: 'Yellow Gold — Macro Detail View',
   RING_GOLD_HERO: 'Yellow Gold — Hero Three-Quarter View',

@@ -59,6 +59,8 @@ export function AnalyseConfirmStep({
   const [categoryFilter, setCategoryFilter] = useState('');
   const [isPickingAudience, setIsPickingAudience] = useState(false);
   const analysis = job.analysis;
+  const roles = job.referenceRoles;
+  const references = roles.roleTagged ? { angle45: !!roles.angle_45, side: !!roles.side_profile } : undefined;
 
   function confirmAudienceWith(category: CustomerCategory) {
     onCustomerCategoryChange(category);
@@ -99,6 +101,33 @@ export function AnalyseConfirmStep({
           <img key={url} src={url} alt="Reference" className={styles.referenceImg} />
         ))}
       </div>
+
+      <section className={styles.generationPlan}>
+        <h3 className={styles.generationPlanTitle}>Reference Coverage</h3>
+        {roles.roleTagged ? (
+          <>
+            <dl className={styles.coverage}>
+              <dt>Main/Front</dt>
+              <dd>Available</dd>
+              <dt>45° Angle</dt>
+              <dd>{roles.angle_45 ? 'Available' : 'Not provided'}</dd>
+              <dt>Side Profile</dt>
+              <dd>{roles.side_profile ? 'Available' : 'Not provided'}</dd>
+            </dl>
+            {!roles.side_profile && (
+              <p className={styles.coverageNote}>
+                A strict side-profile image will not be generated. A reference-faithful elevated detail view will be used
+                instead.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className={styles.coverageNote}>
+            Uploaded before reference roles existed: the first image is the main reference and the original catalogue
+            views are used.
+          </p>
+        )}
+      </section>
 
       <div className={styles.productInfo}>
         <div>
@@ -284,6 +313,7 @@ export function AnalyseConfirmStep({
           customerCategory={customerCategory}
           jewelleryType={jewelleryType}
           hasPresenter={false}
+          references={references}
         />
         {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
       </section>

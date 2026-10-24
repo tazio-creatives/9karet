@@ -16,12 +16,19 @@ interface GenerationSummaryProps {
   customerCategory: CustomerCategory | '';
   jewelleryType: JewelleryType | '';
   hasPresenter: boolean;
+  references?: { angle45: boolean; side: boolean };
 }
 
 // The "Images to generate" box shown before generation starts. Always six
 // images. Rose Gold changes only the metal split, the customer category only
 // the presenter, the jewellery category only the catalogue views.
-export function GenerationSummary({ generateRoseGold, customerCategory, jewelleryType, hasPresenter }: GenerationSummaryProps) {
+export function GenerationSummary({
+  generateRoseGold,
+  customerCategory,
+  jewelleryType,
+  hasPresenter,
+  references,
+}: GenerationSummaryProps) {
   const lines = manifestSummary(generateRoseGold, customerCategory);
   return (
     <div className={styles.summary} aria-live="polite">
@@ -42,7 +49,7 @@ export function GenerationSummary({ generateRoseGold, customerCategory, jeweller
         ))}
       </ul>
       <p className={styles.detail}>
-        Catalogue views: {catalogueViewLabels(jewelleryType, generateRoseGold).join(', ')}
+        Catalogue views: {catalogueViewLabels(jewelleryType, generateRoseGold, references).join(', ')}
         {generateRoseGold && ' — each in yellow and rose gold'}
       </p>
       <p className={styles.detail}>Presenter: {presenterIdentityLabel(jewelleryType, customerCategory, hasPresenter)}</p>
