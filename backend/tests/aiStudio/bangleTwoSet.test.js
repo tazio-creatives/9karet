@@ -147,7 +147,9 @@ describe('Two-bangle set prompts', () => {
     }
     const [front, angle, elevated, macro] = catalogue(bangleJob(PAIR));
     assert.match(front.finalPrompt, /two physical objects in total — arranged in two clean horizontal rows: one bangle above and one bangle below/);
-    assert.match(angle.finalPrompt, /exactly two upright bangles in total[^.]*one bangle on the left[^.]*one bangle on the right/);
+    assert.match(angle.finalPrompt, /exactly two upright bangles in total[^.]*in clearly different orientations/);
+    assert.match(angle.finalPrompt, /the LEFT bangle[^;]*wide, open oval; the RIGHT bangle[^.]*nearly side-on, so it reads as a narrow oval/);
+    assert.match(angle.finalPrompt, /Do not copy the stacked arrangement of the reference photo/);
     assert.match(elevated.finalPrompt, /exactly two complete bangles in total: one bangle in the left foreground and one bangle in the right background/);
     assert.match(macro.finalPrompt, /one larger primary bangle in the foreground[^.]*one smaller second bangle/);
   });
