@@ -19,6 +19,7 @@ import {
   CUSTOMER_CATEGORIES,
   DEFAULT_CUSTOMER_CATEGORY,
   bangleQuantityForJob,
+  bangleSetTypeForJob,
 } from '../services/aiStudioService.js';
 import { findPresenterById } from '../repositories/presenters.repository.js';
 import { findCategoryById } from '../repositories/categories.repository.js';
@@ -445,6 +446,7 @@ export async function confirmJob(req, res, next) {
       confirmedCustomerCategory: customerCategory,
       references,
       bangleQuantity: bangleQuantityForJob(input.jewelleryType, job.analysis),
+      bangleSetType: bangleSetTypeForJob(input.jewelleryType, job.analysis),
     });
 
     const insertedAssets = await insertAssets(
@@ -511,6 +513,7 @@ export async function previewPrompts(req, res, next) {
       confirmedCustomerCategory: customerCategory,
       references: referencesForPlan(job),
       bangleQuantity: bangleQuantityForJob(jewelleryType, job.analysis),
+      bangleSetType: bangleSetTypeForJob(jewelleryType, job.analysis),
     });
 
     res.json({ prompts: previews });
@@ -542,6 +545,7 @@ async function refreshBraceletPrompt(job, asset) {
     confirmedCustomerCategory: job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY,
     references: referencesForPlan(job),
     bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
+    bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
   }).find((p) => p.assetType === asset.asset_type);
   if (preview) await updateAsset(asset.id, { assembled_final_prompt: preview.finalPrompt });
 }
@@ -663,6 +667,7 @@ export async function updateAssetSelection(req, res, next) {
         confirmedCustomerCategory: job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY,
         references: referencesForPlan(job),
         bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
+        bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
       });
       const preview = previews.find((p) => p.assetType === asset.asset_type);
       if (!preview) throw new AppError(400, 'This asset type is not part of the current generation plan');

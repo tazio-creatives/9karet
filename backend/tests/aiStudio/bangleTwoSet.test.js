@@ -85,7 +85,11 @@ function pairReview(check = {}, base = {}) {
       observedArrangement: '',
       productsTouchOrOverlap: false,
       physicalBangleCount: 2,
-      independentClosedObjectCount: 2,
+      independentClosedBangleCount: 2,
+      visualGroupCount: 2,
+      expectedPhysicalCount: 2,
+      actualPhysicalCount: 2,
+      eachReferenceDesignShownOnce: true,
       duplicatedPairDetected: false,
       joinedMultiRailDesign: false,
       innerOuterEdgesMiscounted: false,
@@ -353,12 +357,12 @@ describe('Two-bangle set validation', () => {
   });
 
   test('fixture: two duplicated pairs = four objects and fail, even when the reviewer said two (Slight Alternate Angle, jobs 500c704c / 7b8b2ad5)', () => {
-    const asReported = rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 2, independentClosedObjectCount: 2 });
+    const asReported = rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 2, independentClosedBangleCount: 2 });
     assert.ok(failedWith(asReported, 'Expected exactly two physical bangles, but four were generated.'));
-    for (const signal of [{ independentClosedObjectCount: 4 }, { duplicatedPairDetected: true }, { physicalBangleCount: 4 }]) {
+    for (const signal of [{ independentClosedBangleCount: 4 }, { duplicatedPairDetected: true }, { physicalBangleCount: 4 }]) {
       assert.ok(failedWith(rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], ...signal }), M.pairFourGenerated), JSON.stringify(signal));
     }
-    assert.ok(failedWith(rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], independentClosedObjectCount: 3 }), 'Expected exactly two physical bangles, but three were generated.'));
+    assert.ok(failedWith(rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], independentClosedBangleCount: 3 }), 'Expected exactly two physical bangles, but three were generated.'));
   });
 
   test('fixture: one solid bangle\'s inner/outer edges count as one object; two solid bangles count as two', () => {
@@ -366,7 +370,7 @@ describe('Two-bangle set validation', () => {
     const macro = rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], objectsByPosition: TWO_BANGLES_INNER_WALLS_VISIBLE, innerOuterEdgesMiscounted: true });
     assert.equal(macro.validationStatus, 'passed', JSON.stringify(macro.validationMessages));
     // One solid bangle shown with its inner and outer outline: one object.
-    const one = rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: SOLID_BANGLE_INNER_OUTER, physicalBangleCount: 1, independentClosedObjectCount: 1, bangleCount: 1 });
+    const one = rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: SOLID_BANGLE_INNER_OUTER, physicalBangleCount: 1, independentClosedBangleCount: 1, bangleCount: 1 });
     assert.ok(failedWith(one, 'Expected exactly two physical bangles, but only one was generated.'));
     assert.ok(!one.validationMessages.some((m) => /four|three/.test(m)), 'inner/outer edges never counted as extra bangles');
     // Two solid bangles, Front and Slight Alternate Angle: pass as two.
@@ -383,7 +387,7 @@ describe('Two-bangle set validation', () => {
   test('expected outcomes for the six images of local job 7b8b2ad5', () => {
     const outcomes = {
       YELLOW_FRONT: rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: TWO_SOLID_BANGLES }),
-      YELLOW_SLIGHT_ANGLE: rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 4, independentClosedObjectCount: 4, duplicatedPairDetected: true }),
+      YELLOW_SLIGHT_ANGLE: rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 4, independentClosedBangleCount: 4, duplicatedPairDetected: true }),
       YELLOW_ELEVATED_DETAIL: rule('YELLOW_ELEVATED_DETAIL', { ...CATALOGUE_OK[3], objectsByPosition: TWO_SOLID_BANGLES }),
       YELLOW_MACRO: rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], objectsByPosition: TWO_BANGLES_INNER_WALLS_VISIBLE, innerOuterEdgesMiscounted: true }),
       PRESENTER_YELLOW_1: rule('PRESENTER_YELLOW_1', WORN_OK),
@@ -509,7 +513,7 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       3: 'generation_validation_bangle_pair_catalogue',
       4: 'generation_validation_bangle_pair_catalogue_upright',
     };
-    const COMMON = ['objectsByPosition', 'physicalBangleCount', 'independentClosedObjectCount', 'duplicatedPairDetected', 'joinedMultiRailDesign', 'innerOuterEdgesMiscounted', 'referenceMetalColourMatch', 'washedOutMetal', 'orangeOrCopperCast', 'metalDetailPreserved'];
+    const COMMON = ['objectsByPosition', 'physicalBangleCount', 'independentClosedBangleCount', 'visualGroupCount', 'expectedPhysicalCount', 'actualPhysicalCount', 'eachReferenceDesignShownOnce', 'duplicatedPairDetected', 'joinedMultiRailDesign', 'innerOuterEdgesMiscounted', 'referenceMetalColourMatch', 'washedOutMetal', 'orangeOrCopperCast', 'metalDetailPreserved'];
     const WRIST = ['visibleWristCount', 'banglesPerVisibleWrist', 'otherWristJewellery', 'floatingIntersectingOrMisplaced', 'leftWristBangleCount', 'rightWristBangleCount'];
     const SHOT_ONLY = ['observedShotType', 'observedCameraAngle', 'observedArrangement', 'productsTouchOrOverlap'];
     for (const shot of [1, 2, 3, 4]) {

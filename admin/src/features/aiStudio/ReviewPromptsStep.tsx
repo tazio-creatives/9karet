@@ -135,6 +135,7 @@ export function ReviewPromptsStep({
                 {formatType(jewelleryType)} · {p.metalColor === 'ROSE' ? 'Rose' : 'Yellow'} Gold
                 {p.assetType.startsWith('PRESENTER_') && presenterName ? ` · ${presenterName}` : ''}
               </p>
+              {p.adminNote && <p className={styles.cardMeta}>{p.adminNote}</p>}
 
               <div className={styles.modeToggle}>
                 <button

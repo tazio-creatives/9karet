@@ -139,6 +139,8 @@ export interface PromptPreview {
   };
   negativeInstructions: string[];
   finalPrompt: string;
+  // Bangle identical-pair catalogue slots only.
+  adminNote?: string;
 }
 
 export type ValidationStatus = 'passed' | 'warning' | 'failed';

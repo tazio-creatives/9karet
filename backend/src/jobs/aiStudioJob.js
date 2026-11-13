@@ -13,8 +13,12 @@ import {
   referenceRolesFor,
   isCatalogueAssetType,
   bangleQuantityForJob,
+  bangleSetTypeForJob,
+  bangleUsesLocalPairComposite,
+  bangleCatalogueShotFor,
 } from '../services/aiStudioService.js';
 import { finishGeneratedImage, braceletFrameMessages } from '../services/braceletImageFinish.js';
+import { composeIdenticalPair } from '../services/bangleComposite.js';
 import {
   findJobById,
   updateJob,
@@ -181,6 +185,8 @@ async function generateOneAsset({
   // Bangle only — the job's detected quantity, used for the prompt (when
   // rebuilt) and for validation, on first generation and every regeneration.
   bangleQuantity,
+  // Bangle two-bangle sets only — 'IDENTICAL_PAIR' | 'DISTINCT_PAIR' | null.
+  bangleSetType,
 }) {
   // A cancelled job's late-arriving results are discarded, never written
   // back (plan §12) — checked immediately before each write, not just once
@@ -210,7 +216,7 @@ async function generateOneAsset({
         : null;
 
     async function attemptOnce(priorFailure) {
-      const { buffer: generatedBuffer, prompt } = await generateShot({
+      let { buffer: generatedBuffer, prompt } = await generateShot({
         referenceBuffer,
         mimetype,
         template,
@@ -227,7 +233,22 @@ async function generateOneAsset({
         outputSlot,
         viewReferenceBuffers: viewReferenceBuffers ?? [],
         bangleQuantity,
+        bangleSetType,
       });
+
+      // Identical two-bangle set, catalogue slot: the model generated ONE
+      // bangle; place exactly two copies of it locally. Anything that cannot
+      // be verified throws — the asset is marked FAILED with the reason and
+      // nothing is saved as a successful composite.
+      let sourceBuffer = null;
+      let composite = null;
+      if (confirmedType === 'BANGLE' && bangleUsesLocalPairComposite(asset.asset_type, bangleQuantity, bangleSetType)) {
+        const composed = await composeIdenticalPair(generatedBuffer, bangleCatalogueShotFor(asset.asset_type));
+        if (!composed.ok) throw new Error(composed.reason);
+        sourceBuffer = generatedBuffer;
+        generatedBuffer = composed.buffer;
+        composite = composed.metadata;
+      }
 
       // Bracelet only: local upscale/sharpen (+ white background on
       // catalogue shots). Every other category gets the same buffer back.
@@ -255,6 +276,8 @@ async function generateOneAsset({
           identityReferenceMimetype: identityReferenceBuffer ? 'image/png' : null,
           identityKind,
           bangleQuantity,
+          bangleSetType,
+          compositeSourceBuffer: sourceBuffer,
         });
         validationStatus = result.validationStatus;
         validationResult = result;
@@ -276,7 +299,7 @@ async function generateOneAsset({
         validationStatus = validationStatus === 'failed' ? 'failed' : 'warning';
         validationResult.validationStatus = validationStatus;
       }
-      return { buffer, prompt, validationStatus, validationResult };
+      return { buffer, prompt, validationStatus, validationResult, sourceBuffer, composite };
     }
 
     let attempt = await attemptOnce(initialPriorFailure);
@@ -284,7 +307,7 @@ async function generateOneAsset({
       const autoRetryFailure = (attempt.validationResult?.validationMessages ?? []).join('; ') || initialPriorFailure;
       attempt = await attemptOnce(autoRetryFailure);
     }
-    const { buffer, prompt, validationStatus, validationResult } = attempt;
+    const { buffer, prompt, validationStatus, validationResult, sourceBuffer, composite } = attempt;
 
     const stillActive = await findJobById(jobId);
     if (stillActive.status === 'cancelled') return;
@@ -293,6 +316,10 @@ async function generateOneAsset({
       `products/ai-studio/${jobId}/${crypto.randomUUID()}.png`,
       buffer,
     );
+    // Identical-pair composite: keep the single generated source for audit.
+    const savedSource = sourceBuffer
+      ? await storageProvider.save(`products/ai-studio/${jobId}/source-${crypto.randomUUID()}.png`, sourceBuffer)
+      : null;
 
     // is_featured is deliberately NOT set here — see ensureDefaultFeatured,
     // called once per generation run in generateHandler below. Setting it
@@ -301,7 +328,9 @@ async function generateOneAsset({
     await updateAsset(asset.id, {
       status: 'READY',
       image_key: saved.key,
-      generation_metadata: JSON.stringify({ prompt, imageModel }),
+      generation_metadata: JSON.stringify(
+        composite ? { prompt, imageModel, composite: { ...composite, sourceImageKey: savedSource.key } } : { prompt, imageModel },
+      ),
       generation_completed_at: new Date(),
       validation_status: validationStatus,
       validation_result: validationResult ? JSON.stringify(validationResult) : null,
@@ -328,7 +357,8 @@ async function generateOneAsset({
   }
 }
 
-async function generateHandler(jobs) {
+// Exported for tests (the queue worker registers it below).
+export async function generateHandler(jobs) {
   const [job] = jobs;
   const { jobId, assetIds } = job.data;
 
@@ -410,6 +440,7 @@ async function generateHandler(jobs) {
       confirmedCustomerCategory: aiStudioJob.customer_category,
       gentsMasterPresenterBuffer,
       bangleQuantity: bangleQuantityForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
+      bangleSetType: bangleSetTypeForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
     };
     const { firstWave, chained } = splitGenerationWaves(targets, manifest);
 
