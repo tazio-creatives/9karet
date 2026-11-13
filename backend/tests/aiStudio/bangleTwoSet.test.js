@@ -138,7 +138,7 @@ describe('Two-bangle set prompts', () => {
     for (const job of allPairJobs()) {
       for (const p of catalogue(job)) {
         assert.match(p.finalPrompt, /this image must contain exactly two physical bangles in total — no more and no fewer/, p.assetType);
-        assert.match(p.finalPrompt, /exactly TWO physical bangle objects/, p.assetType);
+        assert.match(p.finalPrompt, /Physical-item count \(mandatory\)/, p.assetType);
         assert.match(p.finalPrompt, /Show exactly two complete, separate physical bangles in this image/, p.assetType);
         assert.match(p.finalPrompt, /never add a third or fourth bangle/, p.assetType);
       }
@@ -150,30 +150,35 @@ describe('Two-bangle set prompts', () => {
     assert.match(macro.finalPrompt, /one larger primary bangle in the foreground[^.]*one smaller second bangle/);
   });
 
-  test('2. internal rails, borders and bands are part of one bangle — never extra bangles', () => {
+  test('2. one bangle = one piece of the reference: a stacked reference pair is never copied as one doubled bangle; genuine rails stay one bangle', () => {
     for (const job of allPairJobs()) {
       for (const p of job) {
-        assert.match(p.finalPrompt, /several rails, borders, edges, grooves, rows or decorative bands as part of its one design; these all belong to that single bangle/, p.assetType);
-        assert.match(p.finalPrompt, /never split a double-rail design into two separate bangles/, p.assetType);
+        assert.match(p.finalPrompt, /each individual bangle is only one of the two pieces in it/, p.assetType);
+        assert.match(p.finalPrompt, /if the reference shows two bands together, each bangle is a single band/, p.assetType);
+        assert.match(p.finalPrompt, /Never copy the stacked look of the reference pair as the design of one bangle, never draw a bangle as two bands or a doubled ring/, p.assetType);
+        assert.match(p.finalPrompt, /Rails, borders or decorative bands that one single piece in the reference genuinely has stay part of that one bangle — never split such a piece into separate bangles/, p.assetType);
         assert.match(p.finalPrompt, /never create extra bangles through reflections, shadows or background objects/, p.assetType);
+        assert.doesNotMatch(p.finalPrompt, /A bangle may have several rails/, p.assetType);
       }
     }
-    // The reviewer is told the same: rails are one object.
+    // The reviewer derives one bangle from the reference the same way.
     for (const p of bangleJob(PAIR)) {
       const text = buildValidationText({ confirmedType: 'BANGLE', metalColor: p.metalColor, assetType: p.assetType, bangleQuantity: PAIR });
       assert.match(text, /count physical jewellery objects, not rails or decorative borders/);
-      assert.match(text, /several rails, borders, edges, grooves, rows or decorative bands is ONE object/);
+      assert.match(text, /if the reference shows two bands, each bangle is ONE single band/);
+      assert.match(text, /two bands stacked together on one wrist, or drawn side by side as one unit, count as TWO; a genuinely multi-rail reference piece counts once/);
+      assert.match(text, /Two separate single-band bangles placed apart, as in the reference, are correct: never report them as one stacked or merged bangle/);
     }
   });
 
   test('3. Images 2–4 prohibit two duplicated pairs and four loops; Image 1 keeps its negatives', () => {
-    const NO_DUP = 'Do not show two duplicated pairs, four loops or four physical bangles, and do not turn either bangle into a pair of bangles.';
+    const NO_DUP = 'Do not draw either bangle as two bands or a doubled ring, and do not show two duplicated pairs, four loops or four rings.';
     for (const job of allPairJobs()) {
       for (const p of catalogue(job)) {
         const shot = SHOT[p.assetType];
         if (shot === 1) assert.ok(!p.negativeInstructions.includes(NO_DUP), p.assetType);
         else assert.ok(p.negativeInstructions.includes(NO_DUP), p.assetType);
-        assert.match(p.finalPrompt, /never show two pairs, four loops or four physical objects/, p.assetType);
+        assert.match(p.finalPrompt, /never show two pairs, four loops or four rings/, p.assetType);
       }
     }
     const [, angle, elevated, macro] = catalogue(bangleJob(PAIR));
@@ -223,6 +228,8 @@ describe('Two-bangle set prompts', () => {
     assert.match(second.finalPrompt, /both wrists facing the camera/);
     assert.match(second.finalPrompt, /Do not cross the arms or wrists, do not hold one wrist with the other hand/);
     assert.match(second.finalPrompt, /never place both bangles on one wrist/);
+    assert.match(second.finalPrompt, /both hands lowered in front of the body, away from the face and hair/);
+    assert.match(second.finalPrompt, /each sitting at its wrist joint just above the hand — never pushed up the forearm or hanging loose/);
     // Image 1: the existing separated two-wrist pose, word for word.
     assert.match(
       first.finalPrompt,
