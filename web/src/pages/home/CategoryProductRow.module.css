@@ -1,0 +1,245 @@
+.categorySection {
+  max-width: 1440px;
+  margin: 16px auto;
+  padding: 0 24px;
+}
+
+.sectionHeading {
+  margin: 0 0 20px;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+}
+
+.categoryBlock {
+  margin-bottom: 40px;
+}
+
+.categoryBlock:last-child {
+  margin-bottom: 0;
+}
+
+.productRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 4px;
+}
+
+/* 6 tiles across (the category tile + 5 products) share one flex-basis
+   formula so they line up evenly in the same row. */
+.productCard,
+.categoryTile {
+  flex: 0 0 calc((100% - 5 * 16px) / 6);
+  min-width: 150px;
+}
+
+.productCard {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e7ded8;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.categoryTile {
+  position: relative;
+  display: block;
+  height: 279px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f4ece6;
+  text-decoration: none;
+  color: inherit;
+}
+
+.categoryTile img,
+.categoryTilePlaceholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+.categoryTile:hover img {
+  transform: scale(1.04);
+}
+
+.categoryTileOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(20, 10, 8, 0) 45%, rgba(20, 10, 8, 0.68) 100%);
+  pointer-events: none;
+}
+
+.categoryTileName {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fdf6ee;
+}
+
+.productImageWrapper {
+  position: relative;
+  height: 200px;
+  background: #fffdfb;
+  overflow: hidden;
+}
+
+.productImageWrapper img,
+.productImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+.productCard:hover img {
+  transform: scale(1.04);
+}
+
+.productInfo {
+  padding: 8px 12px 10px;
+}
+
+.productName {
+  margin: 0 0 3px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #211915;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productMaterial {
+  margin: 0 0 4px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #554943;
+}
+
+.productPrice {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #211915;
+}
+
+.productMrp {
+  margin-left: 6px;
+  font-weight: 400;
+  font-size: 16px;
+  color: #8a8078;
+  text-decoration: line-through;
+}
+
+.offerBanner {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid #f4cdd2;
+  border-radius: 6px;
+  background: #fff5f6;
+}
+
+.offerBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.offerBannerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: #ff765f;
+}
+
+.offerBannerIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.offerBannerHeadlineGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.offerBannerHeadline {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #9e1835;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewAllButton {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 10px 24px;
+  border: 1px solid #65051e;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #65051e;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.viewAllButton:hover {
+  background: #65051e;
+  color: #fdf6ee;
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .productCard,
+  .categoryTile {
+    flex: 0 0 calc((100% - 2 * 16px) / 3);
+  }
+}
+
+@media (max-width: 767px) {
+  .categorySection {
+    padding: 0 14px;
+  }
+
+  .productCard,
+  .categoryTile {
+    flex: 0 0 42vw;
+    min-width: 150px;
+  }
+
+  .categoryTileName {
+    font-size: 18px;
+  }
+}

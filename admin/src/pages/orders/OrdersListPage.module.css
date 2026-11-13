@@ -1,0 +1,299 @@
+/* Page container — the shared AdminLayout .content wrapper still caps at
+   1200px for every other admin page; the ".full-width-page" marker class
+   (plain global selector, not CSS-modules-scoped — see the :has() override in
+   AdminLayout.module.css) lifts that cap only while this page is mounted, so
+   the Orders table can use the full window width without widening every
+   other admin screen. */
+.pageContainer {
+  background: #f6f7f9;
+  max-width: none;
+  margin: -8px 0 0;
+  padding: 0 28px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: #162033;
+}
+
+.pageDescription {
+  margin: 5px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #667085;
+}
+
+.exportButton {
+  flex: none;
+  height: 38px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.exportButton:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-text-faint);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1024px) {
+  .pageContainer {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageContainer {
+    padding: 0 14px;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Sales summary in the page heading — five colour-coded icon cards (one hue
+   per metric, fixed order, never cycled) rather than a plain divided row, per
+   the "premium and colourful" revision. Each hue is a light-mode-only tint
+   pairing (10-14% alpha fill behind a full-strength icon stroke) — decorative
+   identity per metric, not a categorical data encoding, so it sits outside
+   the chart-palette validator's remit. */
+.salesGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.salesCard {
+  composes: cardPadded from '../../styles/shared.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.salesIcon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.salesIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.salesIconIndigo {
+  background: rgba(79, 70, 229, 0.12);
+  color: #4f46e5;
+}
+
+.salesIconTeal {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0d9488;
+}
+
+.salesIconGold {
+  background: rgba(198, 161, 91, 0.18);
+  color: #a37a2c;
+}
+
+.salesIconViolet {
+  background: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+}
+
+.salesIconGreen {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.salesLabel {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #667085;
+  white-space: nowrap;
+}
+
+.salesValue {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #162033;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1200px) {
+  .salesGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .salesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .salesCard {
+    padding: var(--space-3);
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab,
+.tabActive {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: var(--space-2) var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.filters {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.filters select {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+}
+
+.searchInput {
+  flex: 1;
+  max-width: 360px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-bg);
+}
+
+.mobile,
+.subtext {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.splitLayout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.listColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The list narrows once the detail panel opens beside it — lets the table
+   scroll horizontally within its own card instead of clipping columns with
+   no way to reach them (sharedStyles.card clips overflow for its rounded
+   corners). */
+.tableScroll {
+  overflow-x: auto;
+}
+
+/* Overrides sharedStyles.table's td font-size (var(--text-base), 17px) —
+   scoped to Orders only via this second class on the <table>, rather than
+   touching shared.module.css and shrinking every admin table. */
+.ordersTable td {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.row,
+.rowSelected {
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.row:hover {
+  background: var(--color-surface-hover);
+}
+
+.rowSelected {
+  background: var(--color-accent-bg);
+}
+
+.orderLink {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* Only relevant once OrderDetailPanel switches to its own fixed-overlay
+   layout (its <=1100px breakpoint) — invisible otherwise, since the panel
+   sits inline beside the list at wider widths with nothing to dim. */
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.35);
+    z-index: 20;
+  }
+}

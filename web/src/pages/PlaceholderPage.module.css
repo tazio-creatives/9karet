@@ -1,0 +1,15 @@
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.heading {
+  font-size: var(--text-3xl);
+  margin-bottom: var(--space-3);
+}
+
+.body {
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,359 @@
+.placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  /* Sticks alongside the (taller) product-info column on desktop, using
+     normal document scroll — not an inner scroll pane. Stops on its own
+     once it reaches the bottom of .layout (PDPPage.module.css), i.e. before
+     ProductTabs/RelatedProducts, since sticky containment never exceeds the
+     containing grid item's own row height. */
+  position: sticky;
+  top: 120px;
+  align-self: start;
+}
+
+.main {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-bg-alt);
+  box-sizing: border-box;
+  cursor: zoom-in;
+}
+
+.mainImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Desktop no-op — shown only inside the <768px media query below, where the
+   main image itself is what a shopper is swiping through. */
+.carouselPagination {
+  display: none;
+}
+
+.carouselPaginationDot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition:
+    width 180ms ease,
+    background-color 180ms ease;
+}
+
+.carouselPaginationDot.active {
+  width: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+/* Size-guide diagram: the whole square canvas (rulers/labels right at the
+   edges) must stay fully visible — cover-crop or an edge-to-edge fill would
+   cut ruler ticks/labels off. object-fit is also set inline (belt-and-
+   suspenders against the .mainImage mobile media query further down, which
+   redefines object-fit at the same specificity). */
+.productSizeImage {
+  object-fit: contain;
+  object-position: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+.zoomPane {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 200%;
+  z-index: 1;
+}
+
+.zoomHint {
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: zoom-in;
+}
+
+.zoomHint:hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.overlayBadges {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 2;
+}
+
+.badgeNew {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #fbe4e8;
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+
+.overlayWishlist {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-burgundy);
+  background: var(--color-surface);
+  color: var(--color-burgundy);
+}
+
+.thumbRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.navButton {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.navButton:hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.thumbs {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+}
+
+.thumb,
+.thumbActive {
+  position: relative;
+  flex: none;
+  width: 108px;
+  height: 108px;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.sizeGuideLabel {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--color-burgundy);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.thumb {
+  border: 1px solid var(--color-border);
+}
+
+.thumbActive {
+  border: 2px solid var(--color-burgundy);
+}
+
+.thumb img,
+.thumbActive img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sizeGuideThumbImg {
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.lightboxOverlay {
+  position: fixed;
+  inset: 0;
+  /* Must beat every other fixed-position element on the page, notably the
+     sticky mobile purchase bar (ProductInfo.module.css .mobileBar, z-index
+     1000) — otherwise its price breakdown renders on top of the zoomed
+     image instead of being covered by the overlay. */
+  z-index: 1100;
+  background: rgba(20, 16, 16, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  box-sizing: border-box;
+  cursor: zoom-out;
+}
+
+.lightboxImage {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  cursor: default;
+  border-radius: 4px;
+}
+
+.lightboxClose {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
+  z-index: 1101;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.lightboxClose:hover {
+  border-color: #fff;
+}
+
+.lightboxNav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1101;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.lightboxNav:hover {
+  border-color: #fff;
+}
+
+.lightboxNavPrev {
+  left: var(--space-5);
+}
+
+.lightboxNavNext {
+  right: var(--space-5);
+}
+
+@media (max-width: 767px) {
+  /* Breaks the gallery out of the page padding (PDPPage.module.css .page —
+     .hero itself no longer contributes horizontal padding on mobile) so
+     the main image spans the full viewport edge to edge, while the
+     thumbnail row stays inset in line with the rest of the card's content.
+     Vertically still cancels .hero's own top padding, which mobile keeps
+     unchanged. */
+  .gallery {
+    position: static;
+    margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-4)) 0;
+    width: calc(100% + 2 * var(--space-4));
+  }
+
+  .main {
+    aspect-ratio: 1 / 1;
+    background: var(--color-bg-alt);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    /* Without this, touch-action is "auto" and the browser is free to
+       claim a horizontal drag for its own gestures (iOS edge-swipe-back,
+       Chrome's default heuristics) before our touchmove handler ever sees
+       a clean sequence of deltas — the JS swipe logic silently never
+       fires on a real device even though it works fine when a touch
+       sequence is dispatched synthetically (e.g. via CDP/devtools).
+       Vertical page scroll still passes through untouched. */
+    touch-action: pan-y;
+  }
+
+  .mainImage {
+    object-fit: cover;
+    /* iOS Safari's long-press image callout (save/copy sheet) and its
+       built-in image drag can otherwise swallow the same gesture our
+       swipe handler is trying to read. */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .productSizeImage {
+    object-fit: contain;
+  }
+
+  .carouselPagination {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Replaced by the overlay pagination dots on the main image above — no
+     longer shown on mobile. */
+  .thumbRow {
+    display: none;
+  }
+
+  .overlayBadges {
+    display: none;
+  }
+}

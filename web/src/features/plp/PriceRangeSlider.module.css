@@ -1,0 +1,69 @@
+.wrapper {
+  padding-top: var(--space-2);
+}
+
+.track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border);
+  margin: 0 2px;
+}
+
+.trackFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-burgundy);
+  border-radius: 999px;
+}
+
+.range {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  transform: translateY(-50%);
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-burgundy);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.range::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-burgundy);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.range::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

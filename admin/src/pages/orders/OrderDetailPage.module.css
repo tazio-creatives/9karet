@@ -1,0 +1,491 @@
+.back {
+  display: inline-block;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+}
+
+.back:hover {
+  color: var(--color-text);
+}
+
+.subtext {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: var(--space-1) 0 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.fullStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.sectionHeading {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin: 0 0 var(--space-4);
+}
+
+.sectionHeadingSpaced {
+  margin-top: var(--space-4);
+}
+
+.sectionHeadingIcon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin: 0 0 var(--space-4);
+}
+
+.sectionHeadingIcon svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* Change Order Status is the one section still visible when the mini panel
+   is scrolled past the header card (order number scrolls out with it) — so
+   this row repeats it, confirming which order the status control acts on. */
+.statusChangeHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.statusChangeHeading .sectionHeading {
+  margin-bottom: 0;
+}
+
+.statusChangeOrderNumber {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.itemRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.itemRow:last-of-type {
+  border-bottom: none;
+}
+
+.itemImage,
+.itemImagePlaceholder {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+}
+
+.itemImage {
+  cursor: zoom-in;
+  transition: border-color 0.12s ease;
+}
+
+.itemImage:hover {
+  border-color: var(--color-accent);
+}
+
+/* Hover-preview modal — shown while the cursor is over an item thumbnail
+   (OrderDetailContent's onMouseEnter/onMouseLeave), not click-toggled, so it
+   needs no close button of its own. Centered fixed overlay rather than a
+   cursor-anchored popup: this page also renders inside the ~460px Orders
+   side panel, where a positioned-near-cursor preview would frequently clip
+   against the panel's own edge. */
+.imagePreviewOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 24, 39, 0.55);
+  pointer-events: none;
+}
+
+.imagePreviewLarge {
+  max-width: min(70vw, 480px);
+  max-height: 70vh;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  background: var(--color-surface);
+  object-fit: contain;
+}
+
+.itemDetails {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemName {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.itemMeta {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.itemVariants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.variantChip {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.productDetailList {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Full-page only — the compact panel deliberately has no background here
+   (a light border is enough separation at that width); the full page has
+   room for a subtle tinted block instead. */
+.productDetailListFull {
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border-top: none;
+  border-radius: var(--radius-md);
+}
+
+.productDetailHeading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.productDetailRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--text-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.productDetailRow:last-child {
+  border-bottom: none;
+}
+
+.productDetailRow dt {
+  color: var(--color-text-muted);
+  min-width: 0;
+}
+
+.productDetailRow dd {
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.itemPrice {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.totalsBlock {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.pricingSummaryHeading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.grandTotal {
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: var(--text-base);
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: none;
+  background: var(--color-success-bg);
+  border-radius: var(--radius-sm);
+}
+
+.address {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.addressHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.addressHeadingRow .sectionHeading,
+.addressHeadingRow .sectionHeadingIcon {
+  margin-bottom: 0;
+}
+
+.copyAddressButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.copyAddressButton:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timelineItem {
+  display: flex;
+  gap: var(--space-3);
+  position: relative;
+  padding-bottom: var(--space-5);
+}
+
+.timelineItem::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.timelineItem:last-child::before {
+  display: none;
+}
+
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+
+.timelineDot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #530711;
+  margin-top: 5px;
+  z-index: 1;
+}
+
+.timelineBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.timelineTop {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.timelineStatus {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.timelineDate {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.timelineNote {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  margin: 4px 0 0;
+}
+
+.eventSource {
+  text-transform: capitalize;
+  font-style: italic;
+}
+
+.eventForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.eventInput {
+  flex: 1;
+  min-width: 160px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+.eventInputWide {
+  composes: eventInput;
+  flex: 2;
+  min-width: 220px;
+}
+
+.eventInput:focus,
+.eventInputWide:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-bg);
+}
+
+.shipmentLine {
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-2);
+}
+
+.shipmentActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+}
+
+.infoBox {
+  font-size: var(--text-xs);
+  color: var(--color-info);
+  background: var(--color-info-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-top: var(--space-3);
+  margin-bottom: 0;
+}
+
+.inlineCopyButton {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 0;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.inlineCopyButton:hover {
+  color: var(--color-text);
+}
+
+.copiedHint {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Same narrow-width rules as the media query above, applied unconditionally
+   when OrderDetailContent renders inside the Orders list's side panel
+   (OrderDetailPanel) — the panel is ~480px regardless of the admin's own
+   (often wide) viewport, so a viewport media query alone wouldn't catch it. */
+.compact .layout {
+  grid-template-columns: 1fr;
+}
+
+.compactStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

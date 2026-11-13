@@ -1,0 +1,18 @@
+/* Shared primitives for the auth split-panel components — import via
+   `composes: x from '../../features/auth/AuthShared.module.css'`. */
+
+.spinIcon {
+  animation: auth-spin 0.8s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinIcon {
+    animation: none;
+  }
+}

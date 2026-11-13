@@ -1,0 +1,626 @@
+/* Scoped design tokens for the Product Variations card only — deliberately
+   not touching admin/src/styles/tokens.css (that indigo palette drives every
+   other admin screen, including the sidebar). Everything below inherits
+   these custom properties from .section, so nothing outside this card is
+   affected. */
+.section {
+  --pv-primary: #670815;
+  --pv-primary-hover: #4f0610;
+  --pv-primary-bg: #f0e3e5;
+  --pv-ivory: #faf8f3;
+  --pv-border: #dde2e5;
+  --pv-success: #218838;
+  --pv-success-bg: #eaf5ec;
+  --pv-warning: #a8631a;
+  --pv-warning-bg: #fff8e8;
+  --pv-text: #261719;
+  --pv-text-muted: #667172;
+  --pv-radius: 10px;
+}
+
+.headRow {
+  margin-bottom: 20px;
+}
+
+.heading {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--pv-text);
+  margin: 0 0 4px;
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* Section 1 — Fixed / Selectable mode */
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.modeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  text-align: left;
+  min-height: 44px;
+  padding: 14px 16px;
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: var(--pv-text);
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.modeCard:hover { border-color: var(--pv-primary); }
+
+.modeCardSelected {
+  composes: modeCard;
+  border-color: var(--pv-primary);
+  background: var(--pv-primary-bg);
+}
+
+.modeTitle {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modeRadioDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--pv-border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.modeCardSelected .modeRadioDot {
+  border-color: var(--pv-primary);
+}
+
+.modeCardSelected .modeRadioDot::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--pv-primary);
+}
+
+.modeDesc {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+  padding-left: 24px;
+}
+
+/* Section 2 — attribute rows + chips */
+.optionsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.attrRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attrLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pv-text);
+}
+
+.attrLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sizeLabelOverride {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--pv-text-muted);
+}
+
+.sizeLabelOverride input {
+  height: 30px;
+  width: 110px;
+  padding: 0 8px;
+  border: 1px solid var(--pv-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font: inherit;
+}
+
+.sizeLabelOverride input:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--pv-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--pv-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.chip:hover { border-color: var(--pv-primary); }
+
+.chipSelected {
+  composes: chip;
+  background: var(--pv-primary-bg);
+  border-color: var(--pv-primary);
+  color: var(--pv-primary);
+}
+
+.chipCheck {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.chipAdd {
+  composes: chip;
+  border-style: dashed;
+  color: var(--pv-primary);
+  font-weight: 600;
+}
+
+.emptyNote {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+}
+
+/* Compact size table (replaces repeated size cards) */
+.sizeTableWrap { overflow-x: auto; }
+
+.sizeTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sizeTable th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pv-text-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--pv-border);
+}
+
+.sizeTable td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--pv-border);
+  vertical-align: middle;
+}
+
+.sizeTable tr:last-child td { border-bottom: none; }
+
+.sizeTable input {
+  height: 36px;
+  min-width: 64px;
+  width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--pv-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font: inherit;
+}
+
+.sizeTable input:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+
+.sizeRemoveBtn {
+  min-height: 36px;
+  min-width: 36px;
+  border: none;
+  background: transparent;
+  color: var(--pv-text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 6px;
+}
+.sizeRemoveBtn:hover { background: var(--pv-warning-bg); color: var(--pv-warning); }
+
+/* Combination summary bar */
+.summaryBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--pv-ivory);
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  margin-bottom: 20px;
+}
+
+.summaryCount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.summaryMeta {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+}
+
+/* Section 3 — default variant settings */
+.defaultsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.defaultsItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.defaultsLabel {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+}
+
+.defaultsValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.defaultsInput {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font: inherit;
+  width: 100%;
+}
+.defaultsInput:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pv-success-bg);
+  color: var(--pv-success);
+}
+
+.note {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+  margin: 0 0 20px;
+}
+
+/* Price preview */
+.pricePreview {
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.pricePreviewHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pricePreviewTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.estimateTag {
+  font-size: 12px;
+  color: var(--pv-text-muted);
+}
+
+.priceRows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  color: var(--pv-text-muted);
+}
+
+.priceRowTotal {
+  composes: priceRow;
+  color: var(--pv-text);
+  font-weight: 600;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--pv-border);
+}
+
+.refreshBtn {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--pv-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.refreshBtn:hover { border-color: var(--pv-primary); background: var(--pv-primary-bg); }
+.refreshBtn:disabled { opacity: 0.6; cursor: default; }
+
+/* Availability Rules */
+.rulesPanel {
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.ruleList {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ruleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--pv-warning-bg);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--pv-text);
+}
+
+.ruleCount {
+  color: var(--pv-warning);
+  font-weight: 500;
+}
+
+.ruleAddRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ruleAddRow span {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+}
+
+.ruleSelect {
+  height: 44px;
+  min-width: 180px;
+  padding: 0 10px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font: inherit;
+  background: #fff;
+  color: var(--pv-text);
+}
+.ruleSelect:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+.ruleSelect:disabled { opacity: 0.6; }
+
+.ruleAddBtn {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--pv-primary);
+  background: var(--pv-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ruleAddBtn:hover { background: var(--pv-primary-hover); }
+.ruleAddBtn:disabled { opacity: 0.5; cursor: default; background: var(--pv-text-muted); border-color: var(--pv-text-muted); }
+
+/* Advanced variant management summary */
+.advancedPanel {
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  background: #fff;
+}
+
+.advancedHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.advancedTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.advancedTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pv-text);
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--pv-ivory);
+  color: var(--pv-text-muted);
+  border: 1px solid var(--pv-border);
+}
+
+.badgeSuccess { composes: badge; background: var(--pv-success-bg); color: var(--pv-success); border-color: transparent; }
+.badgeWarning { composes: badge; background: var(--pv-warning-bg); color: var(--pv-warning); border-color: transparent; }
+.badgeAccent { composes: badge; background: var(--pv-primary-bg); color: var(--pv-primary); border-color: transparent; }
+
+.advancedSub {
+  font-size: 13px;
+  color: var(--pv-text-muted);
+  padding: 0 16px 14px;
+  margin: 0;
+}
+
+.manageBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--pv-primary);
+  background: var(--pv-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.manageBtn:hover { background: var(--pv-primary-hover); }
+
+.chevronBtn {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--pv-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+.chevronBtn:hover { border-color: var(--pv-primary); color: var(--pv-primary); }
+
+.advancedBody {
+  border-top: 1px solid var(--pv-border);
+  padding: 16px;
+}
+
+/* Purity Pricing Rules — desktop table vs. mobile per-purity cards */
+.purityMobileCards { display: none; }
+
+.purityCard {
+  border: 1px solid var(--pv-border);
+  border-radius: var(--pv-radius);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.purityCardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pv-text);
+  margin-bottom: 6px;
+}
+
+.purityCardDefaults {
+  font-size: 12px;
+  color: var(--pv-text-muted);
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.purityCardField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.purityCardField:last-child { margin-bottom: 0; }
+
+.purityCardField label {
+  font-size: 12px;
+  color: var(--pv-text-muted);
+}
+
+.fieldError {
+  font-size: 12px;
+  color: var(--pv-warning);
+}
+
+@media (max-width: 640px) {
+  .modeGrid { grid-template-columns: 1fr; }
+  .defaultsRow { grid-template-columns: 1fr 1fr; }
+  .advancedHead { align-items: flex-start; }
+  .purityDesktopTable { display: none; }
+  .purityMobileCards { display: block; }
+}

@@ -1,0 +1,41 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.subheading {
+  font-size: var(--text-xl);
+  margin: 0;
+}
+
+.addButton {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.formWrapper {
+  margin-bottom: var(--space-5);
+}
+
+.empty {
+  color: var(--color-text-muted);
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.skeletonCard {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  height: 130px;
+  border-radius: var(--radius-md);
+}

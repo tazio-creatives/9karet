@@ -1,0 +1,134 @@
+.banner {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 24px;
+  overflow: hidden;
+  border-radius: 14px;
+  box-sizing: border-box;
+  aspect-ratio: 3.2 / 1;
+  min-height: 280px;
+  background: #eee5da;
+}
+
+.banner picture,
+.banner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.img {
+  object-fit: cover;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(15, 12, 8, 0.56) 0%, rgba(15, 12, 8, 0.24) 46%, rgba(15, 12, 8, 0) 72%);
+}
+
+.copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  max-width: 520px;
+  padding: 0 var(--space-8, 40px);
+}
+
+.textLight {
+  color: #ffffff;
+}
+
+.textDark {
+  color: #211915;
+}
+
+.posLeft {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.posCenter {
+  align-items: center;
+  text-align: center;
+  max-width: none;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+}
+
+.posRight {
+  align-items: flex-end;
+  text-align: right;
+  margin-left: auto;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+/* Visually hidden, not deleted — this <h1> is still the page's one real
+   heading (SEO/a11y; see CategoryBanner.tsx's own comment on this), it's
+   just redundant as VISIBLE copy once a banner has its own promotional
+   headline, and the category name is already shown in the breadcrumb above.
+   Also fixes a real bug this was masking: index.css's global `h1 { color:
+   var(--color-text) }` rule targets this element directly, which beats
+   inheriting the light/dark text color from .banner.textLight/.textDark
+   (a direct rule on an element always wins over an inherited value,
+   regardless of specificity) — so this title was rendering in the site's
+   default dark-teal text color even on a dark banner image, nearly
+   invisible. Hiding it sidesteps that entirely rather than patching the
+   color as well.
+   */
+
+.description {
+  margin: 4px 0 0;
+  max-width: 46ch;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.94;
+}
+
+@media (max-width: 767px) {
+  .banner {
+    width: 100%;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    aspect-ratio: 4 / 5;
+    min-height: 0;
+  }
+
+  .img {
+    object-fit: cover;
+  }
+
+  .copy {
+    max-width: none;
+    padding: 0 20px 26px;
+    justify-content: flex-end;
+  }
+
+  .posCenter {
+    padding: 0 24px 26px;
+  }
+
+  .title {
+    font-size: clamp(26px, 7vw, 34px);
+  }
+
+  .description {
+    max-width: none;
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,79 @@
+.card {
+  margin-bottom: var(--space-4);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.inputWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.inputIcon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-3) + 16px + var(--space-2));
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+}
+
+.checkButton {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-6);
+  border: none;
+  border-radius: 12px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.checkButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+  transform: none;
+}
+
+.checkButton:hover:not(:disabled) {
+  background: var(--color-burgundy-dark);
+  transform: translateY(-1px);
+}
+
+.error {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-burgundy);
+}
+
+.success {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

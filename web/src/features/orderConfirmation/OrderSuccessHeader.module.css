@@ -1,0 +1,127 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  height: 64px;
+  padding: 0 12px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.menuArea {
+  position: relative;
+  justify-self: start;
+}
+
+.iconButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  color: var(--color-burgundy);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.logo {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+}
+
+.logoImg {
+  height: 40px;
+  width: auto;
+}
+
+@media (min-width: 480px) {
+  .logoImg {
+    height: 46px;
+  }
+}
+
+@media (min-width: 640px) {
+  .inner {
+    height: 72px;
+  }
+
+  .logoImg {
+    height: 52px;
+  }
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 2px solid var(--color-surface);
+  background: #7a1733;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 12px;
+  text-align: center;
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 180px;
+  background: var(--color-surface);
+  border: 1px solid rgba(83, 7, 17, 0.35);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+}
+
+.menuLink {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.menuLink:hover,
+.menuLink:focus-visible {
+  background: var(--color-bg-alt);
+  color: var(--color-burgundy);
+}
+
+.linkButton {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}

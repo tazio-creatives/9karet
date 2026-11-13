@@ -1,0 +1,304 @@
+/* Mirrors features/checkout/AddressFormModal.module.css's structure/tokens
+   (backdrop, centered dialog, mobile bottom-sheet) so this modal matches
+   the rest of the site's established dialog pattern. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(69, 18, 25, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.dialog {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px -20px rgba(83, 7, 17, 0.35), var(--shadow-md);
+  padding: var(--space-6);
+  animation: riseIn 0.2s ease-out;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.headerText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: #300f13;
+}
+
+.productName {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #667085;
+}
+
+.closeButton {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #f2f4f6;
+  color: #667085;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.closeButton:hover {
+  background: #f3e3e5;
+  color: #620814;
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid #620814;
+  outline-offset: 2px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+/* Larger, centered star input — this is the dialog's primary focus, not a
+   trailing inline widget like the old inline form. */
+.starsInput {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.star,
+.starActive {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 32px;
+  line-height: 1;
+  transition: transform 0.1s ease;
+}
+
+.star:hover,
+.starActive:hover {
+  transform: scale(1.1);
+}
+
+.star {
+  color: #d8dde5;
+}
+
+.starActive {
+  color: #eab308;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1c1f24;
+}
+
+.input,
+.textarea {
+  font-size: 13px;
+  font-family: inherit;
+  padding: 10px 12px;
+  border: 1px solid #d8dde5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1c1f24;
+  resize: vertical;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #620814;
+}
+
+.photoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photoThumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f2f4f6;
+}
+
+.photoThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(48, 15, 19, 0.75);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.photoRemove svg {
+  width: 10px;
+  height: 10px;
+}
+
+.photoAdd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 64px;
+  height: 64px;
+  border: 1px dashed #d8dde5;
+  border-radius: 8px;
+  background: transparent;
+  color: #667085;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.photoAdd:hover {
+  border-color: #620814;
+  color: #620814;
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  color: #b3261e;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.submitButton {
+  flex: 1;
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: #620814;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #7a0a19;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cancelButton {
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid #d8dde5;
+  border-radius: 999px;
+  background: transparent;
+  color: #667085;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 700px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .dialog {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    padding: var(--space-5) var(--space-5) var(--space-6);
+    animation: slideUp 0.2s ease-out;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+}

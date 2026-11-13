@@ -1,0 +1,106 @@
+.subtext {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0 0;
+  max-width: 70ch;
+}
+
+.cellInput {
+  width: 90px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-bg);
+}
+
+.cellInputOverridden {
+  border-color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.searchInput {
+  height: 38px;
+  min-width: 220px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.filterSelect {
+  height: 38px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+}
+
+.resultCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.bulkBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent-bg);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.bulkCount {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.bulkAction {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.bulkInput {
+  height: 34px;
+  width: 100px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.ruleExcludedRow {
+  background: var(--color-warning-bg);
+}
+
+.ruleTag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-warning);
+  color: #fff;
+}

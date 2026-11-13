@@ -1,0 +1,273 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  transition: box-shadow 0.15s ease;
+}
+
+.scrolled {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 88px;
+  display: grid;
+  grid-template-columns: 140px minmax(360px, 520px) auto;
+  align-items: center;
+  column-gap: 42px;
+  padding: 0 24px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.logoImg {
+  width: 160px;
+  height: 59px;
+  object-fit: contain;
+  display: block;
+}
+
+/* On desktop the wrapper generates no box of its own, so SearchBar's own
+   root element becomes the direct grid item in the search column. */
+.searchArea {
+  display: contents;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
+}
+
+.actionLink {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  color: var(--color-burgundy);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.actionLink:hover {
+  color: var(--color-gold);
+}
+
+.actionLink:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 3px;
+}
+
+/* Applied alongside .actionLink when that spot is rendered as a <button>
+   (opens the sign-in modal) instead of a <Link> — it already carries its
+   own layout/color/spacing, this just strips the native button chrome so
+   it reads identically to the anchor version. */
+.linkButton {
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.iconWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.actionLabel {
+  font-size: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+  background: #7a1733;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .inner {
+    grid-template-columns: auto 1fr auto;
+    column-gap: 20px;
+    padding: 0 16px;
+  }
+
+  .logoImg {
+    width: 130px;
+    height: 48px;
+  }
+
+  .actionLabel {
+    display: none;
+  }
+}
+
+/* Mobile header (<768px) — one row: hamburger / independently-centred logo
+   / search+wishlist+cart icons. Fully separate from .inner above (hidden
+   below) so nothing here can affect the desktop/tablet header. */
+.mobileBar {
+  display: none;
+}
+
+.mobileSearchRow {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .inner {
+    display: none;
+  }
+
+  .mobileBar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+    background: var(--color-white);
+  }
+
+  .mobileMenuBtnWrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Absolutely positioned at the row's true geometric centre and taken out
+     of the flex flow entirely — this is what makes the logo "independently
+     centred": its position depends only on .mobileBar's own width, never
+     on how wide the hamburger vs. the 3-icon action group happen to be, so
+     the icon group can never push it off-centre the way a plain
+     justify-content: space-between three-item row would. */
+  .mobileLogoWrap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    pointer-events: none;
+  }
+
+  .mobileLogo {
+    display: inline-flex;
+    text-decoration: none;
+    pointer-events: auto;
+  }
+
+  .mobileLogoImg {
+    width: 112px;
+    height: auto;
+    display: block;
+  }
+
+  .mobileActions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Touch boxes are 35px, not the recommended 44px — a true geometric
+     centre (above) plus a 105-120px logo plus three 44px icon boxes simply
+     do not fit together on a real ~360-428px phone screen without either
+     the logo overlapping the icon group or one of the two being reduced;
+     centering the logo and keeping the icon glyph itself at the
+     recommended 24-26px both matter more here than the touch-box's own
+     size, so the box shrinks first. No flex gap between the 3 boxes — each
+     one's own (35 - glyph size)/2 padding on every side already produces
+     real glyph-to-glyph visual spacing when the boxes sit flush against
+     each other. */
+  .mobileIconBtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-burgundy);
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .mobileIconBtn:focus-visible {
+    outline: 2px solid var(--color-burgundy);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .mobileBadge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
+    border-radius: 999px;
+    background: #7a1733;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  .mobileSearchRow {
+    display: block;
+    padding: 0 16px 14px;
+    background: var(--color-white);
+  }
+}
+
+@media (max-width: 359px) {
+  .mobileLogoImg {
+    width: 96px;
+  }
+
+  /* Narrower still (down to 320px) — the icon boxes shrink a little further
+     so the truly-centred logo has no risk of overlapping the icon group's
+     flush-right edge at the narrowest supported width. The glyph itself
+     (a CSS override of the SVG's own width/height attributes) shrinks
+     slightly too, keeping it proportionate inside the smaller box. */
+  .mobileIconBtn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mobileIconBtn svg {
+    width: 22px;
+    height: 22px;
+  }
+}

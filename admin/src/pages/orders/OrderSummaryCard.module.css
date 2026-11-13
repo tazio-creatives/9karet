@@ -1,0 +1,136 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  background: linear-gradient(135deg, #640814 0%, #38050b 100%);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.left {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.iconBox {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.orderId {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+}
+
+.contactRow {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  column-gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+}
+
+.placedRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.totalLabel {
+  margin: var(--space-1) 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.total {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: #f0b429;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.printButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.printButton:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 900px) {
+  .summary {
+    flex-direction: column;
+  }
+
+  .right {
+    align-items: flex-start;
+  }
+
+  .badgeRow {
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,60 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td:last-child {
+  text-align: right;
+}
+
+.totalRow td {
+  border-bottom: none;
+  /* 700 is the heaviest weight loaded for Sora — 800 is deliberately not
+     used, it reads too heavy for this jewellery interface. */
+  font-weight: 600;
+  font-size: var(--text-xl);
+  padding-top: var(--space-3);
+}
+
+.totalRow td:last-child {
+  font-size: var(--text-xl);
+  color: var(--color-burgundy);
+}
+
+.totalNote {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.original {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  margin-right: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.offerBadge {
+  margin-left: var(--space-2);
+  padding: 1px var(--space-2);
+  border-radius: 999px;
+  background: #fbe4e8;
+  color: var(--color-burgundy);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.offerNote {
+  padding-top: var(--space-2);
+  text-align: left !important;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-burgundy);
+}

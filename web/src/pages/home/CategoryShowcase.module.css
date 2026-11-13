@@ -1,0 +1,236 @@
+.categorySection {
+  /* Matches DuoBanner.module.css's .duoSection exactly (the "Signature
+     Collection" section directly below this one) — that section's width
+     and max-width, not just its max-width, is what determines its outer
+     edges. This one previously had no `width` at all, so a block element's
+     default (fill 100% of its parent) applied below the 1440px cap, with
+     no side inset to match duoSection's calc(100% - 48px) — the section
+     rendered wider than Signature Collection at almost every real
+     viewport. */
+  width: calc(100% - 48px);
+  max-width: 1540px;
+  margin: 16px auto;
+  padding: 20px 22px 26px;
+  /* One plain white background for the whole section (category strip +
+     selected-category products) — this is the section's only background,
+     border and radius now; the products panel below no longer paints its
+     own separate card. */
+  background: var(--color-white);
+  border: 1px solid #eadfd8;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.heading {
+  margin: 0 0 14px;
+  line-height: 1;
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+}
+
+.scrollerWrapper {
+  position: relative;
+}
+
+.categoryTrack {
+  display: flex;
+  gap: 22px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding: 4px 2px 6px;
+}
+
+.categoryTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryCard {
+  flex: 0 0 128px;
+  scroll-snap-align: start;
+  text-decoration: none;
+  text-align: center;
+  color: inherit;
+  /* Reset — a real category tile now renders as a <button> (selection,
+     not navigation) rather than an <a>; these are no-ops for the <a>
+     variant still used by a non-category tile. */
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.categoryCardActive .imageWrapper {
+  /* Negative (inward) offset — a positive one extends the outline past the
+     tile's own box, which got clipped by the track's overflow-x for the
+     first (default-selected) tile, reading as the tile "overlapping" the
+     section edge. Inward keeps the active indicator fully inside the same
+     box every tile already occupies, so it can never extend past the
+     container regardless of scroll position. Kept thin (1.5px) for a
+     subtle border rather than a heavy ring. */
+  outline: 1.5px solid var(--color-burgundy);
+  outline-offset: -1.5px;
+}
+
+.categoryCardActive .cardName {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--color-burgundy);
+  font-weight: 600;
+  border-bottom: 1.5px solid var(--color-burgundy);
+  padding-bottom: 2px;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f5eee8;
+}
+
+.imageWrapper img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+/* Hidden by default (desktop keeps its prior plain tinted-box appearance
+   for a category with no image, unchanged) — shown only below 768px, see
+   media query. */
+.imagePlaceholder {
+  display: none;
+}
+
+.categoryCard:hover .imageWrapper img {
+  transform: scale(1.04);
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #65051e;
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cardName {
+  margin: 10px 0 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #211915;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navButton {
+  position: absolute;
+  top: 68px;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #eadfd8;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #392b26;
+  box-shadow: 0 2px 8px rgba(37, 23, 19, 0.14);
+  cursor: pointer;
+}
+
+.navLeft {
+  left: -4px;
+}
+
+.navRight {
+  right: -4px;
+}
+
+@media (max-width: 767px) {
+  /* ~8px outer margin from the viewport + 12px internal horizontal padding
+     — replaces the old wider desktop-derived insets (24px/12px outer,
+     14px inner) that left product cards too narrow below. Kept as one flat
+     rule across the whole <768px range (no separate <=480px step) so the
+     margin doesn't jump back up on the smallest phones. */
+  .categorySection {
+    width: calc(100% - 16px);
+    margin-top: 0;
+    padding: 16px 12px 20px;
+  }
+
+  .categoryCard {
+    flex: 0 0 96px;
+  }
+
+  .imageWrapper {
+    width: 96px;
+    height: 96px;
+  }
+
+  /* The partially-visible next card already signals horizontal scroll —
+     the floating arrow just overlapped it. Touch swipe / scroll still work
+     without it; a desktop screen this narrow (if any) would still see it
+     since this is a max-width, not a pointer/hover, query — matches the
+     brief's "hide it below 768px" instruction literally. */
+  .navButton {
+    display: none;
+  }
+
+  /* No extra horizontal inset beyond .categorySection's own padding — the
+     old 2px left inset here put the first category tile 2px right of the
+     heading above it instead of flush with it. */
+  .categoryTrack {
+    gap: 12px;
+    padding: 4px 0 6px;
+  }
+
+  .imagePlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #c9a27a;
+  }
+}
+
+/* Tighter tier specifically below 640px (matches the product grid's own
+   2-column breakpoint in CategoryProductGrid.module.css) — narrower phones
+   get a smaller viewport-to-content offset (10px total: 4px outer margin +
+   6px section padding) so the two product cards below have more room; the
+   640-767px band above keeps the slightly wider spacing already verified
+   in the previous pass. */
+@media (max-width: 639px) {
+  .categorySection {
+    width: calc(100% - 8px);
+    margin-inline: 4px;
+    padding: 14px 6px 18px;
+  }
+
+  .categoryTrack {
+    gap: 10px;
+  }
+}

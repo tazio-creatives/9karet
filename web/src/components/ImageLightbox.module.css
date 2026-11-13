@@ -1,0 +1,91 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(20, 16, 16, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+}
+
+.image {
+  max-width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+  cursor: default;
+  border-radius: 4px;
+}
+
+.close {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
+  z-index: 1101;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.close:hover {
+  border-color: #fff;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1101;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.nav:hover {
+  border-color: #fff;
+}
+
+.navPrev {
+  left: var(--space-5);
+}
+
+.navNext {
+  right: var(--space-5);
+}
+
+.counter {
+  position: absolute;
+  bottom: var(--space-5);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 700px) {
+  .nav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navPrev {
+    left: var(--space-3);
+  }
+
+  .navNext {
+    right: var(--space-3);
+  }
+}

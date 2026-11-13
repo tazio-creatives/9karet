@@ -1,0 +1,33 @@
+{
+  "name": "9karet",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "9KARET — premium jewellery ecommerce platform (monorepo: backend, web, admin)",
+  "workspaces": [
+    "backend",
+    "web",
+    "admin",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:web": "npm run dev --workspace web",
+    "dev:admin": "npm run dev --workspace admin",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3",
+    "typescript-eslint": "^8.11.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0"
+  }
+}

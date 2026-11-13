@@ -1,0 +1,117 @@
+.writeButton {
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  background: transparent;
+  color: #620814;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.writeButton:hover {
+  background: #f3e3e5;
+}
+
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reviewCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stars {
+  color: #eab308;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.statusTag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: #fdf3df;
+  color: #8a5a00;
+}
+
+.statusApproved {
+  background: #e7f6ec;
+  color: #1a7f41;
+}
+
+.statusRejected {
+  background: #fbe9ea;
+  color: #b3261e;
+}
+
+.reviewTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c1f24;
+}
+
+.reviewBody {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #475467;
+}
+
+.reviewImages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reviewImageButton {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.reviewImageThumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f2f4f6;
+  transition: opacity 0.15s ease;
+}
+
+.reviewImageButton:hover .reviewImageThumb {
+  opacity: 0.85;
+}
+
+.editButton {
+  margin-top: 2px;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  background: transparent;
+  color: #620814;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #f3e3e5;
+}

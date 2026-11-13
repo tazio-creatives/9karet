@@ -1,0 +1,34 @@
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+}
+
+.barCol {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.barTrack {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #c6a15b 0%, #530711 100%);
+  transition: opacity 0.12s ease;
+}
+
+.barCol:hover .bar {
+  opacity: 0.8;
+}

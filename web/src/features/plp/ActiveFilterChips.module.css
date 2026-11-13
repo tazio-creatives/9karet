@@ -1,0 +1,25 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  border: 1px solid #670815;
+  background: #fff;
+  color: #670815;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.remove {
+  font-size: 14px;
+  line-height: 1;
+}

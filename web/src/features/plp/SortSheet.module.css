@@ -1,0 +1,71 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(69, 18, 25, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #451219;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #faf8f3;
+  color: #6b7475;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+}
+
+.option,
+.optionActive {
+  text-align: left;
+  padding: 14px 4px;
+  border: none;
+  background: none;
+  border-bottom: 1px solid #e3ddd4;
+  font-size: 14px;
+  color: #451219;
+  cursor: pointer;
+}
+
+.option:last-child,
+.optionActive:last-child {
+  border-bottom: none;
+}
+
+.optionActive {
+  color: #670815;
+  font-weight: 600;
+}

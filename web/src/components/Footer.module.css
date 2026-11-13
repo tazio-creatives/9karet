@@ -1,0 +1,260 @@
+.footer {
+  background: #38040b;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: var(--space-12);
+}
+
+.top {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-4) var(--space-8);
+  display: grid;
+  grid-template-columns: 1.6fr repeat(4, 1fr);
+  gap: var(--space-6);
+}
+
+.brandCol {
+  padding-right: var(--space-4);
+}
+
+.logo {
+  height: 56px;
+  width: auto;
+  margin-bottom: var(--space-3);
+}
+
+.tagline {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0 0 var(--space-4);
+  max-width: 240px;
+}
+
+.contact {
+  font-style: normal;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+  max-width: 240px;
+  opacity: 0.85;
+}
+
+.contact a {
+  color: var(--color-gold);
+}
+
+.social {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.socialIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(198, 161, 91, 0.35);
+  border-radius: 50%;
+  color: var(--color-gold);
+}
+
+.socialIcon:hover {
+  background: rgba(198, 161, 91, 0.12);
+  border-color: var(--color-gold);
+}
+
+.colTitleButton {
+  display: block;
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: default;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.colTitle {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-white);
+}
+
+.colChevron,
+.colChevronOpen {
+  display: none;
+}
+
+.linkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.link {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--text-sm);
+}
+
+.link:hover {
+  color: var(--color-gold);
+}
+
+.bottom {
+  border-top: 1px solid rgba(198, 161, 91, 0.15);
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.copy {
+  font-size: var(--text-xs);
+  margin: 0;
+}
+
+.secure {
+  font-size: var(--text-xs);
+  margin: 0;
+  color: var(--color-gold);
+}
+
+@media (max-width: 900px) {
+  .top {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brandCol {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Compact accordion footer on mobile — all four link groups collapsed by
+   default (Footer.tsx), tapping a group's header toggles just that one and
+   closes whichever other one was open. Row spacing here comes entirely from
+   explicit padding/margin on the pieces below — .top's own grid `gap` is
+   zeroed in this block, since that row-gap (applied between every column
+   regardless of open/closed state) was what produced the large empty band
+   inside a closed accordion row before this redesign. */
+@media (max-width: 767px) {
+  .top {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 28px 20px 4px;
+  }
+
+  .brandCol {
+    padding-right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .logo {
+    width: 140px;
+    height: auto;
+    margin-bottom: 12px;
+  }
+
+  .tagline {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 220px;
+    margin: 0 0 16px;
+  }
+
+  .social {
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  .col {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0;
+  }
+
+  .col:last-of-type {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .colTitleButton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    margin: 0;
+    padding: 0 4px;
+    cursor: pointer;
+  }
+
+  .colTitle {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+
+  .colChevron,
+  .colChevronOpen {
+    display: none;
+  }
+
+  .colIcon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--color-gold);
+  }
+
+  /* max-height transition (not display:none toggle) — this is what makes
+     opening/closing an animated slide instead of an instant cut. The cap
+     (600px) just needs to clear the tallest group's real content height. */
+  .linkList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    max-height: 0;
+    margin: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.28s ease, opacity 0.2s ease, padding 0.28s ease;
+  }
+
+  .linkListOpen {
+    max-height: 600px;
+    padding: 8px 4px 18px;
+    opacity: 1;
+  }
+
+  .link {
+    font-size: 14px;
+  }
+
+  .bottom {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding: 18px 20px 20px;
+  }
+
+  .copy,
+  .secure {
+    font-size: 12px;
+  }
+}

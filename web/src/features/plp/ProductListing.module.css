@@ -1,0 +1,421 @@
+.page {
+  width: 100%;
+  padding: 20px 18px var(--space-12);
+  background: #faf8f3;
+}
+
+.top {
+  margin-bottom: 20px;
+}
+
+.desktopHero {
+  display: block;
+}
+
+/* Hidden by default (desktop no-op) — shown only inside the <768px media
+   query below. */
+.mobileHero {
+  display: none;
+}
+
+.mobileBanner {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.mobileBanner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Used only when no dedicated mobile image is uploaded and the wide desktop
+   banner is shown instead — the fixed 4:3/cover box above is what was
+   cropping that wider image's offer text. This drops the fixed ratio
+   entirely so the desktop image renders at its own real aspect ratio,
+   complete and uncropped. */
+.mobileBannerFallback {
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+.mobileBannerFallback img {
+  height: auto;
+  object-fit: contain;
+}
+
+.mobileBreadcrumb {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.mobileBreadcrumb a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.mobileHeading {
+  margin: 4px 0 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: #40171c;
+}
+
+.mobileDescription {
+  margin: var(--space-1) 0 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.subcategoryNav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.subcategoryNav::-webkit-scrollbar {
+  display: none;
+}
+
+.subcategoryPill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid #650f1a;
+  background: #fff;
+  color: #650f1a;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.subcategoryPillActive {
+  background: #650f1a;
+  border-color: #650f1a;
+  color: #fff;
+}
+
+/* Breadcrumbs is a shared component rendered as plain semantic elements
+   (nav/ol/li/a) — scoping the exact spec colours/size here (rather than
+   editing the shared Breadcrumbs.module.css) keeps this purely a PLP change,
+   with no risk to the PDP's breadcrumb. Element-selector specificity here
+   (.top nav a) beats the shared component's own class-selector rules. */
+.top > nav {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 20px;
+  color: #6d7878;
+}
+
+.top > nav a {
+  color: #6d7878;
+}
+
+.top > nav li:last-child span {
+  color: #57121b;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.headerLeft {
+  min-width: 0;
+}
+
+.heading {
+  margin: 0;
+  color: #40171c;
+  font-size: clamp(30px, 3vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.description {
+  color: var(--color-text-muted);
+  max-width: 60ch;
+  margin: var(--space-2) 0 0;
+}
+
+.count {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6d7878;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.filtersButton {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filtersButtonCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #57121b;
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.results {
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  /* Stretch (grid's default, restated for clarity) so every card in a row
+     matches the tallest one — otherwise a card with an offer banner sits
+     taller than its neighbour without one, staggering the row's bottom
+     edge. PlpProductCard's own flex column layout leaves the extra height
+     as trailing blank space rather than stretching the image or text. */
+  align-items: stretch;
+}
+
+.skeletonCard {
+  border: 1px solid #e3ddd4;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonImage {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  aspect-ratio: 1 / 1;
+  margin: -10px -10px 0;
+  border-radius: 0;
+}
+
+.skeletonLine {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  height: 12px;
+  border-radius: 4px;
+}
+
+.skeletonButton {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  height: 40px;
+  border-radius: 7px;
+  margin-top: auto;
+}
+
+.loadMoreSentinel {
+  min-height: 1px;
+}
+
+.loadingMore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: var(--space-6) 0;
+  font-size: 13px;
+  color: #667172;
+}
+
+.loadingMoreSpinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #d8d3cb;
+  border-top-color: #670815;
+  animation: loadMoreSpin 0.8s linear infinite;
+}
+
+@keyframes loadMoreSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.stateBlock {
+  text-align: center;
+  padding: var(--space-10) 0;
+}
+
+.emptyHeading {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #451219;
+}
+
+.message {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.retryButton {
+  margin-top: var(--space-4);
+  height: 40px;
+  padding: 0 20px;
+  border: 1.5px solid #670815;
+  border-radius: 7px;
+  background: #fff;
+  color: #670815;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 1200px) {
+  .page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .grid {
+    gap: 16px;
+  }
+}
+
+/* Tablet: sidebar becomes a drawer, grid moves to 3 columns with a slightly
+   tighter gap than the desktop default. */
+@media (max-width: 992px) {
+  .page {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .filtersButton {
+    display: inline-flex;
+  }
+}
+
+/* Mobile: 12px page padding, 2-column grid, 10px gap, bottom padding clears
+   the sticky Sort/Filter bar (56px min-height + safe-area + breathing room),
+   sort control moves into the sticky bar's sheet so the inline SortSelect
+   hides here. */
+@media (max-width: 767px) {
+  .page {
+    padding: 12px 10px 88px;
+    background: var(--color-white);
+  }
+
+  .desktopHero {
+    display: none;
+  }
+
+  .mobileHero {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  /* Overrides the shared (desktop-shared) .top margin-bottom just for
+     mobile, so the pill row → product grid gap totals ~20px instead of the
+     desktop-derived 34px. */
+  .top {
+    margin-bottom: 10px;
+  }
+
+  .mobileBanner {
+    /* Bleeds past .page's own 10px side padding so the banner reaches the
+       viewport edge ("full available width"), independent of the page's
+       own inset used by everything below it. */
+    margin: 0 -10px 14px;
+  }
+
+  .mobileBreadcrumb {
+    margin: 0 0 6px;
+  }
+
+  .subcategoryNav {
+    margin-top: 14px;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+    /* Both children (count, filters/sort) are hidden on mobile — a flex
+       gap still reserves space between hidden 0-height items, which was
+       adding an invisible 16px into the pill-row → grid gap. */
+    gap: 0;
+  }
+
+  .count {
+    display: none;
+  }
+
+  .headerRight {
+    flex-wrap: wrap;
+  }
+
+  .headerRight > label {
+    display: none;
+  }
+
+  .filtersButton {
+    display: none;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 4px;
+  }
+}

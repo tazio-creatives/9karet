@@ -1,0 +1,14 @@
+.formWrapper {
+  margin-bottom: var(--space-5);
+}
+
+.code {
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.window {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}

@@ -1,0 +1,147 @@
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--color-gold);
+}
+
+.cardSelected {
+  border-color: var(--color-burgundy);
+  background: var(--color-white);
+}
+
+.cardSelected:hover {
+  border-color: var(--color-burgundy);
+}
+
+.card:focus-within {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.radio {
+  flex-shrink: 0;
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-burgundy);
+  cursor: pointer;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 2px;
+}
+
+.name {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-blush);
+  color: var(--color-burgundy);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.defaultBadge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-gold-light);
+  color: var(--color-burgundy-dark);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.line {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.deliveringHere {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-burgundy);
+}
+
+.deliveringHere svg {
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.actionButton {
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-burgundy);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.actionButton:disabled {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+.deleteAction {
+  color: #b42318;
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    gap: var(--space-5);
+  }
+
+  .actionButton {
+    display: inline-flex;
+    align-items: center;
+  }
+}

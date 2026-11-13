@@ -1,0 +1,81 @@
+.section {
+  margin-top: 40px;
+}
+
+/* The PDP renders two of these back to back ("You May Also Like" then
+   "Most Loved") — this targets only the second one, tightening the gap
+   between them without touching the first section's own gap above it
+   (Product Details → "You May Also Like"), or any other single-instance
+   usage (e.g. CartPage's Best Sellers). */
+.section + .section {
+  margin-top: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 22px;
+  margin: 0;
+}
+
+.viewAllLink {
+  font-size: var(--text-sm);
+  color: var(--color-burgundy);
+  text-decoration: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-3);
+}
+
+/* "You May Also Like" and "Most Loved" are two independent grids (separate
+   <RelatedProducts> instances) — grid's own align-items:stretch only
+   equalizes card heights within ONE grid, not across both, so if one
+   section's product mix includes a taller card (e.g. one with an offer
+   banner) and the other's doesn't, their rows drift apart. This fixed
+   min-height (sized to the tallest real card — one with an offer banner and
+   a 2-line name) plus stretching the card to fill it keeps both sections
+   visually matched regardless of which products either one happens to show. */
+.gridItem {
+  min-height: 445px;
+}
+
+.gridItem > a {
+  height: 100%;
+}
+
+@media (max-width: 700px) {
+  .heading {
+    font-size: 16px;
+  }
+
+  .grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: var(--space-2);
+    padding-right: var(--space-4);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gridItem {
+    flex: 0 0 75vw;
+    max-width: 280px;
+    scroll-snap-align: start;
+  }
+}

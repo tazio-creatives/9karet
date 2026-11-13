@@ -1,0 +1,75 @@
+/* Lives inside a ProductVariations .section, so the --pv-* tokens apply. */
+
+.typeSelect {
+  height: 36px;
+  min-width: 150px;
+  width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--pv-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  color: var(--pv-text);
+}
+
+.typeSelect:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+
+.totalRow td {
+  font-weight: 600;
+  color: var(--pv-text);
+  border-top: 1px solid var(--pv-border);
+}
+
+.totalHint {
+  font-weight: 400;
+  color: var(--pv-text-muted);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.linkButton {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--pv-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.newTypeInput {
+  height: 44px;
+  min-width: 180px;
+  padding: 0 10px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.newTypeInput:focus {
+  outline: none;
+  border-color: var(--pv-primary);
+  box-shadow: 0 0 0 3px var(--pv-primary-bg);
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pv-warning);
+}

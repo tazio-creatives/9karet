@@ -1,0 +1,202 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 0.15s ease;
+}
+
+.shellCollapsed {
+  grid-template-columns: 72px 1fr;
+}
+
+.sidebar {
+  background: #530711;
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) 0;
+  overflow: hidden;
+  /* Pinned to the viewport so only the page content scrolls. */
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4) var(--space-6);
+}
+
+.sidebarCollapsed .brandRow {
+  justify-content: center;
+  padding: 0 0 var(--space-6);
+}
+
+.brand {
+  display: block;
+  min-width: 0;
+}
+
+.brandLogo {
+  display: block;
+  width: 132px;
+  height: auto;
+}
+
+.collapseToggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.collapseToggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 0 var(--space-3);
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebarCollapsed .nav {
+  padding: 0 var(--space-2);
+}
+
+.navLink,
+.navLinkActive {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.75rem;
+  font-weight: 400;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.navLink svg,
+.navLinkActive svg {
+  flex-shrink: 0;
+}
+
+.navLink:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navLinkActive {
+  color: #c6a15b;
+  background: rgba(198, 161, 91, 0.16);
+}
+
+.sidebarCollapsed .navLink,
+.sidebarCollapsed .navLinkActive {
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.footer {
+  padding: var(--space-4) var(--space-5) 0;
+  margin-top: var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebarCollapsed .footer {
+  padding: var(--space-4) var(--space-2) 0;
+}
+
+.adminIdentity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.sidebarCollapsed .adminIdentity {
+  justify-content: center;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #c6a15b;
+  color: #38040b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.adminName {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adminRole {
+  margin: 2px 0 0;
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.logoutButton {
+  width: 100%;
+  padding: var(--space-2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  color: #e5e7eb;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.logoutButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.content {
+  padding: var(--space-6) var(--space-8);
+  max-width: 1200px;
+}
+
+/* Per-page opt-out of the 1200px cap — a page marks itself with the plain
+   global ".full-width-page" class (see OrdersListPage.module.css) rather
+   than this shared shell hardcoding a list of routes. */
+.content:has(:global(.full-width-page)) {
+  max-width: none;
+}

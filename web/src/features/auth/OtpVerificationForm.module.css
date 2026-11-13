@@ -1,0 +1,164 @@
+.form {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-burgundy);
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: var(--text-3xl);
+  line-height: 1.18;
+  color: var(--color-text);
+  margin: 0 0 var(--space-3);
+}
+
+.heading:focus-visible {
+  outline: none;
+}
+
+.description {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--space-5);
+}
+
+.description strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.changeNumber {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: var(--space-1);
+  color: var(--color-burgundy);
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.boxRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.box {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  max-height: 50px;
+  text-align: center;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.box:focus {
+  outline: none;
+  border-color: var(--color-burgundy);
+  box-shadow: 0 0 0 3px rgba(109, 27, 47, 0.12);
+}
+
+.boxFilled {
+  border-color: var(--color-gold);
+}
+
+.boxError {
+  border-color: var(--color-burgundy);
+}
+
+.apiError {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-burgundy);
+  background: var(--color-blush);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.apiError:focus-visible {
+  outline: none;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  padding: 0 var(--space-5);
+  border: none;
+  border-radius: 10px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-burgundy-dark);
+}
+
+.submit:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.resendRow {
+  margin: var(--space-5) 0 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.resendCountdown {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.resendButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-burgundy);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.resendButton:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .form {
+    max-width: 400px;
+  }
+
+  .heading {
+    font-size: var(--text-2xl);
+  }
+}

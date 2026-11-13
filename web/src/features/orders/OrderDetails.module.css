@@ -1,0 +1,350 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.cardHeading {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #300f13;
+}
+
+/* ---- Order Summary ------------------------------------------------------ */
+
+.back {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #667085;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: #620814;
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.orderNumber {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  color: #300f13;
+}
+
+.placedDate {
+  margin: 3px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: #667085;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badgeGood {
+  background: #e7f6ec;
+  color: #1a7f41;
+}
+
+.badgeInfo {
+  background: #f3e3e5;
+  color: #6b0f1b;
+}
+
+.badgePending {
+  background: #f2f4f6;
+  color: #667085;
+}
+
+.badgeBad {
+  background: #fbe9ea;
+  color: #b3261e;
+}
+
+.stepperWrap {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f3;
+}
+
+/* ---- Items ---------------------------------------------------------------- */
+
+.itemList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item {
+  display: flex;
+  gap: 14px;
+}
+
+.item:not(:last-child) {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eef1f3;
+}
+
+.itemThumb {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f2f4f6;
+}
+
+.itemThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemThumbPlaceholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #eef1f3, #e3e8eb);
+}
+
+.itemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.itemNameCol {
+  min-width: 0;
+}
+
+.itemName {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1f24;
+}
+
+.backorderBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fdf3df;
+  color: #8a5a00;
+  font-size: 10px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.itemMeta {
+  margin: 3px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: #667085;
+}
+
+.itemPrice {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: #300f13;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemAttrStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 8px 10px;
+  background: #f7f8f9;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #667085;
+}
+
+.itemAttrStrip strong {
+  font-weight: 500;
+  color: #1c1f24;
+}
+
+.itemFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+/* Narrow widths: the status pill + review block no longer fit on one row
+   without squeezing the review text down to single-word-per-line — let the
+   review block drop to its own full-width row instead. */
+@media (max-width: 767px) {
+  .itemFooter {
+    flex-wrap: wrap;
+  }
+}
+
+.itemStatusPill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e7f6ec;
+  color: #1a7f41;
+  white-space: nowrap;
+}
+
+/* ---- Price Details --------------------------------------------------------- */
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: #1c1f24;
+}
+
+.priceRow span:first-child {
+  color: #667085;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #eef1f3;
+  font-size: 18px;
+  font-weight: 600;
+  color: #620814;
+}
+
+/* ---- Delivery Address ------------------------------------------------------- */
+
+.addressRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.address {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #1c1f24;
+}
+
+.estimatePanel {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  background: #eaf7ee;
+  border-radius: 8px;
+}
+
+@media (max-width: 480px) {
+  .addressRow {
+    flex-direction: column;
+  }
+
+  .estimatePanel {
+    width: 100%;
+  }
+}
+
+/* ---- Product Review ---------------------------------------------------- */
+
+.reviewList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reviewRow {
+  display: flex;
+  gap: 14px;
+}
+
+.reviewRow:not(:last-child) {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eef1f3;
+}
+
+.reviewRowThumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f2f4f6;
+}
+
+.reviewRowThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviewRowBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reviewRowName {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1c1f24;
+}

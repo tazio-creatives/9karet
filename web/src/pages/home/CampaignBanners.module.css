@@ -1,0 +1,104 @@
+.campaignSection {
+  max-width: 1440px;
+  margin: 16px auto;
+  padding: 0 24px;
+}
+
+.campaignHeading {
+  margin: 0 0 12px;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+}
+
+.bannerRow {
+  overflow: hidden;
+  padding-bottom: 2px;
+}
+
+.bannerTrack {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+}
+
+/* translateX(-50%) is exactly the width of one copy of the item list, since
+   the track renders the items twice back to back — the loop seam lands
+   precisely where the duplicate begins, so it reads as continuous motion. */
+.bannerTrackAnimated {
+  animation: campaignMarquee var(--marquee-duration, 30s) linear infinite;
+}
+
+.bannerRow:hover .bannerTrackAnimated {
+  animation-play-state: paused;
+}
+
+@keyframes campaignMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bannerTrackAnimated {
+    animation: none;
+  }
+}
+
+.bannerCard {
+  position: relative;
+  flex: 0 0 300px;
+  height: 420px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f4ece6;
+  text-decoration: none;
+  color: inherit;
+}
+
+.bannerCard img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.5s ease;
+}
+
+.bannerCard:hover img {
+  transform: scale(1.04);
+}
+
+.bannerContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 22px 20px 40px;
+  background: linear-gradient(180deg, rgba(20, 10, 8, 0.55) 0%, rgba(20, 10, 8, 0) 100%);
+  pointer-events: none;
+}
+
+.bannerTitle {
+  margin: 0;
+  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fdf6ee;
+}
+
+@media (max-width: 767px) {
+  .bannerCard {
+    flex: 0 0 220px;
+    height: 320px;
+  }
+
+  .bannerTitle {
+    font-size: 19px;
+  }
+}

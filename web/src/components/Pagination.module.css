@@ -1,0 +1,44 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+}
+
+.arrowButton,
+.pageButton {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.arrowButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.arrowButton:not(:disabled):hover,
+.pageButton:not(.pageButtonActive):hover {
+  border-color: var(--color-burgundy);
+  color: var(--color-burgundy);
+}
+
+.pageButtonActive {
+  background: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+.ellipsis {
+  color: var(--color-text-muted);
+  padding: 0 var(--space-1);
+}

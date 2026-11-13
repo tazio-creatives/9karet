@@ -1,0 +1,18 @@
+.back {
+  display: inline-block;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  margin-bottom: var(--space-4);
+}
+
+.subtext {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: var(--space-1) 0 0;
+}
+
+.sectionHeading {
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-4);
+}

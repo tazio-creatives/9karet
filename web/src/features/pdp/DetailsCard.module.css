@@ -1,0 +1,115 @@
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  font-size: var(--details-heading-size, calc(var(--text-lg) + 4px));
+  font-weight: var(--details-heading-weight, 600);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.headingChevron,
+.headingChevronOpen {
+  flex-shrink: 0;
+  display: none;
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease;
+}
+
+.headingChevronOpen {
+  transform: rotate(180deg);
+}
+
+.content {
+  overflow: hidden;
+  position: relative;
+  max-height: 240px;
+}
+
+.contentExpanded {
+  max-height: none;
+}
+
+.fade::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--color-surface));
+}
+
+.toggle {
+  align-self: flex-start;
+  margin-top: var(--space-3);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-burgundy);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* True accordion on mobile — collapsed fully to just the header (no peek,
+   no fade), the header itself is the tap target, and the desktop-only
+   "View More" text link is redundant with that so it's hidden here. */
+@media (max-width: 767px) {
+  /* Card itself carries no padding — the heading and content below each
+     apply their own matching 20px horizontal inset instead, so both align
+     to the same left edge rather than nesting one padding inside another. */
+  .card {
+    padding: 0;
+  }
+
+  .heading {
+    min-height: 56px;
+    padding: 18px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .content {
+    padding: 0 20px;
+  }
+
+  .contentExpanded {
+    padding-bottom: 20px;
+  }
+
+  .headingChevron,
+  .headingChevronOpen {
+    display: inline-flex;
+  }
+
+  .content:not(.contentExpanded) {
+    max-height: 0;
+  }
+
+  .fade::after {
+    display: none;
+  }
+
+  .toggle {
+    display: none;
+  }
+}

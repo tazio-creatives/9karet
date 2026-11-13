@@ -1,0 +1,174 @@
+/* Plain full-width wrapper — no box-shadow/clip-path trick (clip-path
+   creates a stacking context that clips the element's OWN pseudo-elements
+   too, not just its descendants, which silently ate an earlier attempt at
+   bridging the gap to Footer below). Full-bleed white background needs
+   nothing cleverer than an unconstrained width here. */
+.page {
+  position: relative;
+  background: var(--color-white);
+  margin-bottom: -6px;
+}
+
+/* Footer's own margin-top opens a gap that only Footer's background fills
+   — recolors exactly that existing gap white without adding any extra
+   space (the gap itself, Footer's margin-top, is unchanged). */
+.page::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-1 * var(--space-12));
+  height: var(--space-12);
+  background: var(--color-white);
+}
+
+.pageInner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px var(--space-4) 0;
+}
+
+.hero {
+  background: #ffffff;
+  border: 1px solid #ece9e2;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(87, 18, 27, 0.05);
+  padding: var(--space-6);
+  margin-top: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
+  column-gap: 32px;
+  align-items: start;
+}
+
+/* Loading-skeleton only now — the real Product Details/Price Breakup cards
+   render inside ProductInfo (see ProductInfo.module.css .detailsStack)
+   since the redesign moved them into the sticky-gallery's right column. */
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-10);
+}
+
+@media (max-width: 1280px) {
+  .layout {
+    column-gap: 32px;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    column-gap: 24px;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+  }
+}
+
+/* Clearance for the fixed mobile purchase bar (ProductInfo.module.css
+   .mobileBar) so it never covers the footer/final content. 104px accounts
+   for the bar's taller "price + buttons" layout; below 380px the bar drops
+   its price row and shrinks, so less clearance is needed. */
+@media (max-width: 767px) {
+  .page {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom));
+    background: var(--color-white);
+  }
+
+  /* .hero was a second, redundant "card" wrapped around every mobile
+     section (gallery, Customize Your Design, Product Details/Price
+     Breakup) on top of .page's own 16px edge padding — 32px of its own
+     padding plus a border stacked underneath each section's own card
+     border, pushing real content ~74px from the viewport edge instead of
+     the intended 16px. Each section already draws its own card surface
+     (DetailsCard's .card, ProductInfo's .customizeToggle/.customizePanel/
+     .selectionSummaryRow, and the gallery's own full-bleed image) so on
+     mobile .hero drops back to being a plain, invisible layout wrapper —
+     0 horizontal padding, no border/radius/shadow of its own — letting
+     .page's 16px be the only page-level inset before those cards' own
+     borders and internal padding take over. */
+  .hero {
+    padding-left: 0;
+    padding-right: 0;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  /* Was 24px, doubled up with .info's own bottom padding above it
+     (ProductInfo.module.css) for a ~44px gap before Product Details —
+     .info now zeroes its bottom padding on mobile so this 16px alone
+     controls the gap, matching the 16px gap used between Product Details
+     and Price Breakup below. */
+  .detailsGrid {
+    margin-top: var(--space-4);
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 379px) {
+  .page {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Loading skeleton */
+.skeletonCrumb {
+  composes: shimmer from '../styles/skeleton.module.css';
+  width: 220px;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  margin: var(--space-6) 0 var(--space-4);
+}
+
+.skeletonImage {
+  composes: shimmer from '../styles/skeleton.module.css';
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+}
+
+.skeletonInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.skeletonLine {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 16px;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonCard {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 220px;
+  border-radius: var(--radius-md);
+}
+
+.skeletonTabs {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 200px;
+  border-radius: 10px;
+  margin-top: var(--space-10);
+}
+
+.skeletonTrust {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 96px;
+  border-radius: 10px;
+  margin-top: var(--space-5);
+}

@@ -1,0 +1,17 @@
+.message {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text);
+  font-size: var(--text-base);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.errorMessage {
+  margin: var(--space-3) 0 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}

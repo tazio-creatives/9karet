@@ -1,0 +1,85 @@
+/* 8 steps (was 4) no longer fits comfortably in a fixed-width order-list
+   card without either wrapping mid-connector (visually broken — a line
+   between steps on different rows implies an order the layout doesn't
+   show) or shrinking labels unreadably small. Scrolling horizontally on
+   narrow containers is the safer trade-off. */
+.stepper {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 2px;
+  overflow-x: auto;
+}
+
+.stepWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 0 76px;
+  min-width: 76px;
+}
+
+.dotRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+}
+
+.dotComplete {
+  background: var(--color-burgundy);
+  border-color: var(--color-burgundy);
+}
+
+.connector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.connectorComplete {
+  background: var(--color-burgundy);
+}
+
+.label {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.labelComplete {
+  color: var(--color-burgundy);
+  font-weight: 500;
+}
+
+.date {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Order Details page's tracker — deep teal instead of burgundy. The list
+   page's default (burgundy) stepper is untouched by this. */
+.teal .dotComplete {
+  background: #620814;
+  border-color: #620814;
+}
+
+.teal .connectorComplete {
+  background: #620814;
+}
+
+.teal .labelComplete {
+  color: #620814;
+}

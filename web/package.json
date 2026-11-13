@@ -1,0 +1,39 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "dev:vite-only": "vite",
+    "build:client": "vite build --outDir dist/client",
+    "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "build:server-sitemap": "vite build --ssr src/seo/sitemap.ts --outDir dist/server --emptyOutDir false",
+    "build": "tsc -b && npm run build:client && npm run build:server && npm run build:server-sitemap",
+    "start": "NODE_ENV=production node server/index.js",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@cashfreepayments/cashfree-js": "^1.0.7",
+    "@tanstack/react-query": "^5.101.4",
+    "compression": "^1.8.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "pg": "^8.23.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.13.3",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.0"
+  }
+}

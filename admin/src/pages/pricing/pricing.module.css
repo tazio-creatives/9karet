@@ -1,0 +1,213 @@
+.pricingPage {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-5);
+}
+
+.tab {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* Rule form */
+.ruleForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4) var(--space-5);
+}
+
+.ruleForm .formControl,
+.formControl {
+  min-height: 42px;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.sectionDivider {
+  grid-column: 1 / -1;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-2) 0;
+}
+
+.sectionLabel {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: var(--space-2) 0 0;
+}
+
+.helpText {
+  grid-column: 1 / -1;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin: -6px 0 0;
+}
+
+.radioRow {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.radioOption {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.radioOption strong {
+  display: block;
+  font-size: var(--text-sm);
+}
+
+.radioOption span {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.actionButton {
+  min-height: 40px;
+}
+
+.formActionsRow {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* Reprice progress banner */
+.repriceBanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.repriceBannerRow {
+  composes: cardPadded from '../../styles/shared.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  border-left: 3px solid var(--color-accent);
+}
+
+.repriceBannerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+}
+
+.repriceBannerText strong {
+  font-size: var(--text-sm);
+}
+
+.repriceBannerText span {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.repriceBannerBar {
+  flex: 1;
+}
+
+/* Preview panel */
+.previewPanel {
+  composes: cardPadded from '../../styles/shared.module.css';
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.previewStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.previewStat {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.previewStatValue {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewStatLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.previewWarning {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+}
+
+.sampleTableWrap {
+  overflow-x: auto;
+}
+
+.priceDelta {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+@media (max-width: 767px) {
+  .ruleForm {
+    grid-template-columns: 1fr;
+  }
+  .radioRow {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .repriceBannerRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+}

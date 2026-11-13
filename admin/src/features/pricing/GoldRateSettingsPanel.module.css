@@ -1,0 +1,42 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+}
+
+.readout {
+  font-size: var(--text-md);
+  font-weight: 500;
+  padding: var(--space-2) 0;
+}
+
+.readoutStrong {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  padding: var(--space-2) 0;
+}
+
+.lastUpdated {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.reviewBanner {
+  font-size: var(--text-sm);
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm, 6px);
+  padding: var(--space-3);
+}

@@ -1,0 +1,121 @@
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-10);
+  padding: var(--space-6) var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.item:hover {
+  background: var(--color-bg-alt);
+  transform: translateY(-2px);
+}
+
+.iconWrap {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--trust-icon-size, 44px);
+  height: var(--trust-icon-size, 44px);
+  border-radius: 50%;
+  background: #fbe4e8;
+  color: var(--color-burgundy);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--trust-title-size, var(--text-sm));
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: var(--trust-subtitle-size, var(--text-xs));
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 900px) {
+  .strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 560px) {
+  .strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Boxed variant — one compact card, equal-width columns divided by vertical
+   separators (used on the cart page, right below the item list). Given a
+   gold top accent and gold-gradient icon badges for a more premium feel than
+   the default blush/pink circle variant used elsewhere. */
+.stripBoxed {
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 0;
+  padding: 0;
+  border-top: 2px solid var(--color-gold);
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  --trust-icon-size: 42px;
+  --trust-title-size: 13px;
+  --trust-subtitle-size: 11px;
+}
+
+.itemBoxed {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 18px 10px;
+  border-right: 1px solid var(--color-border);
+  border-radius: 0;
+}
+
+.itemBoxed:last-child {
+  border-right: none;
+}
+
+.itemBoxed:hover {
+  background: none;
+  transform: none;
+}
+
+.stripBoxed .iconWrap {
+  background: linear-gradient(135deg, #f3e6cb, #e6cd98);
+  color: var(--color-burgundy-dark);
+}
+
+.stripBoxed .title {
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 400px) {
+  .itemBoxed {
+    padding: 14px 6px;
+    gap: 6px;
+  }
+
+  .stripBoxed {
+    --trust-icon-size: 36px;
+    --trust-title-size: 11.5px;
+    --trust-subtitle-size: 10px;
+  }
+}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Meta (Facebook) Business domain verification for 9karet.com -->
+    <meta name="facebook-domain-verification" content="nuwphkxdeniom77dget1w54abv72bq" />
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TS9FR3PF');</script>
+    <!-- End Google Tag Manager -->
+    <!-- Google tag (gtag.js) — GA4. Added directly (not via the GTM
+         container above, which has no tags configured) — don't also add
+         this GA4 ID inside GTM, or every visit is counted twice. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YF4GE487RS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-YF4GE487RS');
+    </script>
+    <!-- Meta Pixel (1119380757335568). Base code only: fbq('init') here; every
+         event, including PageView on each route change, is sent from
+         src/analytics/metaPixel.ts. -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '1119380757335568');
+    </script>
+    <!-- End Meta Pixel -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Loaded non-render-blocking (media="print" until it arrives, then
+         switched to all) — with display=swap the fallback font paints first
+         anyway, so blocking first paint on this request bought nothing. -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <!-- Real <link> to the same stylesheet entry-client.tsx also `import`s —
+         a JS import alone means Vite dev-mode only injects the CSS once the
+         client script has loaded and run, so SSR'd HTML paints fully-formed
+         and unstyled for a beat first (FOUC). A direct <link> is fetched and
+         applied by the browser immediately, before any JS runs, in both dev
+         and prod. -->
+    <link rel="stylesheet" href="/src/index.css" />
+    <!--ssr-head-->
+  </head>
+  <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TS9FR3PF"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <noscript><img height="1" width="1" style="display:none" alt=""
+    src="https://www.facebook.com/tr?id=1119380757335568&ev=PageView&noscript=1" /></noscript>
+    <div id="root"><!--ssr-outlet--></div>
+    <script>window.__REACT_QUERY_STATE__ = /*ssr-state*/undefined;</script>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>

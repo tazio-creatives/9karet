@@ -1,0 +1,504 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e3ddd4;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.imageLink {
+  display: block;
+  text-decoration: none;
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #faf8f3;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badges {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1;
+}
+
+.badgeNew,
+.badgeLow {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 8px;
+  line-height: 1;
+}
+
+.badgeNew {
+  background: #fff5f5;
+  color: #b0384a;
+  border-radius: 6px;
+}
+
+.badgeLow {
+  background: #670815;
+  color: #fff;
+  border-radius: 5px;
+}
+
+.wishlistButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+.wishlistButton::before {
+  content: '';
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e3ddd4;
+  position: absolute;
+  z-index: -1;
+}
+
+.wishlistButton svg {
+  color: #670815;
+  position: relative;
+}
+
+/* Desktop (>=1024px) content padding — reduced at <768px below. */
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.rating {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #6b7475;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star {
+  color: #f5a000;
+}
+
+.ratingCount {
+  color: #6b7475;
+}
+
+.nameLink {
+  text-decoration: none;
+}
+
+/* Product name — desktop tier (>=1024px). Never above weight 500. */
+.name {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: #670815;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(1.35em * 2);
+}
+
+/* Gold + gemstone specification row — desktop tier. Kept on one line by
+   shortening the displayed values (see PlpProductCard.tsx), not by
+   shrinking this text further. */
+.specRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-bottom: 12px;
+  color: #596667;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.specItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.specItem svg {
+  color: #670815;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+}
+
+.metalDot {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border-radius: 50%;
+}
+
+.specDivider {
+  width: 1px;
+  height: 14px;
+  flex: 0 0 1px;
+  background: #d8d3cb;
+}
+
+.priceRow {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #670815;
+}
+
+.mrp {
+  font-size: 15px;
+  font-weight: 400;
+  color: #777777;
+  text-decoration: line-through;
+}
+
+.taxNote {
+  margin: 5px 0 10px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: #667172;
+}
+
+.offerStrip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 6px 10px;
+  margin: 0 0 10px;
+  background: #fff5f5;
+  border: 1px solid #f4b8be;
+  border-radius: 6px;
+  color: #b0384a;
+}
+
+.offerStrip svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.offerTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.offerText {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stockRow {
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #596667;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.stockStatusGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.stockDotIn,
+.stockDotOther {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 7px;
+}
+
+.stockDotIn {
+  background: #218838;
+}
+
+.stockDotOther {
+  background: #c99a45;
+}
+
+.stockLabelIn {
+  color: #218838;
+  font-weight: 600;
+}
+
+.stockLabelOther {
+  color: #451219;
+  font-weight: 600;
+}
+
+.stockSeparator {
+  color: #d8d3cb;
+}
+
+.deliveryText {
+  color: #596667;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add to Cart — desktop tier (>=1024px height); mobile override below. */
+.addToCartButton {
+  margin-top: auto;
+  width: 100%;
+  height: 42px;
+  border-radius: 7px;
+  border: none;
+  background: linear-gradient(135deg, #9e0d20, #670815);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(103, 8, 21, 0.25);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.addToCartButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b30f25, #760a18);
+  box-shadow: 0 4px 12px rgba(103, 8, 21, 0.32);
+  transform: translateY(-1px);
+}
+
+.addToCartButton:focus-visible {
+  outline: 2px solid #670815;
+  outline-offset: 2px;
+}
+
+.addToCartButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tablet (768px–1023px). */
+@media (max-width: 1023px) {
+  .name {
+    font-size: 17px;
+  }
+
+  .specRow {
+    font-size: 13px;
+  }
+
+  .price {
+    font-size: 20px;
+  }
+
+  .mrp {
+    font-size: 14px;
+  }
+
+  .taxNote {
+    font-size: 12px;
+  }
+
+  .offerText {
+    font-size: 13px;
+  }
+
+  .stockRow {
+    font-size: 12px;
+  }
+
+  .addToCartButton {
+    font-size: 15px;
+  }
+}
+
+/* Mobile (<768px). */
+@media (max-width: 767px) {
+  .content {
+    padding: 12px;
+  }
+
+  .stockRow {
+    display: none;
+  }
+
+  .badgeNew,
+  .badgeLow {
+    font-size: 10px;
+  }
+
+  .name {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.3;
+    min-height: 0;
+    margin: 0 0 8px;
+  }
+
+  .specRow {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .specItem svg {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 13px;
+  }
+
+  .metalDot {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+  }
+
+  .price {
+    font-size: 18px;
+  }
+
+  .mrp {
+    font-size: 12px;
+  }
+
+  .taxNote {
+    font-size: 11px;
+    margin: 4px 0 10px;
+  }
+
+  .offerStrip {
+    align-items: flex-start;
+    padding: 8px 10px;
+    margin: 0 0 8px;
+  }
+
+  .offerText {
+    font-size: 11px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+  }
+
+  .stockRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 3px;
+    font-size: 11px;
+    white-space: normal;
+    overflow: visible;
+    margin: 0 0 12px;
+  }
+
+  .stockSeparator {
+    display: none;
+  }
+
+  .deliveryText {
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  /* Visual style only — width/height/radius keep their existing values
+     (height overridden just above, same as before this change). */
+  .addToCartButton {
+    height: 40px;
+    font-size: 14px;
+    background: transparent;
+    color: #650f1a;
+    border: 1.5px solid #650f1a;
+    box-shadow: none;
+  }
+
+  .addToCartButton:hover:not(:disabled) {
+    background: rgba(101, 15, 26, 0.06);
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+/* Narrow phones (<=429px, e.g. iPhone 15 at 393px): the 2-column grid's
+   card content width (~175-180px) can't fit both the metal and gemstone
+   spec values on one line — split them onto two compact rows instead of
+   truncating either value. */
+@media (max-width: 429px) {
+  .specRow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .specItem {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+
+  .specDivider {
+    display: none;
+  }
+}

@@ -1,0 +1,66 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/* Cream frame around a rounded portrait photo, label in the band below. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 6px 0;
+  border-radius: 14px;
+  background: #f1e6d2;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-sm);
+}
+
+.photo {
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.label {
+  padding: var(--space-2) var(--space-1);
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .tile {
+    padding: 4px 4px 0;
+    border-radius: 12px;
+  }
+
+  .photo {
+    border-radius: 9px;
+  }
+
+  .label {
+    padding: 6px 2px 8px;
+    font-size: var(--text-sm);
+  }
+}

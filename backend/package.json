@@ -1,0 +1,41 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "9KARET backend — Node.js + Express + PostgreSQL REST API",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test --test-concurrency=1",
+    "migrate:create": "node-pg-migrate create -m src/db/migrations -j js --",
+    "migrate:up": "node-pg-migrate up -m src/db/migrations --envPath .env",
+    "migrate:down": "node-pg-migrate down -m src/db/migrations --envPath .env",
+    "migrate:redo": "node-pg-migrate redo -m src/db/migrations --envPath .env",
+    "seed": "node src/db/seeds/run.js",
+    "seed:presenters": "node src/db/seeds/presenters.seed.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1116.0",
+    "@aws-sdk/client-ses": "^3.1135.0",
+    "bcrypt": "^6.0.0",
+    "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^8.6.2",
+    "express-session": "^1.19.0",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.2.0",
+    "node-pg-migrate": "^9.0.0",
+    "nodemailer": "^10.0.10",
+    "openai": "^6.49.0",
+    "pg": "^8.23.0",
+    "pg-boss": "^10.4.2",
+    "sharp": "^0.35.3",
+    "zod": "^4.4.3"
+  }
+}

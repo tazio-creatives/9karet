@@ -1,0 +1,324 @@
+/* Mobile-first — 16px page grid, compact cards, sticky payment bar. Desktop
+   overrides (existing two-column layout) live in the min-width:768px block. */
+
+.page {
+  width: 100%;
+  /* Establishes a new block-formatting-context so a child's top margin
+     (e.g. .headingRow's margin-top: 24px, the first in-flow child once
+     logged in) can't collapse through this zero-top-padding box and
+     expose the cream body background above the page. */
+  display: flow-root;
+  /* Footer has its own global margin-top: 96px between <main> and
+     <footer> — with nothing painted in that gap it shows the page's
+     cream body background through. Extending padding-bottom by that
+     same 96px paints white across it, and margin-bottom: -96px cancels
+     the added height back out so Footer's own position on the page
+     doesn't move. */
+  /* The 100px base isn't decorative slack — it's the fixed mobile sticky
+     payment bar's worst-case real footprint (54px button + 12px top
+     padding + up to ~34px safe-area-inset-bottom on notched phones), so
+     the page can scroll far enough for the Back to Bag button to clear
+     it. Trimming it risks the bar covering that button on real devices;
+     kept as-is even though it reads as a large number here. */
+  padding: 0 16px calc(100px + 96px);
+  margin-bottom: -96px;
+  background: var(--color-white);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.headingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 24px 0 16px;
+}
+
+.backChevron {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--color-text);
+  background: var(--color-bg-alt);
+  transition: background-color 0.15s ease;
+}
+
+.backChevron:hover {
+  background: var(--color-border);
+}
+
+.heading {
+  display: none;
+}
+
+.heroPlain {
+  margin-top: var(--space-10);
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.mainColumnTop,
+.mainColumnBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.summaryColumn {
+  min-width: 0;
+}
+
+.error {
+  color: #b42318;
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+/* Back to Bag — below the trust strip, never between Address and Order
+   Summary. */
+.backToBagRow {
+  display: flex;
+  justify-content: center;
+}
+
+.backToBagLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  color: var(--color-burgundy);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.continueLink {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+}
+
+/* Sticky payment bar (mobile only — hidden at 768px+) */
+.stickyBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(60, 23, 28, 0.08);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.stickyBarHidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stickyBarTotal {
+  flex: 0 0 40%;
+  min-width: 0;
+}
+
+.stickyBarLabel {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.stickyBarValue {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stickyBarButton {
+  flex: 0 0 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 54px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stickyBarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Payment gateway step (step 3 interstitial) */
+.paymentBox {
+  max-width: 440px;
+  margin: var(--space-6) auto 0;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: var(--space-8) var(--space-6);
+}
+
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-burgundy);
+  border-radius: 50%;
+  margin-bottom: var(--space-5);
+  animation: checkoutSpin 0.8s linear infinite;
+}
+
+@keyframes checkoutSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.paymentGatewayTitle {
+  font-size: calc(var(--text-base) + 3px);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 var(--space-6);
+}
+
+.paymentTotal {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  color: var(--color-burgundy);
+  margin: 0 0 var(--space-2);
+}
+
+.paymentOrderNumber {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.payButton {
+  width: 100%;
+  padding: var(--space-4);
+  min-height: 52px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  border: none;
+  border-radius: 15px;
+  font-size: calc(var(--text-base) + 3px);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-4);
+}
+
+.payButton:disabled {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Loading skeleton */
+.skeletonAddressCard {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 420px;
+  border-radius: 12px;
+}
+
+.skeletonSummary {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 420px;
+  border-radius: 12px;
+}
+
+@media (min-width: 768px) {
+  .page {
+    max-width: 1400px;
+    /* Individual properties, not the `margin` shorthand — a shorthand here
+       would silently zero out the base rule's margin-bottom: -96px fix
+       for the footer gap (see .page's own comment above). */
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: -96px;
+    /* No sticky bar to clear at this width (.stickyBar is display:none
+       below), so the base bottom padding only needs to be a normal
+       breathing-room value, not the mobile sticky-bar clearance amount. */
+    padding: 0 var(--space-4) calc(var(--space-6) + 96px);
+  }
+
+  .headingRow {
+    margin-top: var(--space-6);
+  }
+
+  .heading {
+    font-size: var(--text-3xl);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--space-8);
+    align-items: start;
+    margin-top: var(--space-8);
+  }
+
+  .mainColumnTop {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .mainColumnBottom {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .summaryColumn {
+    grid-column: 2;
+    /* Spans both left-column rows so the sticky Order Summary stays put
+       beside Contact/Address *and* the trust strip/Back to Bag below them. */
+    grid-row: 1 / -1;
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  .backToBagRow {
+    justify-content: flex-start;
+  }
+
+  /* Desktop keeps OrderSummary's own "Continue to Payment" button (see
+     hidePrimaryOnMobile) — the fixed bar is a mobile-only affordance. */
+  .stickyBar {
+    display: none;
+  }
+}

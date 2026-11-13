@@ -1,0 +1,62 @@
+.stepper {
+  display: flex;
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 var(--space-2);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  background: var(--color-surface);
+}
+
+.dotActive {
+  composes: dot;
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.dotDone {
+  composes: dot;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.labelActive {
+  composes: label;
+  color: var(--color-text);
+  font-weight: 700;
+}

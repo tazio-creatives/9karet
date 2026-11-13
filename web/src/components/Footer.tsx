@@ -1,0 +1,156 @@
+import { useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import styles from './Footer.module.css';
+import { SOCIAL_LINKS } from '../config';
+
+// Desktop never renders this (Footer.module.css hides it above 767px) — the
+// mobile accordion spec calls for a plus/minus glyph specifically, not a
+// rotating chevron: the vertical stroke is simply omitted once open, so
+// "plus" and "minus" are the same element with one line conditionally shown.
+function PlusMinusIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={styles.colIcon}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <line x1="4" y1="12" x2="20" y2="12" />
+      {!open && <line x1="12" y1="4" x2="12" y2="20" />}
+    </svg>
+  );
+}
+
+const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
+  {
+    title: 'Shop',
+    links: [
+      { label: 'Rings', to: '/rings' },
+      { label: 'Earrings', to: '/earrings' },
+      { label: 'Necklaces', to: '/necklaces' },
+      { label: 'Bangles', to: '/bangles' },
+      { label: 'Bracelets', to: '/bracelets' },
+      { label: 'Pendants', to: '/pendants' },
+      { label: 'Gifts', to: '/gifts' },
+    ],
+  },
+  {
+    title: 'Customer Care',
+    links: [
+      { label: 'Contact Us', to: '/contact' },
+      { label: 'Care Guide', to: '/care-guide' },
+    ],
+  },
+  {
+    title: 'About Us',
+    links: [
+      { label: 'Blog', to: '/blog' },
+    ],
+  },
+  {
+    title: 'Policies',
+    links: [
+      { label: 'Privacy Policy', to: '/privacy-policy' },
+      { label: 'Terms & Conditions', to: '/terms' },
+      { label: 'Return & Refund Policy', to: '/refund-policy' },
+      { label: 'Shipping Policy', to: '/shipping-policy' },
+    ],
+  },
+];
+
+export function Footer() {
+  // Collapsed by default, and only one group open at a time — only matters
+  // below 767px (Footer.module.css forces every group open above that,
+  // ignoring this state entirely), so desktop keeps showing all links at
+  // once as before.
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  function toggleSection(title: string) {
+    setOpenSection((prev) => (prev === title ? null : title));
+  }
+
+  return (
+    <footer className={styles.footer}>
+      <div className={styles.top}>
+        <div className={styles.brandCol}>
+          <img src="/images/logo-white.png" alt="9Karet" className={styles.logo} width={535} height={198} loading="lazy" />
+          <p className={styles.tagline}>
+            Smart gold for every day — BIS hallmarked 9K gold jewellery set with genuine gemstones, with transparent
+            pricing and delivery across India.
+          </p>
+          {/* Same details as the Contact page — visible business identity for
+              shoppers, search engines and AI assistants on every page. */}
+          <address className={styles.contact}>
+            <a href="mailto:info@9karet.com">info@9karet.com</a>
+            <br />
+            Goldbox Diamonds Private Limited, Mumbai, Maharashtra
+          </address>
+          {(SOCIAL_LINKS.instagram || SOCIAL_LINKS.facebook) && (
+            <div className={styles.social}>
+              {SOCIAL_LINKS.instagram && (
+                <SocialIcon label="Instagram" href={SOCIAL_LINKS.instagram}>
+                  <rect x="3" y="3" width="18" height="18" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+                </SocialIcon>
+              )}
+              {SOCIAL_LINKS.facebook && (
+                <SocialIcon label="Facebook" href={SOCIAL_LINKS.facebook}>
+                  <path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v6h3v-6h3l1-3h-4v-2c0-.6.4-1 1-1z" />
+                </SocialIcon>
+              )}
+            </div>
+          )}
+        </div>
+
+        {COLUMNS.map((col) => {
+          const isOpen = openSection === col.title;
+          return (
+            <div key={col.title} className={styles.col}>
+              <button
+                type="button"
+                className={styles.colTitleButton}
+                aria-expanded={isOpen}
+                onClick={() => toggleSection(col.title)}
+              >
+                <span className={styles.colTitle}>{col.title}</span>
+                <PlusMinusIcon open={isOpen} />
+              </button>
+              <ul className={isOpen ? `${styles.linkList} ${styles.linkListOpen}` : styles.linkList}>
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.to} className={styles.link}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className={styles.bottom}>
+        <p className={styles.copy}>
+          © {new Date().getFullYear()} 9KARET — Smart Gold. All rights reserved.
+        </p>
+        <p className={styles.secure}>100% Secure Payments</p>
+      </div>
+    </footer>
+  );
+}
+
+// Opens the profile in a new tab so shoppers keep their place on the site.
+function SocialIcon({ label, href, children }: { label: string; href: string; children: ReactNode }) {
+  return (
+    <a href={href} className={styles.socialIcon} aria-label={`9Karet on ${label}`} target="_blank" rel="noopener noreferrer">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        {children}
+      </svg>
+    </a>
+  );
+}

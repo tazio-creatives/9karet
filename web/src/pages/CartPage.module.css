@@ -1,0 +1,561 @@
+/* Mobile-first — see PROJECT spec: 16px page grid, one consolidated cart
+   card, 12px radii, thin borders, no oversized shadows. Desktop overrides
+   (existing two-column layout) live in the min-width:768px block below. */
+
+.page {
+  /* Stops Breadcrumbs' own top margin from collapsing through .page's top
+     edge into the space between Header and <main> — that collapsed margin
+     was invisible white space (nothing paints it but the cream body
+     background), the same root cause as the footer gap above. */
+  display: flow-root;
+  width: 100%;
+  min-height: 100vh;
+  /* Bottom padding absorbs Footer's own 96px margin-top (see the
+     margin-bottom below) so that space is this page's own white padding-box
+     instead of the transparent gap between <main> and <footer> — which had
+     nothing painting over it but the site-wide cream body background. */
+  padding: 0 16px 160px;
+  margin-bottom: -96px;
+  background: var(--color-white);
+}
+
+/* Overrides RelatedProducts' own (larger, PDP-tuned) top margin — this page
+   already has its own trust strip directly above, so the default 96px gap
+   read as excessive here. */
+.bestSellers {
+  margin-top: var(--space-6);
+}
+
+.heading,
+.itemCountLabel {
+  display: none;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.heading {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--color-text);
+  margin: 24px 0 0;
+}
+
+.itemCountLabel {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 4px 0 16px;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Each cart line is now its own card (reference design), not rows sharing
+   one bordered list — spacing lives on .list's gap, not per-row margins. */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  padding: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.removeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #f7f5f1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+.removeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.removeButton:focus-visible,
+.stepper button:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.mediaColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.imageLink {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+.image {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.imageTag {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.discountBadge {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 2px 6px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-top-right-radius: 6px;
+}
+
+.details {
+  min-width: 0;
+  padding-right: 40px;
+}
+
+.name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.sizeRow {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.priceOld {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* Delivery estimate — hidden everywhere per request. */
+.deliveryBadge,
+.deliveryBadgeBackorder {
+  display: none;
+}
+
+.deliveryBadge {
+  color: #1a7f56;
+}
+
+.deliveryBadgeBackorder {
+  color: #8a6a1f;
+}
+
+.deliveryBadge svg,
+.deliveryBadgeBackorder svg {
+  flex-shrink: 0;
+}
+
+/* Same corner radius as .image (10px) — the stepper sits directly under
+   the product image, at the image's own width, so it reads as one unit
+   with it rather than a separate pill control. */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  width: 96px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid #ddd6cc;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.stepper button {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.stepper button:disabled {
+  color: var(--color-border);
+  cursor: not-allowed;
+}
+
+.stepper span {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+.lineTotal {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.summaryColumn {
+  min-width: 0;
+}
+
+/* Empty cart state */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 16px 8px;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: var(--color-bg-alt);
+  color: var(--color-text-muted);
+}
+
+.emptyBody {
+  margin: 0 0 24px;
+  color: var(--color-text-muted);
+}
+
+.emptyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.emptyPrimaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 10px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.emptySecondaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Sticky checkout bar (mobile only — hidden at 768px+, see below) */
+.stickyBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 16px rgba(60, 23, 28, 0.08);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.stickyBarHidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stickyBarTotal {
+  flex: 0 0 40%;
+  min-width: 0;
+}
+
+.stickyBarLabel {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.stickyBarValue {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stickyBarButton {
+  flex: 0 0 60%;
+  height: 54px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-burgundy);
+  color: var(--color-white);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.stickyBarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.continueLink {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+}
+
+/* Loading skeleton */
+.skeletonImage {
+  composes: shimmer from '../styles/skeleton.module.css';
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+}
+
+.skeletonDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.skeletonLine {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 14px;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonSummary {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 320px;
+  border-radius: 12px;
+}
+
+/* Mobile-only tightening — trims the extra vertical space between the
+   delivery pill and the wishlist action. Desktop's spacing is untouched (no
+   override exists for it there, so this block only applies below the 768px
+   breakpoint where the desktop block below takes over). */
+@media (max-width: 767px) {
+  .page {
+    /* Heading/breadcrumb above are now hidden on mobile, so without this
+       the first product card sat flush against the sticky header with no
+       breathing room at all. */
+    padding-top: 16px;
+  }
+
+  .summaryHeading {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .continueShoppingButton {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .row {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  /* Targets RelatedProducts' internal <h2> by element, not by its (hashed,
+     module-scoped) class name — .bestSellers is this page's own wrapper, so
+     this only affects Cart's "Best Sellers" heading, not PDP's. */
+  .bestSellers h2 {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Full-bleed white box (no max-width here) so the background reaches the
+     viewport edges at any width instead of leaving the centered content's
+     margins exposed to the site's cream body background — the 1400px cap
+     and centering move to each direct child instead (.stickyBar is
+     display:none at this width, so it not being centered doesn't matter).
+     padding-bottom absorbs Footer's 96px margin-top the same way the base
+     rule does; longhand left/right/top margins (not the `margin` shorthand)
+     so margin-bottom can stay the separate -96px cancelling it. */
+  .page {
+    padding: 0 0 calc(var(--space-6) + 96px);
+    margin-top: 0;
+    margin-bottom: -96px;
+  }
+
+  .page > * {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    box-sizing: border-box;
+  }
+
+  .heading {
+    font-size: 24px;
+    margin-top: var(--space-6);
+  }
+
+  .itemCountLabel {
+    margin: var(--space-1) 0 var(--space-6);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .list {
+    gap: var(--space-4);
+  }
+
+  .row {
+    grid-template-columns: 120px 1fr;
+    gap: var(--space-5);
+    padding: var(--space-5);
+  }
+
+  .imageLink,
+  .image {
+    width: 120px;
+    height: 120px;
+  }
+
+  .stepper {
+    width: 120px;
+    height: 38px;
+  }
+
+  .removeButton {
+    top: var(--space-3);
+    right: var(--space-3);
+  }
+
+  .summaryColumn {
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  /* Desktop keeps OrderSummary's own "Proceed to Checkout" button (see
+     hidePrimaryOnMobile in OrderSummary.module.css) — the fixed bar is a
+     mobile-only affordance. */
+  .stickyBar {
+    display: none;
+  }
+
+  .emptyState {
+    padding: var(--space-12) var(--space-4) var(--space-4);
+  }
+}

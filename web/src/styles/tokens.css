@@ -1,0 +1,85 @@
+/*
+  Design tokens — 9Karet brand direction: warm ivory background, the logo's
+  deep maroon (#46060F) as the brand colour, warm gold accents ("Smart Gold").
+  The token is still named "burgundy" (it always meant "the brand colour").
+
+  Typography: Plus Jakarta Sans (weights 400/500/600) for both headings and
+  body/product details/prices/buttons/navigation — loaded via Google Fonts
+  in index.html (preconnect + font-display: swap). 700+ is deliberately not
+  loaded — this interface reads as clean and normal-weight; nothing in the
+  stylesheet should request 700 or heavier (falls back to
+  browser-synthesized faux-bold from 600 if it ever does).
+*/
+
+:root {
+  /* Color */
+  --color-bg: #fbf7f2;
+  --color-bg-alt: #f6efeb;
+  --color-surface: #ffffff;
+  --color-burgundy: #5a0f1c;
+  --color-burgundy-dark: #46060f;
+  --color-gold: #c6a15b;
+  --color-gold-light: #dcc391;
+  --color-text: #2e1519;
+  --color-text-muted: #6f6264;
+  --color-border: #ebe2df;
+  --color-white: #ffffff;
+
+  /* Brand black + warm gold — for dark surfaces and gold highlights. */
+  --color-black: #0c0c0c;
+  --color-black-soft: #17140f;
+  --color-brand-gold: #d9ad42;
+  --color-brand-gold-bright: #f0c94a;
+  --color-silver: #c7c9cc;
+
+  /* Pale blush — tokenizes a background hue used behind small icon badges
+     (previously an inline hex on LoginPage's old icon badge). */
+  --color-blush: #f8e8ec;
+
+  /* Typography — Plus Jakarta Sans everywhere (heading and body use the
+     same family). */
+  --font-heading: 'Plus Jakarta Sans', Arial, sans-serif;
+  --font-body: 'Plus Jakarta Sans', Arial, sans-serif;
+  /* Large display titles only (e.g. the homepage Video Story). */
+  --font-display: 'DM Serif Display', Georgia, serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+
+  /* One look for every homepage section heading (Shop by Category, Shop by
+     Bond, New Arrivals…) — size/weight/colour change here, not per section. */
+  --section-heading-size: 1.5rem; /* 24px; 22px on mobile, below */
+  --section-heading-weight: 500;
+  --section-heading-color: var(--color-text);
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+  --space-12: 6rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --shadow-sm: 0 1px 2px rgba(31, 26, 23, 0.06);
+  --shadow-md: 0 4px 16px rgba(31, 26, 23, 0.08);
+
+  --container-max: 1280px;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --section-heading-size: 1.375rem; /* 22px */
+  }
+}

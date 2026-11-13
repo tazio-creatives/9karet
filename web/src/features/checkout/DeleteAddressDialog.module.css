@@ -1,0 +1,111 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(69, 18, 25, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px -20px rgba(83, 7, 17, 0.35), var(--shadow-md);
+  padding: var(--space-6);
+  animation: riseIn 0.2s ease-out;
+}
+
+.heading {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.message {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.cancelButton {
+  flex: 1;
+  min-height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.cancelButton:hover {
+  border-color: var(--color-burgundy);
+}
+
+.deleteButton {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: #b42318;
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: #8f1c13;
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton:focus-visible,
+.deleteButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+}

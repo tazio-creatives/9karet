@@ -1,0 +1,509 @@
+/* Mobile-only (<768px) "My Orders" content — imported by MyOrdersPage.tsx's
+   MobileMyOrders() branch only, never by the desktop branch. The page-level
+   background/padding and "My Account" heading live in AccountLayout's own
+   mobile block (this file starts at "My Orders" heading + filter row). */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #162033;
+}
+
+.filterSelect {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d8dde5;
+  border-radius: 7px;
+  background: #fff;
+  color: #162033;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+/* ---- Summary cards ---------------------------------------------------- */
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(105px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* Very narrow screens (e.g. 320px) can't fit 3 x 105px + gaps — scroll
+   horizontally there instead of letting cards shrink below their floor. */
+@media (max-width: 359px) {
+  .statsRow {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .statsRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statCard {
+    flex: 0 0 105px;
+  }
+}
+
+.statCard {
+  min-width: 105px;
+  height: 88px;
+  padding: 12px 10px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.statIcon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+}
+
+.statIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.statIconBlue {
+  background: #e8f1fc;
+  color: #2563af;
+}
+
+.statIconGreen {
+  background: #e7f6ec;
+  color: #1a7f41;
+}
+
+.statIconPink {
+  background: #f3e3e5;
+  color: #620814;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 400;
+  color: #667085;
+}
+
+.statValue {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  color: #162033;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Order list --------------------------------------------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  display: block;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  text-decoration: none;
+  color: inherit;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.orderNumber {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #162033;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badgeGreenLight {
+  background: #e7f6ec;
+  color: #1a7f41;
+}
+
+.badgeBlueLight {
+  background: #e8f1fc;
+  color: #2563af;
+}
+
+.badgeTealLight {
+  background: #f3e3e5;
+  color: #6b0f1b;
+}
+
+.badgeGreen {
+  background: #d9f2e3;
+  color: #137a3b;
+}
+
+.badgeRedLight {
+  background: #fbe9ea;
+  color: #b3261e;
+}
+
+.badgeAmberLight {
+  background: #fdf3df;
+  color: #8a5a00;
+}
+
+.cardMeta {
+  margin: 3px 0 10px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #7a8495;
+}
+
+.productRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thumb {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.productInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.productName {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #162033;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.moreItems {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: #7a8495;
+}
+
+.deliveryEstimate {
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.rowChevron {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: #98a2b3;
+}
+
+/* ---- Compact progress ---------------------------------------------------- */
+
+.progress {
+  margin-top: 10px;
+}
+
+.progressLine {
+  display: flex;
+  align-items: center;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #d8dde5;
+}
+
+.dotFilled {
+  background: #620814;
+}
+
+.segment {
+  flex: 1;
+  height: 2px;
+  background: #e4e7ec;
+}
+
+.segmentFilled {
+  background: #620814;
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.progressLabels span {
+  font-size: 9px;
+  color: #667085;
+  white-space: nowrap;
+}
+
+.progressLabels span:first-child {
+  text-align: left;
+}
+
+.progressLabels span:last-child {
+  text-align: right;
+}
+
+.progressLabels span:nth-child(2) {
+  text-align: center;
+}
+
+/* ---- Footer row ---------------------------------------------------------- */
+
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f1f3;
+}
+
+.price {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: #162033;
+  font-variant-numeric: tabular-nums;
+}
+
+.viewDetailsLink {
+  font-size: 11px;
+  font-weight: 600;
+  color: #620814;
+}
+
+/* ---- Load more ------------------------------------------------------------ */
+
+.loadMoreButton {
+  width: 100%;
+  height: 42px;
+  margin-top: 2px;
+  margin-bottom: 16px;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  background: transparent;
+  color: #620814;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* ---- Loading / empty / error states --------------------------------------- */
+
+.stateCard {
+  text-align: center;
+  padding: 28px 16px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.stateTitle {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #162033;
+}
+
+.stateBody {
+  margin: 0;
+  font-size: 11px;
+  color: #667085;
+}
+
+.stateAction {
+  margin-top: 10px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  background: transparent;
+  color: #620814;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.skeletonCard {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonLine {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  height: 10px;
+  border-radius: 4px;
+}
+
+.skeletonProductRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.skeletonThumb {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 7px;
+}
+
+/* ---- Support card ---------------------------------------------------------- */
+
+.supportCard {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.supportTextRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.supportIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f3e3e5;
+  color: #620814;
+}
+
+.supportIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.supportText {
+  min-width: 0;
+}
+
+.supportTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #162033;
+}
+
+.supportBody {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 400;
+  color: #667085;
+}
+
+.supportButton {
+  height: 36px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  color: #620814;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Very narrow widths: button moves below the text instead of squeezing it
+   into a vertical column (spec's explicit fallback). */
+@media (max-width: 359px) {
+  .supportButton {
+    width: 100%;
+  }
+}

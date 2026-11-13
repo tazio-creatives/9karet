@@ -1,0 +1,40 @@
+node_modules/
+dist/
+dist-ssr/
+build/
+
+.env
+.env.local
+.env.*.local
+!.env.example
+
+*.log
+npm-debug.log*
+
+.DS_Store
+# macOS resource-fork files (appear when copying from a Mac)
+._*
+.vscode/*
+!.vscode/extensions.json
+
+coverage/
+.turbo/
+
+# local-disk StorageProvider target (Phase 15, plan §2) — dev-only, never committed
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# manual pre-flight pg_dump backups (e.g. before running new migrations) — local-only
+backend/db_backups/
+.local-logs/
+node_modules/
+.env
+.env.*
+*.pem
+*.key
+*.log
+*.bak-*
+backend/uploads/
+dist/
+build/
+.next/

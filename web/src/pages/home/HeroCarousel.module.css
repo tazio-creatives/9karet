@@ -1,0 +1,102 @@
+.hero {
+  display: block;
+  width: 100%;
+}
+
+/* Fixed aspect-ratio (matching the admin form's recommended upload size)
+   instead of an intrinsic-height box — this is what prevents layout shift
+   between slides of slightly different source dimensions, and while the
+   image itself is still loading. */
+.mediaWrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1600 / 500;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.mediaWrap picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* object-fit: cover — the admin form's recommended banner ratio (1600:500)
+   matches this container's own aspect-ratio exactly, so a correctly-sized
+   upload renders at its full, uncropped size; cover only kicks in to fill
+   the frame if an upload doesn't quite match. */
+.bgImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Separate compact strip below the banner — dots never sit over the image
+   itself, and never crowd into a bottom corner. */
+.dotsRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 6px 0;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.dot:hover {
+  background: var(--color-text-muted);
+}
+
+.dotActive {
+  background: var(--color-burgundy);
+  transform: scale(1.25);
+}
+
+@media (max-width: 767px) {
+  .mediaWrap {
+    aspect-ratio: 4 / 5;
+    /* Edge-to-edge on mobile (the wrapping .hero section's own padding is
+       zeroed at this breakpoint) — a rounded corner would look like a
+       clipped notch against the screen edge instead of a banner. */
+    border-radius: 0;
+  }
+
+  .bgImg {
+    /* Never crop the mobile artwork — the mobile image is uploaded at the
+       exact 4:5 ratio this container also uses, so contain and cover are
+       visually identical for a compliant upload, but contain guarantees no
+       crop even if one isn't. */
+    object-fit: contain;
+  }
+}
+
+/* No separately-uploaded mobile image: the desktop image is used as-is on
+   mobile too, at its own natural ratio — never force-fit it into the 4:5
+   portrait frame above, which would crop it. */
+@media (max-width: 767px) {
+  .mediaWrapFallback {
+    aspect-ratio: auto;
+  }
+
+  .mediaWrapFallback picture {
+    height: auto;
+  }
+
+  .mediaWrapFallback .bgImg {
+    height: auto;
+  }
+}

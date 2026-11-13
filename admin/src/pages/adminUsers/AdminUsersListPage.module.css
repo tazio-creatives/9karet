@@ -1,0 +1,79 @@
+.formWrapper {
+  margin-bottom: var(--space-5);
+}
+
+.youBadge {
+  margin-left: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+}
+
+.hint {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.passwordRow {
+  position: relative;
+  display: flex;
+}
+
+.passwordRow input {
+  flex: 1;
+  padding-right: 52px;
+}
+
+.togglePassword {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+}
+
+.togglePassword:hover {
+  color: var(--color-accent-hover);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-4);
+}
+
+.permissionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.permissionCheckbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
+.protectedNote {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.rowActions {
+  display: flex;
+  gap: var(--space-3);
+}

@@ -1,0 +1,43 @@
+.formWrapper {
+  margin-bottom: var(--space-5);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex: none;
+}
+
+.thumbPlaceholder {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  flex: none;
+}
+
+.name {
+  font-weight: 500;
+}
+
+.slug {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-4);
+}

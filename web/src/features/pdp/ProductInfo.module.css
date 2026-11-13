@@ -1,0 +1,565 @@
+.info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 20px 0;
+}
+
+.badges {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 8px;
+}
+
+.badgeNew {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: #f8dce2;
+  color: #8e2940;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.name {
+  font-family: var(--font-heading);
+  margin: 0 0 6px;
+  color: #40171c;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 18px;
+  margin: 0 0 8px;
+  color: #687779;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: #d8a93b;
+}
+
+.ratingValue {
+  font-size: 12px;
+  font-weight: 400;
+  color: #687779;
+}
+
+.ratingCount {
+  font-size: 12px;
+  font-weight: 400;
+  color: #687779;
+}
+
+.price {
+  margin: 0 0 2px;
+  color: #40171c;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 34px;
+}
+
+.mrp {
+  margin-left: var(--space-3);
+  font-weight: 400;
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.discount {
+  margin-left: var(--space-3);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: #fbe4e8;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--color-burgundy);
+}
+
+.taxNote {
+  margin: 0 0 10px;
+  color: #687779;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.offerCard {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid #f4cdd2;
+  border-radius: 6px;
+  background: #fff5f6;
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.offerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.offerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: #ff765f;
+}
+
+.offerIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.offerHeadlineGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.offerHeadline {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #9e1835;
+}
+
+.offerNote {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  color: #8e4050;
+}
+
+.stockDeliveryRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 var(--space-3);
+}
+
+.stockBackorder {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin: 0;
+}
+
+.stockInfo {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin: 0;
+}
+
+.stockLow {
+  color: var(--color-burgundy);
+  font-weight: 600;
+  margin: 0;
+}
+
+.description {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  white-space: pre-line;
+  margin: 0 0 var(--space-4);
+}
+
+.specChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+.specChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.specChip svg {
+  color: var(--color-burgundy);
+  flex-shrink: 0;
+}
+
+.specChipDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.fieldGroup {
+  margin-bottom: var(--space-4);
+}
+
+/* One subtle neutral surface for the whole customization section — no
+   per-field card backgrounds inside it (ColorSelector/PillSelector/
+   SizeSelector all render bare option buttons directly on this). */
+.customizeSection {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid #e3e7e3;
+  border-radius: var(--radius-md);
+  background: #f8f9f7;
+}
+
+.customizeSection .fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.customizeTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+}
+
+.fieldError {
+  margin: var(--space-2) 0 0;
+  font-size: calc(var(--text-xs) + 4px);
+  color: #dc2626;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  gap: 14px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.addToBag,
+.buyNow {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  text-align: center;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.addToBag svg,
+.buyNow svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.addToBag {
+  background: #57121b;
+  border: 1px solid #57121b;
+  color: #ffffff;
+}
+
+.addToBag:hover:not(:disabled) {
+  background: #480d15;
+  border-color: #480d15;
+}
+
+.addToBag:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.buyNow {
+  background: #ffffff;
+  border: 1px solid #57121b;
+  color: #57121b;
+}
+
+.buyNow:hover:not(:disabled) {
+  background: #f8f2f3;
+}
+
+.buyNow:disabled {
+  background: var(--color-bg-alt);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Price Breakup / Product Details now render inside .info (moved from a
+   separate PDPPage-level section) — DetailsCard supplies its own 20px
+   inset on mobile (DetailsCard.module.css), same as before. */
+.detailsStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.detailsCardHeading {
+  --details-heading-size: 22px;
+  --details-heading-weight: 600;
+}
+
+@media (max-width: 767px) {
+  /* .info's 0-left/20px-right padding only makes sense in the desktop
+     2-column grid (flush against the gallery gap on the left). On mobile's
+     single-column stack, everything below relies on this being 0 so
+     DetailsCard's own self-supplied inset (not a parent padding) is what
+     lines its edges up with the rest of the page. */
+  .info {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .badges {
+    display: none;
+  }
+
+  .name {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .price {
+    margin: 0 0 2px;
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .detailsStack {
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+}
+
+@media (max-width: 576px) {
+  .actions {
+    gap: 8px;
+  }
+
+  .addToBag,
+  .buyNow {
+    height: 50px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Inline Add to Cart/Buy Now are redundant with the sticky mobile bar
+     below — only the sticky version shows on mobile. */
+  .actions {
+    display: none;
+  }
+
+  /* The offer card under pricing is redundant with the one now shown in the
+     sticky bar (.mobileBarOfferCard, which composes this same class) — hide
+     only the inline one, not the composed sticky one. */
+  .offerCard:not(.mobileBarOfferCard) {
+    display: none;
+  }
+
+  .mobileBarOfferCard {
+    min-height: 48px;
+  }
+
+  .specChips {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .specChip {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+    height: 42px;
+    padding: 0 var(--space-2);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .customizeSection {
+    padding: 16px;
+  }
+}
+
+/* Sticky mobile purchase bar — mirrors Add to Cart/Buy Now once the inline
+   buttons above scroll out of view. See ProductInfo.tsx for the
+   IntersectionObserver that mounts/unmounts it (never both at once). */
+.mobileBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: 100%;
+  background: #ffffff;
+  border-top: 1px solid #dfe5e3;
+  box-shadow: 0 -4px 16px rgba(87, 18, 27, 0.08);
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+
+.mobileBarInner {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileBarPrice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.mobileBarPriceCurrent {
+  font-size: 22px;
+  font-weight: 600;
+  color: #40171c;
+  white-space: nowrap;
+}
+
+.mobileBarPriceOld {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.mobileBarTax {
+  flex-basis: 100%;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.mobileBarOfferCard {
+  composes: offerCard;
+  margin: 0;
+}
+
+.mobileBarActions {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 8px;
+}
+
+.mobileBarAddToBag,
+.mobileBarBuyNow {
+  width: 100%;
+  height: 50px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.mobileBarAddToBag svg,
+.mobileBarBuyNow svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.mobileBarAddToBag {
+  background: #57121b;
+  border: 1px solid #57121b;
+  color: #ffffff;
+}
+
+.mobileBarAddToBag:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mobileBarBuyNow {
+  background: #ffffff;
+  border: 1px solid #57121b;
+  color: #57121b;
+}
+
+@media (min-width: 768px) {
+  .mobileBar {
+    display: none;
+  }
+}
+
+@media (max-width: 379px) {
+  .mobileBarPrice {
+    display: none;
+  }
+}
+
+/* Unboxing-video reminder under delivery info (mandatory for returns). */
+.unboxingNote {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.unboxingNote svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-gold);
+}
+
+.unboxingNote a {
+  color: var(--color-burgundy);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

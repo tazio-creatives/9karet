@@ -1,0 +1,248 @@
+.newArrivalsSection {
+  max-width: 1440px;
+  margin: 16px auto;
+  padding: 18px 22px 28px;
+  background: #ffffff;
+  border: 1px solid #eadfd8;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.newArrivalsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.newArrivalsTitle {
+  margin: 0;
+  line-height: 1;
+  text-align: left;
+  font-family: var(--font-heading);
+  font-size: var(--section-heading-size);
+  font-weight: var(--section-heading-weight);
+  color: var(--section-heading-color);
+}
+
+.viewAllLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  color: #392b26;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.productSlider {
+  overflow: hidden;
+}
+
+.productTrack {
+  display: flex;
+  gap: 16px;
+  transition: transform 0.3s ease;
+}
+
+.productCard {
+  position: relative;
+  flex: 0 0 calc((100% - (var(--cards-per-view, 5) - 1) * 16px) / var(--cards-per-view, 5));
+  min-width: 0;
+  /* Tall enough for the image (255px) plus info block including the offer
+     banner row (118px measured) — a fixed card without offerBanner just
+     leaves the trailing whitespace, keeping the carousel row's cards level. */
+  height: 374px;
+  background: #ffffff;
+  border: 1px solid #e7ded8;
+  border-radius: 12px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.productImageWrapper {
+  position: relative;
+  height: 255px;
+  padding: 0;
+  background: #fffdfb;
+  overflow: hidden;
+}
+
+.productImageWrapper img,
+.productImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: none;
+  opacity: 1;
+  transition: transform 0.35s ease;
+}
+
+.productCard:hover img {
+  transform: scale(1.04);
+}
+
+.wishlistButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8a6e67;
+  cursor: pointer;
+}
+
+.productInfo {
+  padding: 8px 12px 10px;
+}
+
+.productName {
+  margin: 0 0 3px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #211915;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productMaterial {
+  margin: 0 0 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: #554943;
+}
+
+.productPrice {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #211915;
+}
+
+.productMrp {
+  margin-left: 6px;
+  font-weight: 400;
+  font-size: 16px;
+  color: #8a8078;
+  text-decoration: line-through;
+}
+
+.offerBanner {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid #f4cdd2;
+  border-radius: 6px;
+  background: #fff5f6;
+}
+
+.offerBannerLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.offerBannerIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: #ff765f;
+}
+
+.offerBannerIcon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.offerBannerHeadlineGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.offerBannerHeadline {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #9e1835;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.carouselDot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #eee8e5;
+  cursor: pointer;
+}
+
+.carouselDot.active {
+  background: #65051e;
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .productCard {
+    flex: 0 0 calc((100% - 32px) / 3);
+  }
+}
+
+@media (max-width: 767px) {
+  .newArrivalsSection {
+    padding: 16px 14px 20px;
+  }
+
+  .productSlider {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .productTrack {
+    transform: none !important;
+    transition: none;
+  }
+
+  .productCard {
+    flex: 0 0 72vw;
+    min-width: 220px;
+    scroll-snap-align: start;
+  }
+
+  .carouselDots {
+    display: none;
+  }
+}

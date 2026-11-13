@@ -1,0 +1,19 @@
+.strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.item svg {
+  color: var(--color-brand-gold);
+  flex-shrink: 0;
+}

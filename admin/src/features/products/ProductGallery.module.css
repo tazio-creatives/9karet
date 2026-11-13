@@ -1,0 +1,98 @@
+.uploadRow {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.thumbWrapper {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--color-bg);
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbEmpty {
+  width: 100%;
+  height: 100%;
+}
+
+.primaryBadge {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+}
+
+.typeBadge {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: var(--text-xs);
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: var(--space-2);
+}
+
+.cardActions button {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.cardActions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.jobStatus {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.candidatesSection {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.candidatesHeading {
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}

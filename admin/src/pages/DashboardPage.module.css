@@ -1,0 +1,306 @@
+.subtitle {
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.heroCard {
+  composes: cardPadded from '../styles/shared.module.css';
+  position: relative;
+  overflow: hidden;
+}
+
+/* Raised specificity (.heroGrid .heroCard, not just .heroCard) — composed
+   classes from a different CSS module (shared.module.css's .card, which
+   also sets `background`) have the same specificity as a bare .heroCard
+   rule, so which one wins depends on stylesheet injection order rather
+   than source order. That order isn't stable across Vite dev-server HMR
+   churn, and .card's plain white background was intermittently winning
+   here, silently wiping out the gradient and leaving white-on-white text.
+   Scoping through the parent guarantees this always wins regardless. */
+.heroGrid .heroCard {
+  background: linear-gradient(135deg, #530711 0%, #38040b 100%);
+  color: #fff;
+  border: none;
+}
+
+.heroCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(198, 161, 91, 0.25), transparent 55%);
+  pointer-events: none;
+}
+
+.heroLabel {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.heroValue {
+  margin: 0;
+  font-size: 2.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.heroFoot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.85);
+  position: relative;
+}
+
+.heroFootValue {
+  color: #c6a15b;
+  font-weight: 700;
+}
+
+.heroDivider {
+  height: 1px;
+  margin: var(--space-4) 0;
+  background: rgba(255, 255, 255, 0.14);
+  position: relative;
+}
+
+.heroSubStats {
+  display: flex;
+  gap: var(--space-6);
+  position: relative;
+}
+
+.heroSubLabel {
+  margin: 0 0 2px;
+  font-size: var(--text-xs);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.heroSubValue {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Percent-change pills — reused in the hero card and (via the same
+   ChangeBadge component) anywhere else a period-over-period comparison
+   appears. Deliberately not the app's success/danger status colors: a
+   revenue dip isn't a system error state, it's a comparison, so these get
+   their own quieter up/down treatment plus the icon so the direction never
+   reads from color alone. */
+.changeUp,
+.changeDown {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.changeUp {
+  background: rgba(22, 163, 74, 0.18);
+  color: #4ade80;
+}
+
+.changeDown {
+  background: rgba(220, 38, 38, 0.18);
+  color: #f87171;
+}
+
+.trendCard {
+  composes: cardPadded from '../styles/shared.module.css';
+  display: flex;
+  flex-direction: column;
+}
+
+.trendHeading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.trendChart {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.refundBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-warning);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.refundBanner svg {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.refundBannerCta {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.statCard {
+  composes: cardPadded from '../styles/shared.module.css';
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.statCard:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  border-color: #c6a15b;
+}
+
+.statIcon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(83, 7, 17, 0.08);
+  color: #530711;
+}
+
+.statIconWarning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.statIconDanger {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.statLabel {
+  margin: 0 0 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.statValue {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  margin: 2px 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Applied alongside sharedStyles.cardPadded on every stacked section below
+   the stats grid (low stock, recent orders) — cardPadded itself carries no
+   margin, so this is the one place that sets the vertical rhythm between
+   them. */
+.stackedCard {
+  margin-bottom: var(--space-4);
+}
+
+.stackedCard:last-child {
+  margin-bottom: 0;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.sectionHeading svg {
+  color: #c6a15b;
+}
+
+@media (max-width: 1300px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .heroGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .heroSubStats {
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 420px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}

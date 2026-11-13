@@ -1,0 +1,116 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8) var(--space-6);
+}
+
+.logo {
+  display: block;
+  height: 64px;
+  width: auto;
+  margin: 0 auto var(--space-4);
+}
+
+.heading {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-6);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.field input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-bg);
+}
+
+.passwordRow {
+  position: relative;
+  display: flex;
+}
+
+.passwordRow input {
+  flex: 1;
+  padding-right: 52px;
+}
+
+.togglePassword {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+}
+
+.togglePassword:hover {
+  color: var(--color-accent-hover);
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  margin: 0;
+}
+
+.submit {
+  padding: var(--space-3);
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,39 @@
+.nav {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-5) 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-1);
+}
+
+.list a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.list a:hover {
+  color: var(--color-burgundy);
+  text-decoration: underline;
+}
+
+.list li:last-child span {
+  color: var(--color-text);
+}
+
+.sep {
+  margin: 0 var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .nav {
+    display: none;
+  }
+}

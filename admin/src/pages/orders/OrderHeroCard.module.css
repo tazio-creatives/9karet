@@ -1,0 +1,188 @@
+.hero {
+  background: linear-gradient(135deg, #640814 0%, #38050b 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: var(--space-4) var(--space-2);
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.orderIdGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.orderIconCircle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.orderIdRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orderId {
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.copyButton {
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.copyButton:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.copiedHint {
+  font-size: 11px;
+  color: #9ae6b4;
+}
+
+.pill {
+  flex-shrink: 0;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pillSuccess {
+  background: #d1f5e0;
+  color: #0a6b3d;
+}
+
+.pillNeutral {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.pillInfo {
+  background: #2f6fed;
+  color: #fff;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.infoCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.placedDate {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  margin: var(--space-3) 0;
+}
+
+.bottomRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.bottomLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.printButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.printButton:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.bottomRight {
+  text-align: right;
+}
+
+.totalLabel {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.total {
+  margin: 2px 0 0;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: #f0b429;
+}

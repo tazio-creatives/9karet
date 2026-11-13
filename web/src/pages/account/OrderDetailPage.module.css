@@ -1,0 +1,88 @@
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 16px;
+  align-items: start;
+}
+
+.main,
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.skeletonCard {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  border-radius: 8px;
+}
+
+.stateCard {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 28px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+
+.stateTitle {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #300f13;
+}
+
+.stateBody {
+  margin: 0;
+  font-size: 12px;
+  color: #667085;
+}
+
+.stateActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.retryButton {
+  height: 36px;
+  padding: 0 18px;
+  border: 1px solid #620814;
+  border-radius: 999px;
+  background: transparent;
+  color: #620814;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.back {
+  color: #667085;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: #620814;
+}
+
+/* Tablet — the tracking/timeline sidebar moves below the main column
+   instead of sitting beside it (the account nav sidebar's own collapse is
+   handled by AccountLayout at the same breakpoint). */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .grid {
+    gap: 10px;
+  }
+}

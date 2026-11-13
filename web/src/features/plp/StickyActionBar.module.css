@@ -1,0 +1,57 @@
+.bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    min-height: 56px;
+    background: #fff;
+    border-top: 1px solid #e3ddd4;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+.action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  color: #670815;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+
+.divider {
+  width: 1px;
+  background: #e3ddd4;
+  margin: 8px 0;
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 34px);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #c99a45;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,158 @@
+/* No background/border/radius/horizontal padding of its own — this panel
+   sits directly on CategoryShowcase's single shared section background.
+   margin-top is the only separation from the category strip above (no
+   divider line anymore) — horizontal spacing still comes entirely from the
+   parent .categorySection's own padding, never duplicated here. */
+.panel {
+  width: 100%;
+  margin-top: 16px;
+}
+
+
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  /* Explicit (grid's own default) — every card's outer box fills its row's
+     height regardless of that card's own content length, so a longer
+     product name or an offer banner on one card can't leave its neighbours
+     shorter. minmax(0, 1fr) tracks (not auto/max-content) are what makes
+     every column equal width regardless of a card's own content/image/
+     badge width — a bare 1fr or an unconstrained track would let a wide
+     child push its column wider than the rest. */
+  align-items: stretch;
+}
+
+/* Wrapper around each ProductCard — isolates grid-driven sizing here
+   without touching the shared ProductCard component (used unmodified by
+   PLP/NewArrivals/etc. too), so nothing here leaks into those. */
+.item {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+}
+
+.item > * {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.skeletonCard {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonImage {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  aspect-ratio: 1 / 1;
+  margin: -10px -10px 0;
+  border-radius: 0;
+}
+
+.skeletonLine {
+  composes: shimmer from '../../styles/skeleton.module.css';
+  height: 12px;
+  border-radius: 4px;
+}
+
+.stateBlock {
+  text-align: center;
+  padding: var(--space-8) 0;
+}
+
+.message {
+  margin: 0 0 6px;
+  color: var(--color-text-muted);
+}
+
+.emptyLink {
+  color: var(--color-burgundy);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.emptyLink:hover,
+.emptyLink:focus-visible {
+  text-decoration: underline;
+}
+
+.retryButton {
+  margin-top: var(--space-3);
+  height: 40px;
+  padding: 0 20px;
+  border: 1.5px solid var(--color-burgundy);
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-burgundy);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.viewAllRow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.viewAllButton {
+  min-height: 36px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-burgundy);
+  background: var(--color-surface);
+  color: var(--color-burgundy);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.viewAllButton:hover {
+  background: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+.viewAllButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1023px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 639px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 4px;
+    row-gap: 10px;
+  }
+
+  /* 2 columns x 4 rows = 8 shown; the rest of the fetched 15 stay in the
+     DOM (unmodified indexing for ProductCard/analytics) but hidden here. */
+  .item:nth-child(n + 9) {
+    display: none;
+  }
+
+  .viewAllButton {
+    padding: 0 22px;
+  }
+}

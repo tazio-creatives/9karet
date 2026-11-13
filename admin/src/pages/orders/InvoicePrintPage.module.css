@@ -1,0 +1,280 @@
+@page {
+  size: A5 portrait;
+  margin: 8mm;
+}
+
+.status {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.page {
+  min-height: 100vh;
+  background: #78787c;
+  padding: var(--space-6) 0;
+}
+
+.toolbar {
+  max-width: 148mm;
+  margin: 0 auto var(--space-4);
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backLink {
+  color: #fff;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.printButton {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.printButton:hover {
+  background: var(--color-accent-hover);
+}
+
+.sheet {
+  position: relative;
+  width: 148mm;
+  min-height: 210mm;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: var(--shadow-md);
+  padding: 9mm 8mm;
+  color: #111;
+  font-size: 8.5pt;
+  line-height: 1.4;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  border-bottom: 2px solid #111;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.sellerBlock {
+  min-width: 0;
+}
+
+.logo {
+  height: 40px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.sellerName {
+  margin: 0 0 2px;
+  font-size: 9pt;
+  font-weight: 700;
+}
+
+.sellerLine {
+  margin: 0;
+  font-size: 7pt;
+  color: #555;
+}
+
+.docBlock {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.docTitle {
+  margin: 0 0 2px;
+  font-size: 11pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.invoiceNumber {
+  margin: 0 0 4px;
+  font-size: 9.5pt;
+  font-weight: 700;
+  color: var(--color-accent, #a97a2f);
+  font-variant-numeric: tabular-nums;
+}
+
+.docMeta {
+  margin: 0 0 1px;
+  font-size: 7.5pt;
+}
+
+.docMeta strong {
+  display: inline-block;
+  min-width: 42px;
+  text-align: left;
+  color: #444;
+  font-weight: 600;
+}
+
+.billTo {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ccc;
+}
+
+.billTo p {
+  margin: 0 0 2px;
+}
+
+.billName {
+  font-weight: 700;
+}
+
+.sectionLabel {
+  margin: 0 0 5px;
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.itemsTable thead th {
+  text-align: right;
+  font-size: 6.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #666;
+  border-bottom: 1.5px solid #111;
+  padding: 0 0 4px;
+}
+
+.colNo {
+  text-align: left;
+  width: 16px;
+}
+
+.colItem {
+  text-align: left;
+}
+
+.colQty {
+  text-align: center;
+  width: 26px;
+}
+
+.colAmt {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gstPct {
+  display: block;
+  font-size: 6.5pt;
+  font-weight: 400;
+  color: #888;
+}
+
+.itemRow {
+  break-inside: avoid;
+}
+
+.itemRow td {
+  padding: 5px 0;
+  border-bottom: 1px solid #e5e5e5;
+  vertical-align: top;
+}
+
+.itemName {
+  margin: 0;
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+.itemMeta {
+  margin: 1px 0 0;
+  font-size: 6.5pt;
+  color: #666;
+}
+
+.totalsBlock {
+  margin-left: auto;
+  width: 60%;
+  margin-bottom: 14px;
+}
+
+.totalsRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 8pt;
+  font-variant-numeric: tabular-nums;
+}
+
+.grandTotal {
+  border-top: 1.5px solid #111;
+  margin-top: 4px;
+  padding-top: 5px;
+  font-size: 9.5pt;
+  font-weight: 800;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 8px;
+  break-inside: avoid;
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: 6.5pt;
+  color: #888;
+  max-width: 70mm;
+}
+
+.barcodeBlock {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.barcode {
+  width: 40mm;
+  height: auto;
+  display: block;
+}
+
+@media print {
+  .page {
+    background: none;
+    padding: 0;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .sheet {
+    width: auto;
+    min-height: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+}

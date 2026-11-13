@@ -1,0 +1,318 @@
+import { useState } from 'react';
+import { CUSTOMER_CATEGORIES, REAL_JEWELLERY_TYPES, type CustomerCategory, type JewelleryType, type StudioJob } from '../../api/aiStudio';
+import { Toggle } from '../../components/Toggle';
+import { formatCustomerCategory, presenterDemographicSummary } from './generationRules';
+import { GenerationSummary } from './GenerationSummary';
+import sharedStyles from '../../styles/shared.module.css';
+import styles from './AnalyseConfirmStep.module.css';
+
+function formatType(type: string) {
+  return type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function pct(n: number) {
+  return `${Math.round(n * 100)}%`;
+}
+
+interface AnalyseConfirmStepProps {
+  job: StudioJob;
+  productName: string;
+  productCategoryName: string | null;
+  jewelleryType: JewelleryType | '';
+  onJewelleryTypeChange: (_v: JewelleryType) => void;
+  categoryConfirmed: boolean;
+  onCategoryConfirmedChange: (_v: boolean) => void;
+  generateRoseGold: boolean;
+  onGenerateRoseGoldChange: (_v: boolean) => void;
+  customerCategory: CustomerCategory | '';
+  onCustomerCategoryChange: (_v: CustomerCategory) => void;
+  customerCategoryConfirmed: boolean;
+  onCustomerCategoryConfirmedChange: (_v: boolean) => void;
+  includeProductSizeImage: boolean;
+  onIncludeProductSizeImageChange: (_v: boolean) => void;
+}
+
+// AI-detected attributes are suggestions only — nothing here is ever applied
+// to the product without the admin explicitly confirming it below. The
+// confirmed jewellery type becomes authoritative for every prompt, and the
+// AI never silently changes it afterwards (Problem 1 in the approved plan).
+// The studio is always opened from an existing product, so the "existing
+// product category" is read from the product record, not re-entered.
+export function AnalyseConfirmStep({
+  job,
+  productName,
+  productCategoryName,
+  jewelleryType,
+  onJewelleryTypeChange,
+  categoryConfirmed,
+  onCategoryConfirmedChange,
+  generateRoseGold,
+  onGenerateRoseGoldChange,
+  customerCategory,
+  onCustomerCategoryChange,
+  customerCategoryConfirmed,
+  onCustomerCategoryConfirmedChange,
+  includeProductSizeImage,
+  onIncludeProductSizeImageChange,
+}: AnalyseConfirmStepProps) {
+  const [isPickingCategory, setIsPickingCategory] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [isPickingAudience, setIsPickingAudience] = useState(false);
+  const analysis = job.analysis;
+  const roles = job.referenceRoles;
+  const references = roles.roleTagged ? { angle45: !!roles.angle_45, side: !!roles.side_profile } : undefined;
+
+  function confirmAudienceWith(category: CustomerCategory) {
+    onCustomerCategoryChange(category);
+    onCustomerCategoryConfirmedChange(true);
+    setIsPickingAudience(false);
+  }
+
+  const presenterSummary = customerCategory ? presenterDemographicSummary(customerCategory) : null;
+  const generationSummary = customerCategory
+    ? [
+        formatCustomerCategory(customerCategory),
+        presenterSummary,
+        generateRoseGold ? 'Gold & Rose Gold' : 'Gold Only',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : null;
+
+  // The jewellery type for generation comes only from the AI's detection or
+  // the admin's own pick here — never from the product's store category,
+  // which is a business grouping that can change (e.g. "Bracelets & Bangles").
+  const aiTypeUnknown = !analysis || analysis.jewelleryType === 'UNKNOWN';
+
+  function confirmWith(type: JewelleryType) {
+    onJewelleryTypeChange(type);
+    onCategoryConfirmedChange(true);
+    setIsPickingCategory(false);
+  }
+
+  const filteredTypes = REAL_JEWELLERY_TYPES.filter((t) =>
+    formatType(t).toLowerCase().includes(categoryFilter.trim().toLowerCase()),
+  );
+
+  return (
+    <div>
+      <div className={styles.referenceRow}>
+        {job.referenceImageUrls.map((url) => (
+          <img key={url} src={url} alt="Reference" className={styles.referenceImg} />
+        ))}
+      </div>
+
+      <section className={styles.generationPlan}>
+        <h3 className={styles.generationPlanTitle}>Reference Coverage</h3>
+        {roles.roleTagged ? (
+          <>
+            <dl className={styles.coverage}>
+              <dt>Main/Front</dt>
+              <dd>Available</dd>
+              <dt>45° Angle</dt>
+              <dd>{roles.angle_45 ? 'Available' : 'Not provided'}</dd>
+              <dt>Side Profile</dt>
+              <dd>{roles.side_profile ? 'Available' : 'Not provided'}</dd>
+            </dl>
+            {!roles.side_profile && (
+              <p className={styles.coverageNote}>
+                A strict side-profile image will not be generated. A reference-faithful elevated detail view will be used
+                instead.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className={styles.coverageNote}>
+            Uploaded before reference roles existed: the first image is the main reference and the original catalogue
+            views are used.
+          </p>
+        )}
+      </section>
+
+      <div className={styles.productInfo}>
+        <div>
+          <p className={styles.productInfoLabel}>Product Name</p>
+          <p className={styles.productInfoValue}>{productName}</p>
+        </div>
+        <div>
+          <p className={styles.productInfoLabel}>Store Category (not used for generation)</p>
+          <p className={styles.productInfoValue}>{productCategoryName ?? '—'}</p>
+        </div>
+      </div>
+
+      {analysis && (
+        <div className={styles.attrGrid}>
+          <div className={styles.attrCard}>
+            <p className={styles.attrLabel}>AI-Detected Jewellery Type</p>
+            <p className={styles.attrValue}>{formatType(analysis.jewelleryType)}</p>
+            <span className={styles.confidence}>Confidence: {pct(analysis.jewelleryTypeConfidence)}</span>
+          </div>
+          <div className={styles.attrCard}>
+            <p className={styles.attrLabel}>Detected Gemstone</p>
+            <p className={styles.attrValue}>{analysis.gemstone ?? '—'}</p>
+            <span className={styles.confidence}>Confidence: {pct(analysis.gemstoneConfidence)}</span>
+          </div>
+          <div className={styles.attrCard}>
+            <p className={styles.attrLabel}>Dominant Shape</p>
+            <p className={styles.attrValue}>{analysis.dominantShape ?? '—'}</p>
+            <span className={styles.confidence}>Confidence: {pct(analysis.shapeConfidence)}</span>
+          </div>
+          <div className={styles.attrCard}>
+            <p className={styles.attrLabel}>AI Confidence</p>
+            <p className={styles.attrValue}>{pct(analysis.jewelleryTypeConfidence)}</p>
+          </div>
+        </div>
+      )}
+
+      {aiTypeUnknown ? (
+        <p className={styles.neutralNotice}>
+          The AI couldn&apos;t identify the jewellery type — select the category for this generation below.
+        </p>
+      ) : (
+        <p className={styles.neutralNotice}>
+          Confirm the jewellery category for this generation — use the AI-detected one, or select another.
+        </p>
+      )}
+
+      <div className={styles.categoryActions}>
+        <button
+          type="button"
+          className={sharedStyles.button}
+          disabled={aiTypeUnknown}
+          onClick={() => confirmWith(analysis!.jewelleryType)}
+        >
+          Use AI-Detected Category
+        </button>
+        <button
+          type="button"
+          className={sharedStyles.button}
+          onClick={() => {
+            onCategoryConfirmedChange(false);
+            setIsPickingCategory((v) => !v);
+          }}
+        >
+          Select Another Category
+        </button>
+      </div>
+
+      {isPickingCategory && (
+        <div className={styles.categoryPicker}>
+          <input
+            type="text"
+            className={styles.categorySearch}
+            placeholder="Search jewellery types…"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          />
+          <div className={styles.categoryGrid}>
+            {filteredTypes.map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={jewelleryType === t ? styles.categoryCardSelected : styles.categoryCard}
+                onClick={() => confirmWith(t)}
+              >
+                {formatType(t)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {categoryConfirmed && jewelleryType && (
+        <p className={styles.confirmedNotice}>
+          ✓ Confirmed for this generation: <strong>{formatType(jewelleryType)}</strong>
+        </p>
+      )}
+
+      {/* Customer category — WHO the piece is for, separate from jewellery
+          type (WHAT it is). Follows the exact same AI-suggests / admin-
+          corrects / admin-confirms pattern as the jewellery type above, on
+          this same screen — Ring skips the Presenter step entirely and goes
+          straight from here to generation, so this is the only place every
+          jewellery type is guaranteed to pass through. Drives presenter
+          selection automatically; no separate presenter-picker step is added
+          for it. */}
+      <section className={styles.generationPlan}>
+        <h3 className={styles.generationPlanTitle}>Customer Category</h3>
+        {analysis && (
+          <div className={styles.attrCard}>
+            <p className={styles.attrLabel}>AI-Suggested Customer Category</p>
+            <p className={styles.attrValue}>{formatCustomerCategory(analysis.customerCategory)}</p>
+            <span className={styles.confidence}>Confidence: {pct(analysis.customerCategoryConfidence)}</span>
+          </div>
+        )}
+
+        <div className={styles.categoryActions}>
+          <button
+            type="button"
+            className={sharedStyles.button}
+            disabled={!analysis}
+            onClick={() => analysis && confirmAudienceWith(analysis.customerCategory)}
+          >
+            Use Suggested Category
+          </button>
+          <button
+            type="button"
+            className={sharedStyles.button}
+            onClick={() => {
+              onCustomerCategoryConfirmedChange(false);
+              setIsPickingAudience((v) => !v);
+            }}
+          >
+            Select Another Category
+          </button>
+        </div>
+
+        {isPickingAudience && (
+          <div className={styles.categoryGrid}>
+            {CUSTOMER_CATEGORIES.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={customerCategory === c ? styles.categoryCardSelected : styles.categoryCard}
+                onClick={() => confirmAudienceWith(c)}
+              >
+                {formatCustomerCategory(c)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {customerCategoryConfirmed && customerCategory && (
+          <p className={styles.confirmedNotice}>
+            ✓ Confirmed customer category: <strong>{formatCustomerCategory(customerCategory)}</strong>
+            {presenterSummary && ` — ${presenterSummary}`}
+          </p>
+        )}
+      </section>
+
+      <section className={styles.generationPlan}>
+        <h3 className={styles.generationPlanTitle}>Generation Plan</h3>
+        <Toggle
+          checked={generateRoseGold}
+          onChange={onGenerateRoseGoldChange}
+          label="Generate Rose Gold"
+          helperText="Off: 6 Yellow Gold images. On: 3 Yellow Gold + the same views in Rose Gold. Always 6 images."
+        />
+        <GenerationSummary
+          generateRoseGold={generateRoseGold}
+          customerCategory={customerCategory}
+          jewelleryType={jewelleryType}
+          hasPresenter={false}
+          references={references}
+        />
+        {generationSummary && <p className={styles.confirmedNotice}>{generationSummary}</p>}
+      </section>
+
+      <section className={styles.generationPlan}>
+        <Toggle
+          checked={includeProductSizeImage}
+          onChange={onIncludeProductSizeImageChange}
+          label="Include Product Size Image"
+          helperText="Generate a size-guide image using the product's actual measurements."
+        />
+      </section>
+    </div>
+  );
+}

@@ -1,0 +1,248 @@
+/* Banner + both product rows share this one outer surface — no separate
+   card/container for the product area (plan: "must feel like one
+   continuous collection section"). Banner stays edge-to-edge inside
+   .showcase; the product grid and View All are inset from it via
+   .productArea's own horizontal padding (see below). */
+.showcase {
+  width: calc(100% - 32px);
+  max-width: none;
+  margin: 16px auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid #e7d8c8;
+  border-radius: 16px;
+  background: var(--color-white);
+  box-shadow: 0 4px 18px rgba(65, 43, 24, 0.05);
+}
+
+.banner {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+  aspect-ratio: 3.2 / 1;
+  min-height: 320px;
+  max-height: 380px;
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
+
+.banner:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
+.banner picture {
+  display: block;
+  width: 100%;
+}
+
+.bannerImg {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  /* contain (not cover) so an uploaded banner is never cropped regardless of
+     its real aspect ratio — any letterbox strip blends into the showcase's
+     own background (matches .showcase's background exactly) instead of
+     showing as a bare gap. */
+  object-fit: contain;
+  background: var(--color-white);
+  transition: transform 0.4s ease;
+}
+
+.banner:hover .bannerImg {
+  transform: scale(1.03);
+}
+
+/* Desktop no longer darkens the left side (removed on request) — mobile
+   still gets its own bottom-up scrim below, since the text sits over the
+   image there too and needs the contrast. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: none;
+}
+
+.bannerCopy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  max-width: 480px;
+  padding: 0 var(--space-8);
+  color: #fff;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.description {
+  margin: 0;
+  max-width: 420px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  opacity: 0.92;
+}
+
+/* Banner stays edge-to-edge; only the product area (grid + actions) gets
+   horizontal padding, so cards sit inset from the collection's left/right
+   edges instead of flush against them. */
+.productArea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px 16px;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 18px 0 0;
+}
+
+.viewAllButton {
+  min-height: 36px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-burgundy);
+  background: var(--color-surface);
+  color: var(--color-burgundy);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.viewAllButton:hover {
+  background: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+.viewAllButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.productGrid {
+  display: grid;
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.empty {
+  margin: 0;
+  padding: 24px 0 8px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+/* Tablet (768-1199px) */
+@media (max-width: 1199px) and (min-width: 768px) {
+  .productGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1199px) {
+  .showcase {
+    width: calc(100% - 24px);
+  }
+
+  .productArea {
+    padding-inline: 14px;
+  }
+
+  .productGrid {
+    gap: 12px;
+  }
+}
+
+/* Mobile (<768px) */
+@media (max-width: 767px) {
+  .banner {
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    max-height: none;
+  }
+
+  /* Landscape 4:3 crops some edge content on some banners, unlike the
+     desktop `contain` fit — cover is the deliberate trade-off here so the
+     shorter mobile banner still fills its box edge-to-edge instead of
+     letterboxing. */
+  .bannerImg {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .scrim {
+    background: linear-gradient(180deg, rgba(20, 16, 12, 0) 40%, rgba(20, 16, 12, 0.68) 100%);
+  }
+
+  .bannerCopy {
+    justify-content: flex-end;
+    max-width: none;
+    padding: 0 20px 26px;
+  }
+
+  .description {
+    max-width: none;
+  }
+
+  .productArea {
+    padding: 10px 12px 14px;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* 2 columns x 4 rows = 8 shown; the rest of the fetched 15 stay in the
+     DOM (unmodified indexing for ProductCard/analytics) but hidden here. */
+  .productGrid > *:nth-child(n + 9) {
+    display: none;
+  }
+}
+
+/* Tighter tier below 640px — matches Shop by Category's own mobile pass
+   exactly (4px outer margin + 6px inner padding, 4px column-gap / 10px
+   row-gap), so both full-width homepage product sections read consistently
+   on narrow phones. Card chrome itself (background/border/shadow/radius,
+   image fill, smaller name/price type, hidden Out of Stock tag) comes from
+   ProductCard's own `flat` prop + its matching <640px rules — nothing
+   further to duplicate here. Supersedes the old <=359px-only width tweak,
+   which is now folded into this one flat sub-640 tier. */
+@media (max-width: 639px) {
+  .showcase {
+    width: calc(100% - 8px);
+  }
+
+  .productArea {
+    padding: 10px 6px 14px;
+  }
+
+  .productGrid {
+    column-gap: 4px;
+    row-gap: 10px;
+  }
+}

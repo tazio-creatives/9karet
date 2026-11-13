@@ -1,0 +1,50 @@
+.page {
+  /* Homepage background forced to plain white — overrides the site-wide
+     cream body background (tokens.css --color-bg) for this page only,
+     everywhere a section doesn't already paint its own surface (the
+     default, non-"alt" HomepageSection.module.css sections, and the gaps
+     around full-bleed custom sections like CategoryShowcase/
+     CollectionProductShowcase/DuoBanner, which render with no sectionClass
+     at all). */
+  background: var(--color-white);
+  /* Cancels the footer's site-wide top margin on the homepage only, so the
+     gap above the footer is just the last section's own padding plus this
+     (about 48px desktop / 40px phone, was ~128px), all in white. */
+  margin-bottom: calc(-1 * var(--space-12));
+  padding-bottom: var(--space-4);
+}
+
+.skeleton {
+  background: var(--color-white);
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.skeletonBlock {
+  composes: shimmer from '../styles/skeleton.module.css';
+  height: 280px;
+  border-radius: var(--radius-md);
+}
+
+.error {
+  background: var(--color-white);
+  text-align: center;
+  padding: var(--space-10);
+  color: var(--color-text-muted);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
