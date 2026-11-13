@@ -89,6 +89,8 @@ function pairReview(check = {}, base = {}) {
       duplicatedPairDetected: false,
       splitRailDetected: false,
       goldColourCorrect: true,
+      ringsPerBangleInReference: 1,
+      separateRingCount: 2,
       ...check,
     },
   };
@@ -187,18 +189,29 @@ describe('Two-bangle set prompts', () => {
     assert.match(macro.finalPrompt, /must never display four loops or two duplicated pairs/);
   });
 
-  test('4. Elevated Detail enforces a clean yellow gold (and only Elevated Detail)', () => {
+  test('4. every pair image asks for rich polished gold (design from the reference, not its dull colour); Elevated Detail adds the clean-yellow check', () => {
     for (const job of allPairJobs()) {
+      for (const p of job) {
+        assert.match(p.finalPrompt, /rich, warm, premium yellow gold with a high mirror polish/, p.assetType);
+        assert.match(p.finalPrompt, /never pale lemon, butter-yellow, greenish, beige, orange, copper, brown, black or burnt/, p.assetType);
+        assert.match(p.finalPrompt, /take only the design from it — not its dull colour or lighting/, p.assetType);
+      }
       for (const p of catalogue(job)) {
-        const gold = /clean, bright, neutral yellow gold that matches the reference — never pale beige, orange, copper, black or burnt/;
+        const elevated = /Elevated Detail gold: this image is checked for clean, bright, neutral yellow gold — never pale beige, orange, copper, black or burnt/;
         if (SHOT[p.assetType] === 3) {
-          assert.match(p.finalPrompt, gold, p.assetType);
-          assert.match(p.finalPrompt, /realistic, polished highlights without washing out the design/, p.assetType);
+          assert.match(p.finalPrompt, elevated, p.assetType);
+          assert.match(p.finalPrompt, /realistic, polished highlights that never wash out the design/, p.assetType);
           assert.equal(p.metalColor, 'YELLOW');
         } else {
-          assert.doesNotMatch(p.finalPrompt, gold, p.assetType);
+          assert.doesNotMatch(p.finalPrompt, elevated, p.assetType);
         }
       }
+    }
+    // Image 2 spells the ring count out position by position.
+    for (const p of catalogue(bangleJob(PAIR))) {
+      const ringCount = /the left position holds exactly ONE single bangle ring and the right position holds exactly ONE single bangle ring/;
+      if (SHOT[p.assetType] === 2) assert.match(p.finalPrompt, ringCount);
+      else assert.doesNotMatch(p.finalPrompt, ringCount, p.assetType);
     }
     // Validation: wrong gold fails Elevated Detail only.
     assert.ok(failedWith(rule('YELLOW_ELEVATED_DETAIL', { ...CATALOGUE_OK[3], goldColourCorrect: false }), M.goldColour));
@@ -256,6 +269,15 @@ describe('Two-bangle set validation', () => {
     assert.ok(failedWith(rule('PRESENTER_YELLOW_2', { ...WORN_OK, physicalBangleCount: 4 }), M.pairFourGenerated));
     assert.equal(banglePairCountMessage(3), 'Expected exactly two physical bangles, but three were generated.');
     assert.equal(banglePairCountMessage(1), 'Expected exactly two physical bangles, but only one was generated.');
+  });
+
+  test('four literal rings fail even when the reviewer called them two bangles (local job f1356633, Image 2)', () => {
+    const doubled = rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], physicalBangleCount: 2, separateRingCount: 4, ringsPerBangleInReference: 1 });
+    assert.ok(failedWith(doubled, M.pairFourGenerated));
+    // A genuinely two-rail design: 4 rings = 2 bangles, passes.
+    assert.equal(rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], separateRingCount: 4, ringsPerBangleInReference: 2 }).validationStatus, 'passed');
+    assert.ok(failedWith(rule('PRESENTER_YELLOW_1', { ...WORN_OK, separateRingCount: 4 }), M.pairFourGenerated));
+    assert.ok(failedWith(rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], separateRingCount: 1 }), 'Expected exactly two physical bangles, but only one was generated.'));
   });
 
   test('a split multi-rail design fails', () => {
@@ -342,7 +364,7 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       assert.equal(calls.length, 1);
       assert.equal(calls[0].body.response_format.json_schema.name, kinds[shot]);
       const props = calls[0].body.response_format.json_schema.schema.properties.bangleCheck.properties;
-      for (const f of ['physicalBangleCount', 'leftWristBangleCount', 'rightWristBangleCount', 'duplicatedPairDetected', 'splitRailDetected', 'goldColourCorrect']) {
+      for (const f of ['physicalBangleCount', 'leftWristBangleCount', 'rightWristBangleCount', 'duplicatedPairDetected', 'splitRailDetected', 'goldColourCorrect', 'ringsPerBangleInReference', 'separateRingCount']) {
         assert.ok(props[f], `${f} on shot ${shot}`);
       }
       assert.equal(result.validationStatus, 'passed', `shot ${shot}`);

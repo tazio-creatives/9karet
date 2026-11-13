@@ -1357,9 +1357,20 @@ const BANGLE_PAIR_PHYSICAL_COUNT =
 const BANGLE_PAIR_NO_DUPLICATED_PAIR =
   'Do not draw either bangle as two bands or a doubled ring, and do not show two duplicated pairs, four loops or four rings.';
 
-// Image 3 (Elevated Detail) for a pair: a clean yellow gold.
+// Gold for every pair image. References are often dull 3D renders or poorly
+// lit photos, and "match the reference" produced flat, pale, butter-yellow
+// gold — so the design comes from the reference, the gold finish does not.
+const BANGLE_PAIR_GOLD =
+  'Gold colour and finish (every image of this set): render both bangles in a rich, warm, premium yellow gold with a high mirror polish — bright, crisp specular highlights along the edges and motifs, and deeper warm-gold reflections that give real depth and contrast, as in a professional jewellery photograph. Never flat, matte, dull or plastic-looking, and never pale lemon, butter-yellow, greenish, beige, orange, copper, brown, black or burnt in any area. If the reference is a dull 3D render or a poorly lit photo, take only the design from it — not its dull colour or lighting. Keep the highlights controlled so every motif, edge and stone stays sharp and readable.';
+
+// Image 3 (Elevated Detail) for a pair: the gold check is enforced here.
 const BANGLE_PAIR_ELEVATED_GOLD =
-  'Yellow-gold colour for this image: render both bangles in a clean, bright, neutral yellow gold that matches the reference — never pale beige, orange, copper, black or burnt in any area. Keep realistic, polished highlights without washing out the design, so every motif, edge and stone stays readable.';
+  'Elevated Detail gold: this image is checked for clean, bright, neutral yellow gold — never pale beige, orange, copper, black or burnt in any area — with realistic, polished highlights that never wash out the design.';
+
+// Image 2 for a pair: the upright side-by-side view was still drawn as two
+// doubled bangles, so the ring count is spelled out position by position.
+const BANGLE_PAIR_UPRIGHT_RING_COUNT =
+  'Ring count for this image: the left position holds exactly ONE single bangle ring and the right position holds exactly ONE single bangle ring — two rings in the whole image. No second ring stands directly behind, beside or inside either bangle. The far side of the same bangle seen through its own opening is part of that bangle, not a second one.';
 
 // Bangle catalogue sections: the fixed shot replaces the generic view
 // composition, its view-specific negatives and the old shared layout note.
@@ -1384,7 +1395,15 @@ function bangleCatalogueSectionsFor(assetType, bangleQuantity) {
   }
   return {
     composition: `${CATALOGUE_SIZE_NOTE} ${shot.title}`,
-    placement: [placement, BANGLE_PAIR_PHYSICAL_COUNT, shotNumber === 3 ? BANGLE_PAIR_ELEVATED_GOLD : null].filter(Boolean).join(' '),
+    placement: [
+      placement,
+      BANGLE_PAIR_PHYSICAL_COUNT,
+      shotNumber === 2 ? BANGLE_PAIR_UPRIGHT_RING_COUNT : null,
+      BANGLE_PAIR_GOLD,
+      shotNumber === 3 ? BANGLE_PAIR_ELEVATED_GOLD : null,
+    ]
+      .filter(Boolean)
+      .join(' '),
     negatives: shotNumber === 1 ? negatives : [...negatives, BANGLE_PAIR_NO_DUPLICATED_PAIR],
   };
 }
@@ -1395,7 +1414,10 @@ function banglePresenterRulesFor(assetType, bangleQuantity) {
   const key = bangleKey(bangleQuantity);
   if (key === 'TWO_BANGLE_SET') {
     const pose = BANGLE_PAIR_PRESENTER_POSE[assetType === 'PRESENTER_YELLOW_2' ? 2 : 1];
-    return { placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT}`, negatives: [BANGLE_PAIR_OTHER_JEWELLERY] };
+    return {
+      placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT} ${BANGLE_PAIR_GOLD}`,
+      negatives: [BANGLE_PAIR_OTHER_JEWELLERY],
+    };
   }
   const pose = assetType === 'PRESENTER_YELLOW_2' ? BANGLE_PRESENTER_POSE_2[key] : BANGLE_PRESENTER_POSE_1;
   return {
@@ -2253,6 +2275,10 @@ const BANGLE_PAIR_CHECK_FIELDS = {
   duplicatedPairDetected: z.boolean(),
   splitRailDetected: z.boolean(),
   goldColourCorrect: z.boolean(),
+  // Literal ring counting: the reviewer counted a doubled pair as "one
+  // bangle", so it also reports raw rings against the reference's rings.
+  ringsPerBangleInReference: z.number().int().min(0),
+  separateRingCount: z.number().int().min(0),
 };
 const BanglePairValidationSchema = ValidationSchema.extend({
   bangleCheck: BangleCheckSchema.extend(BANGLE_PAIR_CHECK_FIELDS),
@@ -2262,7 +2288,7 @@ const BanglePairUprightValidationSchema = ValidationSchema.extend({
 });
 
 const BANGLE_PAIR_COUNT_VALIDATION =
-  " Two-bangle set physical count — count physical jewellery objects, not rails or decorative borders. First work out from the ORIGINAL reference what ONE bangle looks like: the reference shows exactly two bangles, often stacked or touching, so each bangle is one of the two pieces in it — if the reference shows two bands, each bangle is ONE single band; only when each of the two reference pieces itself has several joined rails does one bangle have several rails. Then, in the GENERATED image, physicalBangleCount = the number of separate pieces that each match one reference bangle: where the reference bangle is a single band, every separate band or closed ring counts as one bangle, so two bands stacked together on one wrist, or drawn side by side as one unit, count as TWO; a genuinely multi-rail reference piece counts once. Reflections, shadows and background objects are not bangles. Set bangleCount to the same number as physicalBangleCount. leftWristBangleCount and rightWristBangleCount = for a worn shot, the number of bangles counted this way on the presenter's left wrist and on the right wrist (0 and 0 for a product-only shot, or for a wrist that is not visible). duplicatedPairDetected = true if either bangle has been doubled — drawn as two bands or rings where the reference bangle is one band — so the image shows two pairs, four loops or four rings. splitRailDetected = true only if one genuinely multi-rail reference piece has been split into separate bangles. Two separate single-band bangles placed apart, as in the reference, are correct: never report them as one stacked or merged bangle. goldColourCorrect = false if any bangle's gold looks pale beige, orange, copper, black or burnt, or does not match the requested gold colour and the reference.";
+  " Two-bangle set physical count — count physical jewellery objects, not rails or decorative borders. First work out from the ORIGINAL reference what ONE bangle looks like: the reference shows exactly two bangles, often stacked or touching, so each bangle is one of the two pieces in it — if the reference shows two bands, each bangle is ONE single band; only when each of the two reference pieces itself has several joined rails does one bangle have several rails. Then, in the GENERATED image, physicalBangleCount = the number of separate pieces that each match one reference bangle: where the reference bangle is a single band, every separate band or closed ring counts as one bangle, so two bands stacked together on one wrist, or drawn side by side as one unit, count as TWO; a genuinely multi-rail reference piece counts once. Reflections, shadows and background objects are not bangles. Set bangleCount to the same number as physicalBangleCount. leftWristBangleCount and rightWristBangleCount = for a worn shot, the number of bangles counted this way on the presenter's left wrist and on the right wrist (0 and 0 for a product-only shot, or for a wrist that is not visible). duplicatedPairDetected = true if either bangle has been doubled — drawn as two bands or rings where the reference bangle is one band — so the image shows two pairs, four loops or four rings. splitRailDetected = true only if one genuinely multi-rail reference piece has been split into separate bangles. Two separate single-band bangles placed apart, as in the reference, are correct: never report them as one stacked or merged bangle. Ring count, counted literally: ringsPerBangleInReference = the number of separate metal rings that ONE reference bangle has (1 for a single band — the usual case — even when the reference shows the two bangles stacked together); separateRingCount = the number of separate closed metal rings visible in the GENERATED image, counting every ring on its own even when two rings stand or sit right next to each other, but not counting the far side of one bangle seen through its own opening, reflections or shadows. goldColourCorrect = false if any bangle's gold looks pale beige, orange, copper, black or burnt, or does not match the requested gold colour and the reference.";
 
 // Response schema for a Bangle validation call: [schema, name].
 function bangleValidationSchemaFor(assetType, bangleQuantity) {
@@ -2337,6 +2363,13 @@ function banglePairCountFailures(check, { worn, shot }) {
   const failures = [];
   const physical = check.physicalBangleCount;
   if (Number.isInteger(physical) && physical !== 2) failures.push(banglePairCountMessage(physical));
+  // Literal rings: e.g. 4 rings where one reference bangle has 1 ring = four bangles.
+  const perBangle = check.ringsPerBangleInReference;
+  const rings = check.separateRingCount;
+  if (Number.isInteger(perBangle) && perBangle > 0 && Number.isInteger(rings) && rings !== 2 * perBangle) {
+    const bangles = Math.round(rings / perBangle);
+    failures.push(bangles === 2 ? M.countMismatch : banglePairCountMessage(bangles));
+  }
   if (check.duplicatedPairDetected) failures.push(M.pairFourGenerated);
   if (check.splitRailDetected) failures.push(M.splitRail);
   if (worn) {
