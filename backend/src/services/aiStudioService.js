@@ -1161,7 +1161,7 @@ const BANGLE_CATALOGUE_SHOTS = {
     arrangement: {
       SINGLE_BANGLE: 'Show exactly one complete bangle, placed centrally in a clean front-facing orientation.',
       TWO_BANGLE_SET:
-        'Show exactly two complete bangles arranged in two clean horizontal rows — one above and one below — with a visible, even white gap between them. Keep both at a matching scale and the same front-facing orientation. They must not overlap, touch or stack.',
+        'Show exactly two complete bangles — two physical objects in total — arranged in two clean horizontal rows: one bangle above and one bangle below, with a visible, even white gap between them. Keep both at a matching scale and the same front-facing orientation. They must not overlap, touch or stack.',
       UNKNOWN:
         'Show the same number of complete bangles as the reference, centred and front-facing; if there is more than one, arrange them in clean horizontal rows with an even white gap, not overlapping, touching or stacked.',
     },
@@ -1176,7 +1176,7 @@ const BANGLE_CATALOGUE_SHOTS = {
       SINGLE_BANGLE:
         'Show exactly one complete bangle standing vertically on its lower edge at the 30–40 degree three-quarter angle, with its complete outline inside the frame. The opening appears naturally oval because of perspective.',
       TWO_BANGLE_SET:
-        'Show exactly two complete bangles, each standing upright on its own lower edge: the first slightly toward the left foreground and the second slightly toward the right background, each at a slightly different three-quarter rotation so the two forms are distinguishable. Keep a visible white gap between them. They must not overlap, touch, interlock, stack or sit one inside the other. Both bangles keep the exact reference design and stay equally identifiable.',
+        'Show exactly two upright bangles in total, each standing on its own lower edge: one bangle on the left, slightly toward the foreground, and one bangle on the right, slightly toward the background, each at a slightly different three-quarter rotation so the two forms are distinguishable. Each position holds one single bangle — do not turn either bangle into a pair. Keep a visible white gap between them and keep both fully visible. They must not overlap, touch, interlock, stack or sit one inside the other. Both bangles keep the exact reference design and stay equally identifiable.',
       UNKNOWN:
         'Show the same number of complete bangles as the reference, each standing upright on its own lower edge at the 30–40 degree three-quarter angle; if there is more than one, place them slightly left-foreground and right-background with a visible white gap, not overlapping, touching, interlocking or stacked.',
     },
@@ -1193,7 +1193,7 @@ const BANGLE_CATALOGUE_SHOTS = {
       SINGLE_BANGLE:
         'Show exactly one complete bangle in a low profile view, keeping its structure readable without flattening it.',
       TWO_BANGLE_SET:
-        'Show exactly two complete bangles: one toward the left foreground and the second toward the right background, using depth to distinguish foreground from background, with visible separation between them. They must not overlap, touch, stack or merge, and both must stay complete and readable.',
+        'Show exactly two complete bangles in total: one bangle in the left foreground and one bangle in the right background, using depth to distinguish foreground from background, with clear white space between them. They must not stack, touch, overlap or merge, neither position may hold a duplicated pair, and both must stay complete and readable.',
       UNKNOWN:
         'Show the same number of complete bangles as the reference in a low profile view; if there is more than one, place them at different depths (left foreground, right background) with visible separation, not overlapping, touching or stacked.',
     },
@@ -1208,7 +1208,7 @@ const BANGLE_CATALOGUE_SHOTS = {
       SINGLE_BANGLE:
         'Show exactly one complete bangle standing upright on its lower edge, slightly angled toward the camera so its principal motif faces the viewer, with its complete outer shape inside the frame.',
       TWO_BANGLE_SET:
-        'Show exactly two complete bangles, both standing upright: the primary bangle larger in the foreground on one side, and the second bangle upright slightly behind it on the opposite side. The primary bangle has the sharpest focus so its motif and craftsmanship are clearly visible; the second may be slightly less prominent but stays complete and recognisable — never blurred beyond recognition. Keep visible white space between them so neither hides any part of the other — they must not overlap, touch, interlock, stack or merge.',
+        'Show exactly two complete bangles in total, both standing upright: one larger primary bangle in the foreground on one side, and one smaller second bangle upright slightly behind it on the opposite side. The primary bangle has the sharpest focus so its motif and craftsmanship are clearly visible; the second may be slightly less prominent but stays complete and recognisable — never blurred beyond recognition. Keep visible pure white space between them so neither hides any part of the other — they must not overlap, touch, interlock, stack or merge, and the image must never display four loops or two duplicated pairs.',
       UNKNOWN:
         'Show the same number of complete bangles as the reference, each standing upright, in a closer three-quarter design-detail composition; if there is more than one, place the primary bangle larger in the foreground and the other slightly behind on the opposite side, all complete, recognisable and visibly separate.',
     },
@@ -1240,7 +1240,7 @@ const BANGLE_CATALOGUE_QUANTITY = {
   SINGLE_BANGLE:
     'Quantity: the uploaded reference contains exactly one bangle. Show exactly one bangle — do not create a duplicate, a decorative second bangle or any other jewellery.',
   TWO_BANGLE_SET:
-    'Quantity: the uploaded reference is a set of exactly two bangles. Show exactly two complete, separate bangles in this image — never merge them into one object, never drop one, and never add a third bangle.',
+    'Quantity: the uploaded reference is a set of exactly two bangles. Show exactly two complete, separate physical bangles in this image — never merge them into one object, never drop one, and never add a third or fourth bangle.',
   UNKNOWN:
     'Quantity: show exactly the same number of bangles as the uploaded reference — do not add, duplicate, merge or drop any bangle.',
 };
@@ -1268,11 +1268,11 @@ function banglePairPresenterComposition(template) {
 }
 
 const BANGLE_PAIR_PRESENTER_RULE =
-  "Two-bangle set rule (mandatory): show exactly the two bangles from the reference set. Show both the presenter's left wrist and right wrist clearly, with exactly one bangle on the left wrist and exactly one bangle on the right wrist. Never place both bangles on the same wrist, never stack the pair, do not add a third bangle, do not remove either bangle, and do not merge the two designs into one. Both wrists, both hands and both bangles must be clearly distinguishable. Each hand passes naturally through its own bangle's opening, and each bangle sits naturally around its own wrist joint — never floating, cutting into the skin, looking pasted on or glued to the arm. The product reference shows both bangles together only to identify the complete set — do not copy that arrangement onto one wrist. The presenter reference photo defines the presenter's identity only — do not copy its original arm or hand position. Preserve the exact design of each bangle on its assigned wrist.";
+  "Two-bangle set rule (mandatory): show exactly the two bangles from the reference set. Show both the presenter's left wrist and right wrist clearly, with exactly one bangle on the left wrist and exactly one bangle on the right wrist. Never place both bangles on the same wrist, never stack the pair, do not add a third bangle, do not remove either bangle, and do not merge the two designs into one. Both wrists, both hands and both bangles must be clearly distinguishable. Each hand passes naturally through its own bangle's opening, and each bangle sits naturally around its own wrist joint — never floating, cutting into the skin, looking pasted on or glued to the arm. The product reference shows both bangles together only to identify the complete set — do not copy that arrangement onto one wrist. The presenter reference photo defines the presenter's identity only — do not copy its original arm or hand position. Preserve the exact design of each bangle on its assigned wrist. Exactly two bangles appear in the whole image: one on the left wrist and one on the right wrist. Keep the two wrists physically separated — neither hand may cover the other wrist or its bangle — and do not add bracelets, watches, rings or any other jewellery.";
 
 const BANGLE_PAIR_PRESENTER_POSE = {
   1: 'Presenter Image 1 — two-wrist product-focused pose: a close, product-focused portrait composition showing both forearms, both hands and both wrists. Keep the left and right wrists physically separated — do not cross the wrists, do not place one wrist directly behind the other, and do not let either hand touch or cover the face. One bangle on the left wrist and one on the right wrist, with both wrists angled toward the camera so both bangles are equally clear and are the visual focus. The face may remain visible but must not dominate the jewellery.',
-  2: 'Presenter Image 2 — alternate asymmetrical two-wrist pose: a genuinely different pose from Presenter Image 1, showing both forearms, hands and wrists clearly. Keep one wrist slightly higher and the other slightly lower in an open, asymmetrical composition, with visible space between the wrists. Do not cross the arms in a way that hides either bangle, and do not place both bangles on one wrist — keep one bangle on each wrist, both equally visible and in focus.',
+  2: 'Presenter Image 2 — alternate asymmetrical two-wrist pose: a clearly different pose from Presenter Image 1, showing both hands, both wrists and both forearms clearly. Hold one wrist slightly higher and the other slightly lower in an open, asymmetrical composition, with both wrists facing the camera and visible space between them. Exactly one bangle on the left wrist and exactly one bangle on the right wrist, both equally visible and in focus. Do not cross the arms or wrists, do not hold one wrist with the other hand, do not let one hand cover the other wrist or its bangle, and never place both bangles on one wrist.',
 };
 
 const BANGLE_PAIR_OTHER_JEWELLERY =
@@ -1343,6 +1343,20 @@ function bangleSingleShotFor(assetType, bangleQuantity) {
   return bangleKey(bangleQuantity) === 'SINGLE_BANGLE' ? (BANGLE_SINGLE_SHOTS[bangleCatalogueShotFor(assetType)] ?? null) : null;
 }
 
+// Two-bangle set only. The pair was sometimes generated as two pairs (four
+// physical bangles) on Images 2–4, or with both bangles on one wrist in the
+// alternate presenter pose. These rules count physical objects — a bangle's
+// own rails, borders and bands never make it two bangles.
+const BANGLE_PAIR_PHYSICAL_COUNT =
+  'Physical-item count (mandatory): the uploaded reference is exactly TWO physical bangle objects, and this image must contain exactly two physical bangles in total — no more and no fewer. A bangle may have several rails, borders, edges, grooves, rows or decorative bands as part of its one design; these all belong to that single bangle and must never be counted or separated as additional bangles. Keep each bangle as one complete physical object. Never generate two copies of either bangle, never show two pairs, four loops or four physical objects, never split a double-rail design into two separate bangles, and never create extra bangles through reflections, shadows or background objects.';
+
+const BANGLE_PAIR_NO_DUPLICATED_PAIR =
+  'Do not show two duplicated pairs, four loops or four physical bangles, and do not turn either bangle into a pair of bangles.';
+
+// Image 3 (Elevated Detail) for a pair: a clean yellow gold.
+const BANGLE_PAIR_ELEVATED_GOLD =
+  'Yellow-gold colour for this image: render both bangles in a clean, bright, neutral yellow gold that matches the reference — never pale beige, orange, copper, black or burnt in any area. Keep realistic, polished highlights without washing out the design, so every motif, edge and stone stays readable.';
+
 // Bangle catalogue sections: the fixed shot replaces the generic view
 // composition, its view-specific negatives and the old shared layout note.
 function bangleCatalogueSectionsFor(assetType, bangleQuantity) {
@@ -1355,14 +1369,19 @@ function bangleCatalogueSectionsFor(assetType, bangleQuantity) {
       negatives: [BANGLE_CATALOGUE_PLAIN, ...single.negatives, BANGLE_CATALOGUE_QUANTITY[key]],
     };
   }
-  const shot = BANGLE_CATALOGUE_SHOTS[bangleCatalogueShotFor(assetType)];
+  const shotNumber = bangleCatalogueShotFor(assetType);
+  const shot = BANGLE_CATALOGUE_SHOTS[shotNumber];
   const placement = shot.upright
     ? `${shot.composition} ${shot.arrangement[key]} ${BANGLE_UPRIGHT_DIVERSITY} ${BANGLE_REFERENCE_VIEWPOINT_NOTE} ${BANGLE_POSITION_ONLY_NOTE} ${BANGLE_UPRIGHT_BACKGROUND}`
     : `${shot.composition} ${shot.arrangement[key]} ${BANGLE_CATALOGUE_DIVERSITY} ${BANGLE_REFERENCE_VIEWPOINT_NOTE}`;
+  const negatives = [BANGLE_CATALOGUE_PLAIN, ...shot.negatives, BANGLE_CATALOGUE_QUANTITY[key]];
+  if (key !== 'TWO_BANGLE_SET') {
+    return { composition: `${CATALOGUE_SIZE_NOTE} ${shot.title}`, placement, negatives };
+  }
   return {
     composition: `${CATALOGUE_SIZE_NOTE} ${shot.title}`,
-    placement,
-    negatives: [BANGLE_CATALOGUE_PLAIN, ...shot.negatives, BANGLE_CATALOGUE_QUANTITY[key]],
+    placement: [placement, BANGLE_PAIR_PHYSICAL_COUNT, shotNumber === 3 ? BANGLE_PAIR_ELEVATED_GOLD : null].filter(Boolean).join(' '),
+    negatives: shotNumber === 1 ? negatives : [...negatives, BANGLE_PAIR_NO_DUPLICATED_PAIR],
   };
 }
 
@@ -1372,7 +1391,7 @@ function banglePresenterRulesFor(assetType, bangleQuantity) {
   const key = bangleKey(bangleQuantity);
   if (key === 'TWO_BANGLE_SET') {
     const pose = BANGLE_PAIR_PRESENTER_POSE[assetType === 'PRESENTER_YELLOW_2' ? 2 : 1];
-    return { placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose}`, negatives: [BANGLE_PAIR_OTHER_JEWELLERY] };
+    return { placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT}`, negatives: [BANGLE_PAIR_OTHER_JEWELLERY] };
   }
   const pose = assetType === 'PRESENTER_YELLOW_2' ? BANGLE_PRESENTER_POSE_2[key] : BANGLE_PRESENTER_POSE_1;
   return {
@@ -2220,6 +2239,40 @@ const BANGLE_SINGLE_DETAIL_REQUIRED = {
   4: ' Required shot for this image: MACRO_CLOSE_UP. For this macro image the band leaving the frame is intentional: count the one partly visible bangle as bangleCount = 1, and set requiredBangleHiddenOrCropped = false unless the decorated section itself is cut off or hidden. Set shapeAndDesignMatchReference = false if the visible stones, settings, spacing or motifs differ from the matching section of the reference.',
 };
 
+// Two-bangle set only: physical-object counts on every image (catalogue and
+// worn), in pair-only schemas so single-bangle and unknown-quantity jobs keep
+// exactly the schemas and text they had before.
+const BANGLE_PAIR_CHECK_FIELDS = {
+  physicalBangleCount: z.number().int().min(0),
+  leftWristBangleCount: z.number().int().min(0),
+  rightWristBangleCount: z.number().int().min(0),
+  duplicatedPairDetected: z.boolean(),
+  splitRailDetected: z.boolean(),
+  goldColourCorrect: z.boolean(),
+};
+const BanglePairValidationSchema = ValidationSchema.extend({
+  bangleCheck: BangleCheckSchema.extend(BANGLE_PAIR_CHECK_FIELDS),
+});
+const BanglePairUprightValidationSchema = ValidationSchema.extend({
+  bangleCheck: BangleUprightCheckSchema.extend(BANGLE_PAIR_CHECK_FIELDS),
+});
+
+const BANGLE_PAIR_COUNT_VALIDATION =
+  " Two-bangle set physical count — count physical jewellery objects, not rails or decorative borders. physicalBangleCount = the number of separate physical bangle objects in the whole image: a bangle with several rails, borders, edges, grooves, rows or decorative bands is ONE object, and reflections, shadows and background objects are not bangles. leftWristBangleCount and rightWristBangleCount = for a worn shot, the number of bangles on the presenter's left wrist and on the right wrist (0 and 0 for a product-only shot, or for a wrist that is not visible). duplicatedPairDetected = true if either bangle has been duplicated into a pair, so the image shows two pairs, four loops or four physical bangles. splitRailDetected = true if one multi-rail bangle design has been split into separate bangles. goldColourCorrect = false if any bangle's gold looks pale beige, orange, copper, black or burnt, or does not match the requested gold colour and the reference.";
+
+// Response schema for a Bangle validation call: [schema, name].
+function bangleValidationSchemaFor(assetType, bangleQuantity) {
+  const kind = bangleCheckKindFor(assetType, bangleQuantity);
+  if (bangleKey(bangleQuantity) === 'TWO_BANGLE_SET') {
+    return kind === 'upright'
+      ? [BanglePairUprightValidationSchema, 'generation_validation_bangle_pair_upright']
+      : [BanglePairValidationSchema, 'generation_validation_bangle_pair'];
+  }
+  if (kind === 'singleDetail') return [BangleSingleDetailValidationSchema, 'generation_validation_bangle_single_detail'];
+  if (kind === 'upright') return [BangleUprightValidationSchema, 'generation_validation_bangle_upright'];
+  return [BangleValidationSchema, 'generation_validation_bangle'];
+}
+
 export function bangleValidationContextFor(confirmedType, bangleQuantity, assetType) {
   if (confirmedType !== 'BANGLE') return '';
   const shot = assetType ? bangleCatalogueShotFor(assetType) : null;
@@ -2233,7 +2286,8 @@ export function bangleValidationContextFor(confirmedType, bangleQuantity, assetT
     : assetType
       ? BANGLE_WORN_SHOT_VALIDATION
       : '';
-  return `${BANGLE_VALIDATION_COMMON}${BANGLE_VALIDATION_QUANTITY[bangleKey(bangleQuantity)]}${shotText}`;
+  const pairText = bangleKey(bangleQuantity) === 'TWO_BANGLE_SET' && assetType ? BANGLE_PAIR_COUNT_VALIDATION : '';
+  return `${BANGLE_VALIDATION_COMMON}${BANGLE_VALIDATION_QUANTITY[bangleKey(bangleQuantity)]}${shotText}${pairText}`;
 }
 
 export const BANGLE_VALIDATION_MESSAGES = {
@@ -2259,7 +2313,39 @@ export const BANGLE_VALIDATION_MESSAGES = {
   notCloser: 'The composition does not provide a visibly closer design view.',
   background: 'The background is not pure white (#FFFFFF) or contains fabric, texture or a tinted tone.',
   macroNotClose: 'The macro image shows the complete bangle instead of a close-up of its decorated section.',
+  pairFourGenerated: 'Expected exactly two physical bangles, but four were generated.',
+  splitRail: 'A multi-rail bangle design was incorrectly split into separate bangles.',
+  goldColour: 'The yellow-gold colour does not match the reference.',
 };
+
+const COUNT_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+
+// "Expected exactly two physical bangles, but four were generated."
+export function banglePairCountMessage(count) {
+  if (count === 4) return BANGLE_VALIDATION_MESSAGES.pairFourGenerated;
+  if (count === 1) return 'Expected exactly two physical bangles, but only one was generated.';
+  return `Expected exactly two physical bangles, but ${COUNT_WORDS[count] ?? count} were generated.`;
+}
+
+// Two-bangle set: failures from the physical-count fields (all six images).
+function banglePairCountFailures(check, { worn, shot }) {
+  const M = BANGLE_VALIDATION_MESSAGES;
+  const failures = [];
+  const physical = check.physicalBangleCount;
+  if (Number.isInteger(physical) && physical !== 2) failures.push(banglePairCountMessage(physical));
+  if (check.duplicatedPairDetected) failures.push(M.pairFourGenerated);
+  if (check.splitRailDetected) failures.push(M.splitRail);
+  if (worn) {
+    const left = check.leftWristBangleCount;
+    const right = check.rightWristBangleCount;
+    if (Number.isInteger(left) && Number.isInteger(right)) {
+      if ((left >= 2 && right === 0) || (right >= 2 && left === 0)) failures.push(M.sameWrist);
+      if (left !== 1 || right !== 1) failures.push(M.setOnePerWrist);
+    }
+  }
+  if (shot === 3 && check.goldColourCorrect === false) failures.push(M.goldColour);
+  return failures;
+}
 
 // Single bangle, Images 3 (top-down overhead) and 4 (macro crop).
 function bangleSingleDetailFailures(check, shot) {
@@ -2321,7 +2407,10 @@ export function applyBangleValidationRules(result, { assetType, bangleQuantity }
     if (check.bangleCount === 0) failures.push(M.expectedOneGotNone);
     if (check.requiredBangleHiddenOrCropped && !cropExpected) failures.push(M.notVisible);
   } else if (bangleQuantity === 'TWO_BANGLE_SET') {
-    if (check.bangleCount !== 2) failures.push(M.countMismatch);
+    failures.push(...banglePairCountFailures(check, { worn, shot }));
+    // The physical-count message replaces the generic one when it applies.
+    const physicalReported = Number.isInteger(check.physicalBangleCount) && check.physicalBangleCount !== 2;
+    if (check.bangleCount !== 2 && !physicalReported) failures.push(M.countMismatch);
     if (check.bangleSetMergedIntoOne) failures.push(M.merged);
     if (check.requiredBangleHiddenOrCropped) failures.push(M.notVisible);
     if (worn) {
@@ -2456,11 +2545,7 @@ export async function validateGeneratedImage({
         { role: 'user', content },
       ],
       response_format: isBangle
-        ? bangleCheckKindFor(assetType, bangleQuantity) === 'singleDetail'
-          ? zodResponseFormat(BangleSingleDetailValidationSchema, 'generation_validation_bangle_single_detail')
-          : bangleCheckKindFor(assetType, bangleQuantity) === 'upright'
-            ? zodResponseFormat(BangleUprightValidationSchema, 'generation_validation_bangle_upright')
-            : zodResponseFormat(BangleValidationSchema, 'generation_validation_bangle')
+        ? zodResponseFormat(...bangleValidationSchemaFor(assetType, bangleQuantity))
         : zodResponseFormat(ValidationSchema, 'generation_validation'),
     });
     const parsed = completion.choices[0].message.parsed;
