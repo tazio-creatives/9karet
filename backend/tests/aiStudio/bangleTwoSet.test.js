@@ -71,7 +71,7 @@ function pairReview(check = {}, base = {}) {
     validationMessages: [],
     ...base,
     bangleCheck: {
-      closedLoops: TWO_LOOPS,
+      objectsByPosition: TWO_SOLID_BANGLES,
       bangleCount: 2,
       visibleWristCount: 0,
       banglesPerVisibleWrist: [],
@@ -85,34 +85,42 @@ function pairReview(check = {}, base = {}) {
       observedArrangement: '',
       productsTouchOrOverlap: false,
       physicalBangleCount: 2,
-      closedLoopCount: 2,
+      independentClosedObjectCount: 2,
+      duplicatedPairDetected: false,
+      joinedMultiRailDesign: false,
+      innerOuterEdgesMiscounted: false,
+      referenceMetalColourMatch: true,
+      washedOutMetal: false,
+      orangeOrCopperCast: false,
+      metalDetailPreserved: true,
       leftWristBangleCount: 0,
       rightWristBangleCount: 0,
-      duplicatedPairDetected: false,
-      splitBandDetected: false,
-      visibleGapBetweenParallelLoops: false,
-      goldColourCorrect: true,
       ...check,
     },
   };
 }
-// Two solid bangles: inner and outer edges of each band are one loop.
-const TWO_LOOPS = [
-  { position: 'left', description: 'one solid band with star motifs; inner and outer edge of the same band' },
-  { position: 'right', description: 'one solid band with star motifs; inner and outer edge of the same band' },
+// Fixtures (per-position descriptions as the reviewer returns them).
+// One solid bangle whose inner and outer outline / inner wall is visible: one object.
+const SOLID_BANGLE_INNER_OUTER = [
+  { position: 'centre', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: false, description: 'outer star-studded face and plain inner wall of the same band' },
 ];
-// Regression fixture — local job 500c704c, Slight Alternate Angle: two
-// positions, two parallel loops with a visible gap at each = four bangles.
-// The reviewer reported physicalBangleCount 2 and the image passed.
-const FOUR_LOOPS_AS_TWO_POSITIONS = {
-  closedLoops: [
-    { position: 'left, front loop', description: 'star-studded band' },
-    { position: 'left, rear loop', description: 'parallel star-studded band, visible gap from the front loop' },
-    { position: 'right, front loop', description: 'star-studded band' },
-    { position: 'right, rear loop', description: 'parallel star-studded band, visible gap from the front loop' },
-  ],
-  observedArrangement: 'two upright bangles side by side',
-};
+// Two solid bangles: two objects.
+const TWO_SOLID_BANGLES = [
+  { position: 'left', separateBandsAtPosition: 1, everyBandHasItsOwnDecoratedOuterFace: true, description: 'one solid star-studded band' },
+  { position: 'right', separateBandsAtPosition: 1, everyBandHasItsOwnDecoratedOuterFace: true, description: 'one solid star-studded band' },
+];
+// Regression — Slight Alternate Angle (local jobs 500c704c, 7b8b2ad5): two
+// positions, each a duplicated parallel pair with a visible gap = four
+// objects. The reviewer reported physicalBangleCount 2.
+const TWO_DUPLICATED_PAIRS = [
+  { position: 'left', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: true, description: 'two parallel star-studded rings with a visible gap' },
+  { position: 'right', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: true, description: 'two parallel star-studded rings with a visible gap' },
+];
+// Macro (local job 7b8b2ad5): each bangle's inner wall seen through the opening.
+const TWO_BANGLES_INNER_WALLS_VISIBLE = [
+  { position: 'left, large', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: false, description: 'star-studded outer face and plain inner wall of the same band' },
+  { position: 'right, small', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: false, description: 'star-studded outer face and plain inner wall of the same band' },
+];
 const CATALOGUE_OK = {
   1: { observedShotType: 'FRONT_HORIZONTAL' },
   2: {
@@ -182,14 +190,16 @@ describe('Two-bangle set prompts', () => {
         assert.doesNotMatch(p.finalPrompt, /genuinely has stay part of that one bangle|A bangle may have several rails/, p.assetType);
       }
     }
-    // The reviewer inspects every closed loop, never positions.
+    // The reviewer counts complete physical objects, never outlines or positions.
     for (const p of bangleJob(PAIR)) {
       const text = buildValidationText({ confirmedType: 'BANGLE', metalColor: p.metalColor, assetType: p.assetType, bangleQuantity: PAIR });
-      assert.match(text, /inspect every separate closed jewellery loop in the GENERATED image; never count positions, groups or arrangements/);
-      assert.match(text, /The inner and outer edges of one solid band, and the far side of the same bangle seen through its own opening, are part of that one bangle/);
-      assert.match(text, /Two parallel closed bands separated by a visible gap are TWO physical bangles, even when they stand together at one position/);
-      assert.match(text, /FIRST fill closedLoops: one entry for every separate closed loop/);
-      assert.doesNotMatch(text, /genuinely multi-rail reference piece counts once/);
+      assert.match(text, /count complete physical jewellery objects in the GENERATED \(first\) image, never outlines, edges, positions or groups/);
+      assert.match(text, /One solid bangle has an inner and an outer outline, and through its opening you may see its plain inner wall or far side: all of that is ONE object/);
+      assert.match(text, /Decorative rails joined into one rigid body are ONE object/);
+      assert.match(text, /Two independent closed rings running in parallel with a visible separating gap are TWO objects/);
+      assert.match(text, /Two positions that each hold a duplicated parallel pair are FOUR objects/);
+      assert.match(text, /it does not make them one fused bangle, and two separate bangles in the generated image are correct/);
+      assert.match(text, /FIRST fill objectsByPosition/);
     }
   });
 
@@ -209,17 +219,21 @@ describe('Two-bangle set prompts', () => {
     assert.match(macro.finalPrompt, /must never display four loops or two duplicated pairs/);
   });
 
-  test('4. every pair image (catalogue and presenter) asks for natural polished yellow gold with contrast and neutral white balance', () => {
+  test('4. gold: the reference is the colour authority on all six images; catalogue neutral white balance, presenter lighting never changes the gold', () => {
     for (const job of allPairJobs()) {
       for (const p of job) {
-        assert.match(p.finalPrompt, /match the reference's yellow-gold metal colour as a natural, polished yellow gold/, p.assetType);
-        assert.match(p.finalPrompt, /warm golden highlights with realistic darker gold reflections that keep the metal's depth and contrast/, p.assetType);
-        assert.match(p.finalPrompt, /Use neutral white balance and controlled lighting: never overexpose the metal/, p.assetType);
-        assert.match(p.finalPrompt, /never pale beige, lemon yellow, orange, copper, brown or washed-out gold/, p.assetType);
+        assert.match(p.finalPrompt, /the uploaded product reference is the authority for the metal colour — match its gold hue, saturation, brightness and finish as a natural, polished yellow gold/, p.assetType);
+        assert.match(p.finalPrompt, /balanced highlights and darker reflective areas that keep the surface depth, so every motif and edge stays clearly visible/, p.assetType);
+        assert.match(p.finalPrompt, /Never pale beige, lemon yellow, orange, copper, brown, black, burnt or overexposed metal/, p.assetType);
+        assert.match(p.finalPrompt, /Apply this to the jewellery only — do not recolour the whole image/, p.assetType);
         assert.doesNotMatch(p.finalPrompt, /rich, warm, premium yellow gold|high mirror polish/, p.assetType);
       }
+      for (const p of presenters(job)) {
+        assert.match(p.finalPrompt, /Do not change the skin, clothing or background colours, and do not let the scene lighting turn the jewellery into a different gold tone/, p.assetType);
+        assert.doesNotMatch(p.finalPrompt, /Use neutral white balance and keep the background pure white/, p.assetType);
+      }
       for (const p of catalogue(job)) {
-        assert.match(p.finalPrompt, /Catalogue backgrounds stay pure white/, p.assetType);
+        assert.match(p.finalPrompt, /Use neutral white balance and keep the background pure white/, p.assetType);
         const elevated = /Elevated Detail gold: clean, bright, neutral yellow gold — never pale beige, orange, copper, black or burnt/;
         if (SHOT[p.assetType] === 3) {
           assert.match(p.finalPrompt, elevated, p.assetType);
@@ -230,18 +244,27 @@ describe('Two-bangle set prompts', () => {
         }
       }
     }
-    // Validation: pale / orange / washed-out gold fails every pair image, even with the right count and pose.
+  });
+
+  test('gold validation compares with the reference: pale/orange/lost detail fails every image even with the right count and pose; reference-matched gold passes', () => {
     assert.equal(M.goldColour, 'The yellow-gold colour does not match the reference.');
-    for (const shot of [1, 2, 3, 4]) {
-      assert.ok(failedWith(rule(SHOT_ASSET[shot], { ...CATALOGUE_OK[shot], goldColourCorrect: false }), M.goldColour), `shot ${shot}`);
-      assert.equal(rule(SHOT_ASSET[shot], { ...CATALOGUE_OK[shot], goldColourCorrect: true }).validationStatus, 'passed', `shot ${shot}`);
+    const bad = [
+      [{ referenceMetalColourMatch: false }, M.goldColour],
+      [{ washedOutMetal: true }, M.washedOutMetal],
+      [{ orangeOrCopperCast: true }, M.orangeMetal],
+      [{ metalDetailPreserved: false }, M.metalDetail],
+    ];
+    for (const [fields, message] of bad) {
+      for (const shot of [1, 2, 3, 4]) assert.ok(failedWith(rule(SHOT_ASSET[shot], { ...CATALOGUE_OK[shot], ...fields }), message), `shot ${shot} ${message}`);
+      for (const assetType of ['PRESENTER_YELLOW_1', 'PRESENTER_YELLOW_2']) assert.ok(failedWith(rule(assetType, { ...WORN_OK, ...fields }), message), assetType);
     }
-    for (const assetType of ['PRESENTER_YELLOW_1', 'PRESENTER_YELLOW_2']) {
-      assert.ok(failedWith(rule(assetType, { ...WORN_OK, goldColourCorrect: false }), M.goldColour), assetType);
-    }
+    // Accurate, reference-matched gold passes (the defaults are a reference match).
+    for (const shot of [1, 2, 3, 4]) assert.equal(rule(SHOT_ASSET[shot], CATALOGUE_OK[shot]).validationStatus, 'passed');
+    // The reviewer compares with the reference, not the words "yellow gold".
     for (const p of bangleJob(PAIR)) {
       const text = buildValidationText({ confirmedType: 'BANGLE', metalColor: p.metalColor, assetType: p.assetType, bangleQuantity: PAIR });
-      assert.match(text, /goldColourCorrect = false if the gold is materially wrong: pale, washed out, overexposed, beige, lemon yellow, orange, copper or brown[^.]*— even when the count and pose are correct/);
+      assert.match(text, /compare the jewellery's gold with the ORIGINAL reference's metal, not with the words "yellow gold"/);
+      assert.match(text, /referenceMetalColourMatch = false if the hue, saturation, brightness or finish is materially different from the reference metal/);
     }
   });
 
@@ -329,29 +352,84 @@ describe('Two-bangle set validation', () => {
     assert.equal(banglePairCountMessage(1), 'Expected exactly two physical bangles, but only one was generated.');
   });
 
-  test('regression (job 500c704c): two positions with two parallel loops each = four bangles, fails even though the reviewer said two', () => {
-    // Exactly what the reviewer returned: positions counted, physicalBangleCount 2.
-    const asReported = rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], ...FOUR_LOOPS_AS_TWO_POSITIONS, physicalBangleCount: 2, closedLoopCount: 2 });
-    assert.equal(asReported.validationStatus, 'failed');
+  test('fixture: two duplicated pairs = four objects and fail, even when the reviewer said two (Slight Alternate Angle, jobs 500c704c / 7b8b2ad5)', () => {
+    const asReported = rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 2, independentClosedObjectCount: 2 });
     assert.ok(failedWith(asReported, 'Expected exactly two physical bangles, but four were generated.'));
-    // Any one of the loop signals is enough on its own.
-    for (const signal of [{ closedLoopCount: 4 }, { visibleGapBetweenParallelLoops: true }, { duplicatedPairDetected: true }, { physicalBangleCount: 4 }]) {
+    for (const signal of [{ independentClosedObjectCount: 4 }, { duplicatedPairDetected: true }, { physicalBangleCount: 4 }]) {
       assert.ok(failedWith(rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], ...signal }), M.pairFourGenerated), JSON.stringify(signal));
     }
-    // Three closed loops fail too.
-    assert.ok(failedWith(rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], closedLoopCount: 3 }), 'Expected exactly two physical bangles, but three were generated.'));
-    // Worn: two bands on each wrist.
-    assert.ok(failedWith(rule('PRESENTER_YELLOW_1', { ...WORN_OK, ...FOUR_LOOPS_AS_TWO_POSITIONS }), M.pairFourGenerated));
+    assert.ok(failedWith(rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], independentClosedObjectCount: 3 }), 'Expected exactly two physical bangles, but three were generated.'));
   });
 
-  test('two solid bangles (inner and outer edge of each band) and two separate upright bangles pass as two', () => {
-    assert.equal(rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], closedLoops: TWO_LOOPS, closedLoopCount: 2 }).validationStatus, 'passed');
-    assert.equal(rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], closedLoops: TWO_LOOPS, closedLoopCount: 2 }).validationStatus, 'passed');
+  test('fixture: one solid bangle\'s inner/outer edges count as one object; two solid bangles count as two', () => {
+    // Two bangles with their inner walls visible (Macro, job 7b8b2ad5): two objects, passes.
+    const macro = rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], objectsByPosition: TWO_BANGLES_INNER_WALLS_VISIBLE, innerOuterEdgesMiscounted: true });
+    assert.equal(macro.validationStatus, 'passed', JSON.stringify(macro.validationMessages));
+    // One solid bangle shown with its inner and outer outline: one object.
+    const one = rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: SOLID_BANGLE_INNER_OUTER, physicalBangleCount: 1, independentClosedObjectCount: 1, bangleCount: 1 });
+    assert.ok(failedWith(one, 'Expected exactly two physical bangles, but only one was generated.'));
+    assert.ok(!one.validationMessages.some((m) => /four|three/.test(m)), 'inner/outer edges never counted as extra bangles');
+    // Two solid bangles, Front and Slight Alternate Angle: pass as two.
+    assert.equal(rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: TWO_SOLID_BANGLES }).validationStatus, 'passed');
+    assert.equal(rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_SOLID_BANGLES }).validationStatus, 'passed');
+    // A genuinely fused multi-rail design: its rails are one object.
+    const fused = [
+      { position: 'left', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: true, description: 'two rails fused into one rigid body' },
+      { position: 'right', separateBandsAtPosition: 2, everyBandHasItsOwnDecoratedOuterFace: true, description: 'two rails fused into one rigid body' },
+    ];
+    assert.equal(rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: fused, joinedMultiRailDesign: true }).validationStatus, 'passed');
   });
 
-  test('a split band fails', () => {
-    assert.equal(M.splitRail, 'A multi-rail bangle design was incorrectly split into separate bangles.');
-    for (const shot of [1, 2, 3, 4]) assert.ok(failedWith(rule(SHOT_ASSET[shot], { ...CATALOGUE_OK[shot], splitBandDetected: true }), M.splitRail));
+  test('expected outcomes for the six images of local job 7b8b2ad5', () => {
+    const outcomes = {
+      YELLOW_FRONT: rule('YELLOW_FRONT', { ...CATALOGUE_OK[1], objectsByPosition: TWO_SOLID_BANGLES }),
+      YELLOW_SLIGHT_ANGLE: rule('YELLOW_SLIGHT_ANGLE', { ...CATALOGUE_OK[2], objectsByPosition: TWO_DUPLICATED_PAIRS, physicalBangleCount: 4, independentClosedObjectCount: 4, duplicatedPairDetected: true }),
+      YELLOW_ELEVATED_DETAIL: rule('YELLOW_ELEVATED_DETAIL', { ...CATALOGUE_OK[3], objectsByPosition: TWO_SOLID_BANGLES }),
+      YELLOW_MACRO: rule('YELLOW_MACRO', { ...CATALOGUE_OK[4], objectsByPosition: TWO_BANGLES_INNER_WALLS_VISIBLE, innerOuterEdgesMiscounted: true }),
+      PRESENTER_YELLOW_1: rule('PRESENTER_YELLOW_1', WORN_OK),
+      PRESENTER_YELLOW_2: rule('PRESENTER_YELLOW_2', { ...WORN_OK, banglesPerVisibleWrist: [2, 0], leftWristBangleCount: 2, rightWristBangleCount: 0 }),
+    };
+    assert.equal(outcomes.YELLOW_FRONT.validationStatus, 'passed');
+    assert.ok(failedWith(outcomes.YELLOW_SLIGHT_ANGLE, M.pairFourGenerated));
+    assert.equal(outcomes.YELLOW_ELEVATED_DETAIL.validationStatus, 'passed');
+    assert.equal(outcomes.YELLOW_MACRO.validationStatus, 'passed');
+    assert.equal(outcomes.PRESENTER_YELLOW_1.validationStatus, 'passed');
+    assert.ok(failedWith(outcomes.PRESENTER_YELLOW_2, 'Both bangles were placed on the same wrist.'));
+  });
+
+  test('catalogue validation can never return presenter-only failures', () => {
+    const presenterOnly = [M.setOnePerWrist, M.sameWrist, M.notVisible, M.otherJewellery, M.floating];
+    // The Front Catalogue case from job 7b8b2ad5: reviewer flagged "hidden" plus wrist-shaped data and its own wrist message.
+    const front = rule(
+      'YELLOW_FRONT',
+      { ...CATALOGUE_OK[1], requiredBangleHiddenOrCropped: true, visibleWristCount: 0, banglesPerVisibleWrist: [], otherWristJewellery: true, floatingIntersectingOrMisplaced: true },
+      { validationMessages: ['Warning: One wrist is not clearly visible.', 'Note: two bangles on white.'] },
+    );
+    assert.ok(failedWith(front, M.catalogueHidden));
+    for (const m of presenterOnly) assert.ok(!front.validationMessages.includes(`Failed: ${m}`), m);
+    assert.ok(!front.validationMessages.some((m) => /wrist|hand/i.test(m)), JSON.stringify(front.validationMessages));
+    assert.ok(front.validationMessages.includes('Note: two bangles on white.'));
+    // Every catalogue shot, with every wrist-shaped field set wrong: no wrist failures.
+    for (const shot of [1, 2, 3, 4]) {
+      const r = rule(SHOT_ASSET[shot], { ...CATALOGUE_OK[shot], visibleWristCount: 0, banglesPerVisibleWrist: [2], leftWristBangleCount: 2, rightWristBangleCount: 0, otherWristJewellery: true, floatingIntersectingOrMisplaced: true });
+      assert.equal(r.validationStatus, 'passed', `shot ${shot}: ${JSON.stringify(r.validationMessages)}`);
+    }
+    // The schemas themselves have no wrist fields for catalogue, and no shot fields for presenter.
+    for (const p of bangleJob(PAIR)) {
+      const text = buildValidationText({ confirmedType: 'BANGLE', metalColor: p.metalColor, assetType: p.assetType, bangleQuantity: PAIR });
+      if (p.kind === 'catalogue') assert.match(text, /never report wrist, hand or bangle-per-wrist issues/);
+      else assert.match(text, /This is a worn presenter image: evaluate quantity, that both wrists are visible, exactly one bangle on each wrist/);
+    }
+  });
+
+  test('wrist rules still apply to presenter validation', () => {
+    for (const assetType of ['PRESENTER_YELLOW_1', 'PRESENTER_YELLOW_2']) {
+      const hidden = rule(assetType, { ...WORN_OK, requiredBangleHiddenOrCropped: true });
+      assert.ok(failedWith(hidden, M.notVisible), assetType);
+      assert.ok(!hidden.validationMessages.includes(`Failed: ${M.catalogueHidden}`));
+      assert.ok(failedWith(rule(assetType, { ...WORN_OK, otherWristJewellery: true }), M.otherJewellery));
+      assert.ok(failedWith(rule(assetType, { ...WORN_OK, floatingIntersectingOrMisplaced: true }), M.floating));
+    }
   });
 
   test('both bangles on one wrist, or a missing wrist, fails the presenter images', () => {
@@ -425,7 +503,15 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
 
   test('10. six images per job, one image call per image, one validation call with the pair schema', async () => {
     for (const job of allPairJobs()) assert.equal(job.length, 6);
-    const kinds = { 1: 'generation_validation_bangle_pair', 2: 'generation_validation_bangle_pair_upright', 3: 'generation_validation_bangle_pair', 4: 'generation_validation_bangle_pair_upright' };
+    const kinds = {
+      1: 'generation_validation_bangle_pair_catalogue',
+      2: 'generation_validation_bangle_pair_catalogue_upright',
+      3: 'generation_validation_bangle_pair_catalogue',
+      4: 'generation_validation_bangle_pair_catalogue_upright',
+    };
+    const COMMON = ['objectsByPosition', 'physicalBangleCount', 'independentClosedObjectCount', 'duplicatedPairDetected', 'joinedMultiRailDesign', 'innerOuterEdgesMiscounted', 'referenceMetalColourMatch', 'washedOutMetal', 'orangeOrCopperCast', 'metalDetailPreserved'];
+    const WRIST = ['visibleWristCount', 'banglesPerVisibleWrist', 'otherWristJewellery', 'floatingIntersectingOrMisplaced', 'leftWristBangleCount', 'rightWristBangleCount'];
+    const SHOT_ONLY = ['observedShotType', 'observedCameraAngle', 'observedArrangement', 'productsTouchOrOverlap'];
     for (const shot of [1, 2, 3, 4]) {
       calls.length = 0;
       chatReply = pairReview(CATALOGUE_OK[shot]);
@@ -436,9 +522,10 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       assert.equal(calls.length, 1);
       assert.equal(calls[0].body.response_format.json_schema.name, kinds[shot]);
       const props = calls[0].body.response_format.json_schema.schema.properties.bangleCheck.properties;
-      for (const f of ['closedLoops', 'physicalBangleCount', 'closedLoopCount', 'leftWristBangleCount', 'rightWristBangleCount', 'duplicatedPairDetected', 'splitBandDetected', 'visibleGapBetweenParallelLoops', 'goldColourCorrect']) {
-        assert.ok(props[f], `${f} on shot ${shot}`);
-      }
+      for (const f of COMMON) assert.ok(props[f], `${f} on shot ${shot}`);
+      for (const f of WRIST) assert.ok(!props[f], `catalogue shot ${shot} must not ask for ${f}`);
+      for (const f of SHOT_ONLY) assert.ok(props[f], `${f} on shot ${shot}`);
+      assert.equal(Object.keys(props)[0], 'objectsByPosition', 'positions are described before any count');
       assert.equal(result.validationStatus, 'passed', `shot ${shot}`);
     }
     // A four-bangle presenter image fails through the real validation path.
@@ -449,7 +536,10 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       confirmedType: 'BANGLE', metalColor: 'YELLOW', assetType: 'PRESENTER_YELLOW_2', bangleQuantity: PAIR,
     });
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].body.response_format.json_schema.name, 'generation_validation_bangle_pair');
+    assert.equal(calls[0].body.response_format.json_schema.name, 'generation_validation_bangle_pair_presenter');
+    const wornProps = calls[0].body.response_format.json_schema.schema.properties.bangleCheck.properties;
+    for (const f of [...COMMON, ...WRIST]) assert.ok(wornProps[f], `presenter needs ${f}`);
+    for (const f of SHOT_ONLY) assert.ok(!wornProps[f], `presenter must not ask for ${f}`);
     assert.ok(failedWith(worn, M.pairFourGenerated));
   });
 

@@ -1355,11 +1355,15 @@ const BANGLE_PAIR_PHYSICAL_COUNT =
 const BANGLE_PAIR_NO_DUPLICATED_PAIR =
   'Do not draw either bangle as two parallel loops, a doubled ring or a double band, and do not show two duplicated pairs, four loops or four rings.';
 
-// Gold for every pair image. "Rich, warm" with bright specular highlights
-// came out pale, washed out and slightly orange; this asks for natural
-// polished yellow gold with contrast and neutral white balance.
-const BANGLE_PAIR_GOLD =
-  "Gold colour and finish (every image of this set): match the reference's yellow-gold metal colour as a natural, polished yellow gold — warm golden highlights with realistic darker gold reflections that keep the metal's depth and contrast, so every edge, motif and surface detail stays clearly visible. Use neutral white balance and controlled lighting: never overexpose the metal or let highlights wash it out, and never pale beige, lemon yellow, orange, copper, brown or washed-out gold. Take the gold colour from the reference metal, but not a dull, flat or grey render lighting. Catalogue backgrounds stay pure white.";
+// Gold for every pair image. Results were pale, washed out and sometimes
+// orange. The uploaded reference is the authority for the metal colour; the
+// correction applies to the jewellery only, never the whole image.
+const BANGLE_PAIR_GOLD_CORE =
+  'Gold colour and finish (every image of this set): the uploaded product reference is the authority for the metal colour — match its gold hue, saturation, brightness and finish as a natural, polished yellow gold, with balanced highlights and darker reflective areas that keep the surface depth, so every motif and edge stays clearly visible. Never pale beige, lemon yellow, orange, copper, brown, black, burnt or overexposed metal. Apply this to the jewellery only — do not recolour the whole image.';
+const BANGLE_PAIR_GOLD = {
+  catalogue: `${BANGLE_PAIR_GOLD_CORE} Use neutral white balance and keep the background pure white.`,
+  presenter: `${BANGLE_PAIR_GOLD_CORE} Do not change the skin, clothing or background colours, and do not let the scene lighting turn the jewellery into a different gold tone.`,
+};
 
 // Image 3 (Elevated Detail) for a pair: a clean yellow gold.
 const BANGLE_PAIR_ELEVATED_GOLD =
@@ -1401,7 +1405,7 @@ function bangleCatalogueSectionsFor(assetType, bangleQuantity) {
       BANGLE_PAIR_PHYSICAL_COUNT,
       shotNumber === 2 ? BANGLE_PAIR_UPRIGHT_RING_COUNT : null,
       shotNumber === 4 ? BANGLE_PAIR_MACRO_CLOSE : null,
-      BANGLE_PAIR_GOLD,
+      BANGLE_PAIR_GOLD.catalogue,
       shotNumber === 3 ? BANGLE_PAIR_ELEVATED_GOLD : null,
     ]
       .filter(Boolean)
@@ -1417,7 +1421,7 @@ function banglePresenterRulesFor(assetType, bangleQuantity) {
   if (key === 'TWO_BANGLE_SET') {
     const pose = BANGLE_PAIR_PRESENTER_POSE[assetType === 'PRESENTER_YELLOW_2' ? 2 : 1];
     return {
-      placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT} ${BANGLE_PAIR_GOLD}`,
+      placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT} ${BANGLE_PAIR_GOLD.presenter}`,
       negatives: [BANGLE_PAIR_OTHER_JEWELLERY],
     };
   }
@@ -2267,41 +2271,76 @@ const BANGLE_SINGLE_DETAIL_REQUIRED = {
   4: ' Required shot for this image: MACRO_CLOSE_UP. For this macro image the band leaving the frame is intentional: count the one partly visible bangle as bangleCount = 1, and set requiredBangleHiddenOrCropped = false unless the decorated section itself is cut off or hidden. Set shapeAndDesignMatchReference = false if the visible stones, settings, spacing or motifs differ from the matching section of the reference.',
 };
 
-// Two-bangle set only: physical-object counts on every image (catalogue and
-// worn), in pair-only schemas so single-bangle and unknown-quantity jobs keep
-// exactly the schemas and text they had before.
-// The reviewer passed two positions of two parallel loops each as "two
-// bangles": it counted positions. It now lists every closed loop first —
-// first in the schema, so the list is written before any count — and the
-// list decides the count.
-const BanglePairLoopSchema = z.object({ position: z.string(), description: z.string() });
-const BANGLE_PAIR_CHECK_FIELDS = {
+// Two-bangle set only, in pair-only schemas so single-bangle and
+// unknown-quantity jobs keep exactly the schemas and text they had before.
+//
+// Catalogue and presenter images get SEPARATE schemas: the shared schema
+// asked every product shot for wrist fields, and a Front Catalogue image
+// failed with the presenter message "One required wrist or bangle is not
+// clearly visible". Catalogue: quantity, design, composition, background,
+// metal colour — no wrist, hand or placement fields. Presenter: quantity,
+// wrists, one bangle per wrist, placement, design, metal colour — no shot
+// composition fields.
+//
+// Counting is per physical object. The reviewer counted a bangle's inner
+// wall seen through its opening as a second loop (Macro), and read the
+// stacked reference as one "fused" bangle so two separate bangles looked
+// "split" (Elevated Detail). Each position is now described first —
+// first in the schema, so it is written before any count — with whether a
+// second band there has its own decorated outer face (a separate bangle) or
+// is only the plain inner wall of the same band.
+const BanglePairPositionSchema = z.object({
+  position: z.string(),
+  separateBandsAtPosition: z.number().int().min(0),
+  everyBandHasItsOwnDecoratedOuterFace: z.boolean(),
+  description: z.string(),
+});
+const BANGLE_PAIR_COUNT_FIELDS = {
   physicalBangleCount: z.number().int().min(0),
-  closedLoopCount: z.number().int().min(0),
+  independentClosedObjectCount: z.number().int().min(0),
+  duplicatedPairDetected: z.boolean(),
+  joinedMultiRailDesign: z.boolean(),
+  innerOuterEdgesMiscounted: z.boolean(),
+};
+// Metal colour is compared with the reference — the single
+// goldColourCorrect flag was answered "true" on every image.
+const BANGLE_PAIR_METAL_FIELDS = {
+  referenceMetalColourMatch: z.boolean(),
+  washedOutMetal: z.boolean(),
+  orangeOrCopperCast: z.boolean(),
+  metalDetailPreserved: z.boolean(),
+};
+const BANGLE_PAIR_WORN_FIELDS = {
   leftWristBangleCount: z.number().int().min(0),
   rightWristBangleCount: z.number().int().min(0),
-  duplicatedPairDetected: z.boolean(),
-  splitBandDetected: z.boolean(),
-  visibleGapBetweenParallelLoops: z.boolean(),
-  goldColourCorrect: z.boolean(),
 };
-const BanglePairValidationSchema = ValidationSchema.extend({
-  bangleCheck: z.object({ closedLoops: z.array(BanglePairLoopSchema) }).extend(BangleCheckSchema.shape).extend(BANGLE_PAIR_CHECK_FIELDS),
-});
-const BanglePairUprightValidationSchema = ValidationSchema.extend({
-  bangleCheck: z.object({ closedLoops: z.array(BanglePairLoopSchema) }).extend(BangleUprightCheckSchema.shape).extend(BANGLE_PAIR_CHECK_FIELDS),
+const WRIST_FIELDS = { visibleWristCount: true, banglesPerVisibleWrist: true, otherWristJewellery: true, floatingIntersectingOrMisplaced: true };
+const SHOT_FIELDS = { observedShotType: true, observedCameraAngle: true, observedArrangement: true, productsTouchOrOverlap: true };
+const pairCheck = (base) =>
+  z.object({ objectsByPosition: z.array(BanglePairPositionSchema) }).extend(base.shape).extend(BANGLE_PAIR_COUNT_FIELDS).extend(BANGLE_PAIR_METAL_FIELDS);
+const BanglePairCatalogueValidationSchema = ValidationSchema.extend({ bangleCheck: pairCheck(BangleCheckSchema.omit(WRIST_FIELDS)) });
+const BanglePairCatalogueUprightValidationSchema = ValidationSchema.extend({ bangleCheck: pairCheck(BangleUprightCheckSchema.omit(WRIST_FIELDS)) });
+const BanglePairPresenterValidationSchema = ValidationSchema.extend({
+  bangleCheck: pairCheck(BangleCheckSchema.omit(SHOT_FIELDS)).extend(BANGLE_PAIR_WORN_FIELDS),
 });
 
 const BANGLE_PAIR_COUNT_VALIDATION =
-  " Two-bangle set physical count — inspect every separate closed jewellery loop in the GENERATED image; never count positions, groups or arrangements. One physical bangle is one complete rigid object: one solid band forming one closed circumference. The inner and outer edges of one solid band, and the far side of the same bangle seen through its own opening, are part of that one bangle. Two parallel closed bands separated by a visible gap are TWO physical bangles, even when they stand together at one position or look like one double-band unit. FIRST fill closedLoops: one entry for every separate closed loop you can see — position (e.g. \"left, front loop\", \"left, rear loop\", \"right wrist\") and a short description — listing two parallel loops at one position as two entries. closedLoopCount = the number of entries in closedLoops. physicalBangleCount = the number of physical bangles counted by this rule; set bangleCount to the same number. leftWristBangleCount and rightWristBangleCount = for a worn shot, the bangles counted this way on the presenter's left wrist and on the right wrist (0 and 0 for a product-only shot, or for a wrist that is not visible). visibleGapBetweenParallelLoops = true if any position shows two parallel closed loops running alongside each other with a visible gap between them. duplicatedPairDetected = true if either intended bangle has become a duplicated parallel pair, so the image shows two pairs or four loops. splitBandDetected = true if one solid band has been split into separate bands. Two separate bangles placed apart, one per position, are correct. goldColourCorrect = false if the gold is materially wrong: pale, washed out, overexposed, beige, lemon yellow, orange, copper or brown, or clearly a different gold colour from the requested yellow gold and the reference metal — even when the count and pose are correct.";
+  " Two-bangle set physical count — count complete physical jewellery objects in the GENERATED (first) image, never outlines, edges, positions or groups. One solid bangle has an inner and an outer outline, and through its opening you may see its plain inner wall or far side: all of that is ONE object. Decorative rails joined into one rigid body are ONE object. Two independent closed rings running in parallel with a visible separating gap are TWO objects — each has its own decorated outer face. Two positions that each hold a duplicated parallel pair are FOUR objects. The reference photo may show the two bangles stacked or touching: that is only how the set was photographed — it does not make them one fused bangle, and two separate bangles in the generated image are correct. FIRST fill objectsByPosition: one entry per position (e.g. \"left\", \"right\", \"front\", \"back\", \"left wrist\"), with separateBandsAtPosition = the number of independent bands there and everyBandHasItsOwnDecoratedOuterFace = true only if each of those bands shows its own decorated outer face (its own motifs and outer edges); a plain inner wall seen through the opening is not a separate band. Then: physicalBangleCount = the number of complete physical objects (set bangleCount to the same number); independentClosedObjectCount = the number of independent closed rings with their own decorated outer face; duplicatedPairDetected = true if either intended bangle has become a duplicated parallel pair (two pairs or four loops); joinedMultiRailDesign = true only if one bangle in the GENERATED image genuinely has several rails fused into one rigid body with no gap; innerOuterEdgesMiscounted = true if you first counted more outlines than objects only because of the inner and outer edges or inner wall of the same band. Metal colour — compare the jewellery's gold with the ORIGINAL reference's metal, not with the words \"yellow gold\": referenceMetalColourMatch = false if the hue, saturation, brightness or finish is materially different from the reference metal; washedOutMetal = true if the metal is pale, washed out, overexposed, beige or lemon yellow; orangeOrCopperCast = true if it has an orange, copper or brown cast; metalDetailPreserved = false if motifs, edges or surface depth are lost in glare or flat colour.";
+
+const BANGLE_PAIR_CATALOGUE_SCOPE =
+  ' This is a product-only catalogue image: there are no wrists, hands or worn placement to evaluate — never report wrist, hand or bangle-per-wrist issues. Evaluate only quantity, product design, shot composition, background and metal colour. Judge the background only from the GENERATED (first) image; the reference photo\'s background, text and labels are irrelevant.';
+
+const BANGLE_PAIR_PRESENTER_SCOPE =
+  " This is a worn presenter image: evaluate quantity, that both wrists are visible, exactly one bangle on each wrist, physical placement on the wrist, design and metal colour. Do not judge catalogue shot composition. leftWristBangleCount and rightWristBangleCount = the physical bangles, counted as above, on the presenter's left wrist and on the right wrist (0 for a wrist that is not visible). Judge metal colour on the jewellery only: the presenter's skin, clothing and background lighting do not count, but lighting must not have turned the jewellery into a different gold tone.";
 
 // Response schema for a Bangle validation call: [schema, name].
 function bangleValidationSchemaFor(assetType, bangleQuantity) {
   const kind = bangleCheckKindFor(assetType, bangleQuantity);
   if (bangleKey(bangleQuantity) === 'TWO_BANGLE_SET') {
+    if (!kind) return [BanglePairPresenterValidationSchema, 'generation_validation_bangle_pair_presenter'];
     return kind === 'upright'
-      ? [BanglePairUprightValidationSchema, 'generation_validation_bangle_pair_upright']
-      : [BanglePairValidationSchema, 'generation_validation_bangle_pair'];
+      ? [BanglePairCatalogueUprightValidationSchema, 'generation_validation_bangle_pair_catalogue_upright']
+      : [BanglePairCatalogueValidationSchema, 'generation_validation_bangle_pair_catalogue'];
   }
   if (kind === 'singleDetail') return [BangleSingleDetailValidationSchema, 'generation_validation_bangle_single_detail'];
   if (kind === 'upright') return [BangleUprightValidationSchema, 'generation_validation_bangle_upright'];
@@ -2312,6 +2351,7 @@ export function bangleValidationContextFor(confirmedType, bangleQuantity, assetT
   if (confirmedType !== 'BANGLE') return '';
   const shot = assetType ? bangleCatalogueShotFor(assetType) : null;
   const kind = assetType ? bangleCheckKindFor(assetType, bangleQuantity) : null;
+  const isPair = bangleKey(bangleQuantity) === 'TWO_BANGLE_SET';
   const shotText = shot
     ? kind === 'singleDetail'
       ? `${BANGLE_SINGLE_DETAIL_VALIDATION}${BANGLE_SINGLE_DETAIL_REQUIRED[shot]}`
@@ -2319,9 +2359,13 @@ export function bangleValidationContextFor(confirmedType, bangleQuantity, assetT
         ? `${BANGLE_UPRIGHT_SHOT_VALIDATION}${BANGLE_UPRIGHT_SHOT_REQUIRED[shot]}`
         : `${BANGLE_SHOT_VALIDATION}${BANGLE_SHOT_REQUIRED[shot]}`
     : assetType
-      ? BANGLE_WORN_SHOT_VALIDATION
+      ? isPair
+        ? '' // the pair presenter schema has no shot-composition fields
+        : BANGLE_WORN_SHOT_VALIDATION
       : '';
-  const pairText = bangleKey(bangleQuantity) === 'TWO_BANGLE_SET' && assetType ? BANGLE_PAIR_COUNT_VALIDATION : '';
+  const pairText = isPair && assetType
+    ? `${BANGLE_PAIR_COUNT_VALIDATION}${shot ? BANGLE_PAIR_CATALOGUE_SCOPE : BANGLE_PAIR_PRESENTER_SCOPE}`
+    : '';
   return `${BANGLE_VALIDATION_COMMON}${BANGLE_VALIDATION_QUANTITY[bangleKey(bangleQuantity)]}${shotText}${pairText}`;
 }
 
@@ -2351,7 +2395,22 @@ export const BANGLE_VALIDATION_MESSAGES = {
   pairFourGenerated: 'Expected exactly two physical bangles, but four were generated.',
   splitRail: 'A multi-rail bangle design was incorrectly split into separate bangles.',
   goldColour: 'The yellow-gold colour does not match the reference.',
+  washedOutMetal: 'The gold metal is pale, washed out or overexposed compared with the reference.',
+  orangeMetal: 'The gold has an orange or copper cast compared with the reference.',
+  metalDetail: 'Metal detail is lost — motifs, edges or surface depth are not clearly visible.',
+  // Catalogue wording for a hidden/cropped bangle — never mentions wrists.
+  catalogueHidden: 'A required bangle is hidden or cropped out of the frame.',
 };
+
+// Two-bangle set: messages that only make sense for a worn presenter image.
+const BANGLE_PRESENTER_ONLY_MESSAGES = new Set([
+  BANGLE_VALIDATION_MESSAGES.setOnePerWrist,
+  BANGLE_VALIDATION_MESSAGES.sameWrist,
+  BANGLE_VALIDATION_MESSAGES.notVisible,
+  BANGLE_VALIDATION_MESSAGES.otherJewellery,
+  BANGLE_VALIDATION_MESSAGES.floating,
+]);
+const WRIST_WORDS = /\b(wrists?|hands?|forearms?|arms?)\b/i;
 
 const COUNT_WORDS = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
 
@@ -2362,19 +2421,31 @@ export function banglePairCountMessage(count) {
   return `Expected exactly two physical bangles, but ${COUNT_WORDS[count] ?? count} were generated.`;
 }
 
-// Two-bangle set: failures from the physical-count fields (all six images).
-function banglePairCountFailures(check, { worn, shot }) {
+// Physical objects implied by the per-position description: a position with
+// several bands counts each band only when each has its own decorated outer
+// face (two independent rings); otherwise it is one solid bangle whose inner
+// wall or edges were seen. Genuinely fused multi-rail designs count once.
+function banglePairObjectsFromPositions(check) {
+  const positions = check.objectsByPosition;
+  if (!Array.isArray(positions) || !positions.length || check.joinedMultiRailDesign) return null;
+  return positions.reduce((sum, p) => {
+    const bands = Number.isInteger(p.separateBandsAtPosition) ? p.separateBandsAtPosition : 0;
+    return sum + (bands > 1 && p.everyBandHasItsOwnDecoratedOuterFace ? bands : Math.min(bands, 1));
+  }, 0);
+}
+
+// Two-bangle set: failures from the physical-count and metal fields (all six images).
+function banglePairCountFailures(check, { worn }) {
   const M = BANGLE_VALIDATION_MESSAGES;
   const failures = [];
   const physical = check.physicalBangleCount;
   if (Number.isInteger(physical) && physical !== 2) failures.push(banglePairCountMessage(physical));
-  // Every closed loop is inspected: the listed loops and the loop count must
-  // both be two — never trust a count that only matches the two positions.
-  const loops = Math.max(check.closedLoopCount ?? 0, check.closedLoops?.length ?? 0);
-  if (loops > 2) failures.push(banglePairCountMessage(loops));
-  if (check.visibleGapBetweenParallelLoops) failures.push(M.pairFourGenerated);
+  const independent = check.independentClosedObjectCount;
+  if (Number.isInteger(independent) && independent !== 2) failures.push(banglePairCountMessage(independent));
+  // Never trust a count that only matches the two positions.
+  const fromPositions = banglePairObjectsFromPositions(check);
+  if (fromPositions !== null && fromPositions > 2) failures.push(banglePairCountMessage(fromPositions));
   if (check.duplicatedPairDetected) failures.push(M.pairFourGenerated);
-  if (check.splitBandDetected) failures.push(M.splitRail);
   if (worn) {
     const left = check.leftWristBangleCount;
     const right = check.rightWristBangleCount;
@@ -2383,8 +2454,11 @@ function banglePairCountFailures(check, { worn, shot }) {
       if (left !== 1 || right !== 1) failures.push(M.setOnePerWrist);
     }
   }
-  // Materially wrong gold fails every pair image, even with the right count and pose.
-  if (check.goldColourCorrect === false) failures.push(M.goldColour);
+  // Metal compared with the reference fails every pair image, even with the right count and pose.
+  if (check.referenceMetalColourMatch === false) failures.push(M.goldColour);
+  if (check.washedOutMetal) failures.push(M.washedOutMetal);
+  if (check.orangeOrCopperCast) failures.push(M.orangeMetal);
+  if (check.metalDetailPreserved === false) failures.push(M.metalDetail);
   return failures;
 }
 
@@ -2448,12 +2522,12 @@ export function applyBangleValidationRules(result, { assetType, bangleQuantity }
     if (check.bangleCount === 0) failures.push(M.expectedOneGotNone);
     if (check.requiredBangleHiddenOrCropped && !cropExpected) failures.push(M.notVisible);
   } else if (bangleQuantity === 'TWO_BANGLE_SET') {
-    failures.push(...banglePairCountFailures(check, { worn, shot }));
+    failures.push(...banglePairCountFailures(check, { worn }));
     // The physical-count message replaces the generic one when it applies.
     const physicalReported = Number.isInteger(check.physicalBangleCount) && check.physicalBangleCount !== 2;
     if (check.bangleCount !== 2 && !physicalReported) failures.push(M.countMismatch);
     if (check.bangleSetMergedIntoOne) failures.push(M.merged);
-    if (check.requiredBangleHiddenOrCropped) failures.push(M.notVisible);
+    if (check.requiredBangleHiddenOrCropped) failures.push(worn ? M.notVisible : M.catalogueHidden);
     if (worn) {
       if (perWrist.some((n) => n > 1)) failures.push(M.sameWrist);
       if (check.visibleWristCount < 2) failures.push(M.notVisible);
@@ -2478,9 +2552,18 @@ export function applyBangleValidationRules(result, { assetType, bangleQuantity }
   if (!check.shapeAndDesignMatchReference) failures.push(M.design);
   if (result.metalColourStatus === 'incorrect') failures.push(M.metal);
 
-  const unique = [...new Set(failures)];
-  if (!unique.length) return result;
-  const messages = [...unique.map((m) => `Failed: ${m}`), ...(result.validationMessages ?? [])];
+  // Two-bangle catalogue images never carry presenter-only failures: a
+  // hidden bangle uses the catalogue wording, and wrist/hand messages —
+  // ours or the reviewer's own — are dropped.
+  const pairCatalogue = bangleQuantity === 'TWO_BANGLE_SET' && !worn;
+  const scoped = pairCatalogue
+    ? failures.map((m) => (m === M.notVisible ? M.catalogueHidden : m)).filter((m) => !BANGLE_PRESENTER_ONLY_MESSAGES.has(m))
+    : failures;
+  const reviewerMessages = (result.validationMessages ?? []).filter((m) => !(pairCatalogue && WRIST_WORDS.test(m)));
+
+  const unique = [...new Set(scoped)];
+  if (!unique.length) return pairCatalogue ? { ...result, validationMessages: reviewerMessages } : result;
+  const messages = [...unique.map((m) => `Failed: ${m}`), ...reviewerMessages];
   return { ...result, validationStatus: 'failed', validationMessages: [...new Set(messages)] };
 }
 
