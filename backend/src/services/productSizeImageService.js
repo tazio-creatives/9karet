@@ -114,14 +114,71 @@ const BASE_VALIDATION_USER_TEXT = 'Review this generated Product Size Image base
 export const PENDANT_REASONS = {
   chainVisible: 'Pendant contains a visible chain or support.',
   angledOrCropped: 'Pendant is angled or cropped.',
+  // Warning (not a failure) — the image is kept for the admin to review.
+  mayBeAngled: 'Review: the AI reviewer reported the pendant may be angled or tilted — check that it is straight and front-on.',
 };
+
+// Pendant only: the reviewer also reports each problem as a separate flag,
+// so the pass/fail decision (decidePendantResult) can check the background
+// and cropping claims against the local pixel measurements. On production
+// the reviewer failed pendants whose background the local cleanup had just
+// measured as a clean white border (e.g. borderShare 1).
+const PendantCheckSchema = z.object({
+  designMismatch: z.boolean(),
+  bailMissingOrChanged: z.boolean(),
+  chainOrSupportVisible: z.boolean(),
+  angledOrTilted: z.boolean(),
+  croppedOrTouchingEdge: z.boolean(),
+  backgroundNotClean: z.boolean(),
+});
+const PendantValidationSchema = ValidationSchema.extend({ pendantCheck: PendantCheckSchema });
+
+const PENDANT_CHECK_RULE =
+  ' The reference is often a 3D render on a grey background with text labels (for example "H = 10 MM", "W = 7.27 MM" or a design number). That background and text belong to the reference photo only — never judge the GENERATED image\'s background, framing or cropping from them. Also fill pendantCheck for the GENERATED image: designMismatch = the pendant design differs from the reference, or it is stretched, squashed or reconstructed differently; bailMissingOrChanged = its own bail or loop is missing, shortened or redesigned; chainOrSupportVisible = any chain, wire, thread or hanging support is visible; angledOrTilted = the pendant is rotated, tilted, three-quarter or in perspective rather than straight and front-on; croppedOrTouchingEdge = part of the pendant is cut off or touches the frame edge; backgroundNotClean = the generated background is not clean, flat white.';
 
 // Pendant only — added to the request text; the system prompt and every
 // general fidelity check stay exactly as they are.
 const PENDANT_VALIDATION_RULE = `This is a PENDANT size image. The chain is intentionally excluded: a chain shown in the reference but absent from the generated image is NOT a design mismatch and must not fail or warn. The pendant's own natural bail or loop must still be present and match the reference — set status "failed" if it is missing or redesigned. Set status "failed" if any chain, necklace chain, wire, thread or hanging support is visible, with the reason "${PENDANT_REASONS.chainVisible}" Set status "failed" if the pendant is angled, tilted or cropped, with the reason "${PENDANT_REASONS.angledOrCropped}" Also set "failed" if the pendant is stretched, squashed or reconstructed differently from the reference. Every other check above still applies in full.`;
 
 export function buildProductSizeValidationText(jewelleryType) {
-  return jewelleryType === 'PENDANT' ? `${BASE_VALIDATION_USER_TEXT} ${PENDANT_VALIDATION_RULE}` : BASE_VALIDATION_USER_TEXT;
+  return jewelleryType === 'PENDANT' ? `${BASE_VALIDATION_USER_TEXT} ${PENDANT_VALIDATION_RULE}${PENDANT_CHECK_RULE}` : BASE_VALIDATION_USER_TEXT;
+}
+
+// Pendant only: the final decision, combining the reviewer's flags with the
+// local measurements (no extra AI call).
+//   - Design mismatch, missing/changed bail or a visible chain: fails, as before.
+//   - The local edge detection must find the pendant with a margin on every
+//     side; if it cannot, that fails with its own measured reason, as before.
+//   - "Background not clean" alone does not fail when the local cleanup
+//     confirmed a clean light border and detection succeeded.
+//   - "Cropped" alone does not fail when detection confirmed a margin on
+//     every side.
+//   - "Angled" cannot be measured locally: it becomes a warning, so the
+//     finished image is kept for the admin to review.
+//   - A failure the flags do not explain stays a failure.
+// Returns { status: 'passed' | 'warning' | 'failed', reasons }.
+export function decidePendantResult({ validation, cleanupApplied, detection }) {
+  const check = validation.pendantCheck;
+  const reviewerReasons = validation.reasons ?? [];
+  if (!check) {
+    // No flags (should not happen with the Pendant schema): previous behaviour.
+    if (validation.status === 'failed') return { status: 'failed', reasons: reviewerReasons };
+    if (!detection.box) return { status: 'failed', reasons: [detection.reason] };
+    return { status: validation.status, reasons: validation.status === 'warning' ? reviewerReasons : [] };
+  }
+  if (check.designMismatch || check.bailMissingOrChanged || check.chainOrSupportVisible) {
+    return { status: 'failed', reasons: reviewerReasons.length ? reviewerReasons : ['Product design differs from reference.'] };
+  }
+  if (!detection.box) return { status: 'failed', reasons: [detection.reason] };
+  // Background claim is overruled only by a confirmed clean border (cleanup
+  // applied) plus a successful detection.
+  if (check.backgroundNotClean && !cleanupApplied) return { status: 'failed', reasons: reviewerReasons };
+  // Cropping is settled by the measured margin (detection used requireMargin).
+  const explained = check.backgroundNotClean || check.croppedOrTouchingEdge || check.angledOrTilted;
+  if (validation.status === 'failed' && !explained) return { status: 'failed', reasons: reviewerReasons };
+  if (check.angledOrTilted) return { status: 'warning', reasons: [PENDANT_REASONS.mayBeAngled] };
+  if (validation.status === 'warning') return { status: 'warning', reasons: reviewerReasons };
+  return { status: 'passed', reasons: [] };
 }
 
 export async function validateProductSizeBase({ generatedBuffer, referenceBuffer, referenceMimetype, jewelleryType }) {
@@ -143,7 +200,10 @@ export async function validateProductSizeBase({ generatedBuffer, referenceBuffer
           ],
         },
       ],
-      response_format: zodResponseFormat(ValidationSchema, 'product_size_validation'),
+      response_format:
+        jewelleryType === 'PENDANT'
+          ? zodResponseFormat(PendantValidationSchema, 'product_size_validation_pendant')
+          : zodResponseFormat(ValidationSchema, 'product_size_validation'),
     });
     return completion.choices[0].message.parsed;
   } catch (err) {
@@ -938,9 +998,11 @@ export async function runProductSizeGeneration(productId, measurementsRow) {
   const referenceBuffer = await storageProvider.read(keyFromUrl(reference.url));
 
   let baseBuffer = await generateProductSizeBase(referenceBuffer, reference.mimetype, jewelleryType);
+  let cleanupApplied = false;
   if (isPendant) {
     const { buffer, cleanup } = await cleanPendantBase(baseBuffer);
     baseBuffer = buffer;
+    cleanupApplied = cleanup.applied;
     console.info('Product Size Image pendant cleanup', JSON.stringify({ productId, ...cleanup }));
   }
 
@@ -950,20 +1012,37 @@ export async function runProductSizeGeneration(productId, measurementsRow) {
     referenceMimetype: reference.mimetype,
     jewelleryType,
   });
-  if (baseValidation.status === 'failed') {
-    return { status: 'failed', failureReason: baseValidation.reasons.join(' ') || 'Product design differs from reference.' };
+
+  let boundingBox;
+  let status;
+  let pendantReasons = [];
+  if (isPendant) {
+    // Pendant: the reviewer's flags are checked against the local
+    // measurements (see decidePendantResult).
+    const detection = await detectProductBoundingBoxDetailed(baseBuffer, { requireMargin: true });
+    const decision = decidePendantResult({ validation: baseValidation, cleanupApplied, detection });
+    console.info('Product Size Image pendant decision', JSON.stringify({ productId, reviewer: baseValidation.status, pendantCheck: baseValidation.pendantCheck ?? null, detected: Boolean(detection.box), cleanupApplied, decision: decision.status }));
+    if (decision.status === 'failed') {
+      return { status: 'failed', failureReason: decision.reasons.join(' ') || 'Product design differs from reference.' };
+    }
+    boundingBox = detection.box;
+    status = decision.status;
+    pendantReasons = decision.status === 'warning' ? decision.reasons : [];
+  } else {
+    if (baseValidation.status === 'failed') {
+      return { status: 'failed', failureReason: baseValidation.reasons.join(' ') || 'Product design differs from reference.' };
+    }
+    const detection = await detectProductBoundingBoxDetailed(baseBuffer, { requireMargin: false });
+    boundingBox = detection.box;
+    if (!boundingBox) {
+      return { status: 'failed', failureReason: detection.reason };
+    }
+    status = baseValidation.status;
   }
 
-  const detection = await detectProductBoundingBoxDetailed(baseBuffer, { requireMargin: isPendant });
-  const boundingBox = detection.box;
-  if (!boundingBox) {
-    return { status: 'failed', failureReason: detection.reason };
-  }
-
-  let status = baseValidation.status;
   let warningReason = null;
   if (isPendant) {
-    const warnings = status === 'warning' ? [...baseValidation.reasons] : [];
+    const warnings = [...pendantReasons];
     const proportion = pendantProportionCheck(boundingBox, measurementsRow.measurements);
     if (proportion) console.info('Product Size Image pendant proportions', JSON.stringify({ productId, ...proportion }));
     if (proportion?.warning) {
