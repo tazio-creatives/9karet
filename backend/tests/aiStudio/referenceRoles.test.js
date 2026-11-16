@@ -146,10 +146,13 @@ describe('catalogue views by reference count', () => {
   });
 });
 
+// The generic reference-safe views (every category without its own fixed
+// shots). Necklace got its own four catalogue shots on 2026-11-16 (see
+// necklaceSetType.test.js), so Pendant is the example category here.
 describe('catalogue prompts by reference count', () => {
   test('no side reference: no strict side profile is requested; the elevated detail wording is used', () => {
     for (const combo of ['main only', 'main + 45°']) {
-      const p = previews(COMBOS[combo], 'NECKLACE');
+      const p = previews(COMBOS[combo], 'PENDANT');
       for (const c of p.slice(0, 4)) assert.doesNotMatch(c.finalPrompt, /^.*Side-profile view\./m, `${combo} ${c.slotKey}`);
       assert.match(p[2].finalPrompt, /Create a reference-faithful elevated detail view of the exact uploaded jewellery/);
       assert.match(p[2].finalPrompt, /If a structural detail is not clearly visible in the uploaded reference, do not invent it/);
@@ -157,7 +160,7 @@ describe('catalogue prompts by reference count', () => {
   });
 
   test('no 45° reference: the angled slot is a slight 15–25° turn of the main reference', () => {
-    const p = previews(COMBOS['main + side'], 'NECKLACE');
+    const p = previews(COMBOS['main + side'], 'PENDANT');
     assert.match(p[1].finalPrompt, /rotated approximately 15–25 degrees/);
     assert.match(p[2].finalPrompt, /Side-profile view/);
   });
