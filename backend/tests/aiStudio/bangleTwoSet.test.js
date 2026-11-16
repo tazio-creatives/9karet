@@ -489,12 +489,17 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
     assert.equal(Object.keys(now).length, Object.keys(BASELINE).length);
     let unchanged = 0;
     let pairChanged = 0;
+    let necklaceCatalogueChanged = 0;
     for (const [key, before] of Object.entries(BASELINE)) {
       const after = now[key];
       assert.ok(after, key);
       if (before.type === 'BANGLE' && before.quantity === PAIR) {
         assert.notEqual(after.prompt, before.prompt, key);
         pairChanged += 1;
+      } else if (before.type === 'NECKLACE' && before.kind === 'catalogue') {
+        // Intended change (2026-11-16): Necklace catalogue images have their own four fixed shots.
+        assert.notEqual(after.prompt, before.prompt, key);
+        necklaceCatalogueChanged += 1;
       } else {
         assert.equal(after.prompt, before.prompt, key);
         assert.equal(after.validation, before.validation, key);
@@ -502,7 +507,8 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       }
     }
     assert.equal(pairChanged, 240);
-    assert.equal(unchanged, 9120);
+    assert.equal(necklaceCatalogueChanged, 480);
+    assert.equal(unchanged, 8640);
   });
 
   test('10. six images per job, one image call per image, one validation call with the pair schema', async () => {

@@ -104,9 +104,12 @@ const AnalysisSchema = z.object({
   // Two-bangle sets: same design or different designs (see
   // bangleSetTypeFromAnalysis) — answered in this same call, no extra request.
   bangleSetType: z.enum(['IDENTICAL_PAIR', 'DISTINCT_PAIR', 'NOT_APPLICABLE']),
+  // Necklaces: necklace alone or necklace + matching earrings set (see
+  // necklaceSetTypeSuggestion) — answered in this same call, no extra request.
+  necklaceSetType: z.enum(['NECKLACE_ONLY', 'NECKLACE_SET', 'NOT_APPLICABLE']),
 });
 
-const ANALYSIS_SYSTEM_PROMPT = `You are a jewellery product analyst. Examine the uploaded photograph and identify the jewellery item's type, metal colour, gemstone, and dominant shape, each with a confidence score from 0 to 1. Use "UNKNOWN" for jewelleryType only if the item genuinely does not match any of the listed types or the photo is too unclear to tell. Also suggest which customer category the piece is designed for — WOMEN, GENTS, KIDS, or UNISEX — based on styling cues such as scale, motif and design language (e.g. a small, simple band suggests KIDS; a broad, plain band suggests GENTS), with its own confidence score from 0 to 1; default to WOMEN when the cues are ambiguous. Also report wristPieceCount: the number of separate physical bangles, bracelets or other wrist pieces in the photo (0 if the item is not a wrist piece). Count actual jewellery pieces only — do not count reflections, shadows, overlapping edges, or the same piece shown again from another camera view as additional pieces. Also report bangleSetType: IDENTICAL_PAIR when the photo shows exactly two bangles with the same design, DISTINCT_PAIR when it shows exactly two bangles whose designs differ, and NOT_APPLICABLE for a single bangle, any other count, or any item that is not a bangle. This is a suggestion for a human reviewer, not a final decision — always report your best honest confidence, do not artificially inflate it.`;
+const ANALYSIS_SYSTEM_PROMPT = `You are a jewellery product analyst. Examine the uploaded photograph and identify the jewellery item's type, metal colour, gemstone, and dominant shape, each with a confidence score from 0 to 1. Use "UNKNOWN" for jewelleryType only if the item genuinely does not match any of the listed types or the photo is too unclear to tell. Also suggest which customer category the piece is designed for — WOMEN, GENTS, KIDS, or UNISEX — based on styling cues such as scale, motif and design language (e.g. a small, simple band suggests KIDS; a broad, plain band suggests GENTS), with its own confidence score from 0 to 1; default to WOMEN when the cues are ambiguous. Also report wristPieceCount: the number of separate physical bangles, bracelets or other wrist pieces in the photo (0 if the item is not a wrist piece). Count actual jewellery pieces only — do not count reflections, shadows, overlapping edges, or the same piece shown again from another camera view as additional pieces. Also report bangleSetType: IDENTICAL_PAIR when the photo shows exactly two bangles with the same design, DISTINCT_PAIR when it shows exactly two bangles whose designs differ, and NOT_APPLICABLE for a single bangle, any other count, or any item that is not a bangle. Also report necklaceSetType: NECKLACE_ONLY when the photo shows a necklace with no earrings, NECKLACE_SET when it shows a necklace together with matching earrings, and NOT_APPLICABLE for any item that is not a necklace. This is a suggestion for a human reviewer, not a final decision — always report your best honest confidence, do not artificially inflate it.`;
 
 // Bangle quantity — an automatic Bangle-only rule (no admin option), derived
 // from the job's stored analysis so every prompt, validation and
@@ -151,6 +154,29 @@ export function bangleSetTypeForJob(jewelleryType, analysis) {
     }
   }
   return BANGLE_SET_TYPES.includes(parsed?.bangleSetType) ? parsed.bangleSetType : null;
+}
+
+// Necklace set type: 'NECKLACE_ONLY' | 'NECKLACE_SET'. The AI's suggestion
+// pre-fills the Analyse & Confirm choice; the admin's confirmed value is
+// stored on the job (necklace_set_type). null = unknown (jobs confirmed
+// before this existed, or any non-Necklace job): today's prompts, unchanged.
+export const NECKLACE_SET_TYPES = ['NECKLACE_ONLY', 'NECKLACE_SET'];
+
+export function necklaceSetTypeSuggestion(analysis) {
+  let parsed = analysis;
+  if (typeof analysis === 'string') {
+    try {
+      parsed = JSON.parse(analysis);
+    } catch {
+      return null;
+    }
+  }
+  return NECKLACE_SET_TYPES.includes(parsed?.necklaceSetType) ? parsed.necklaceSetType : null;
+}
+
+// The confirmed value saved on a job (Necklace jobs only).
+export function necklaceSetTypeForJob(job) {
+  return job?.jewellery_type === 'NECKLACE' && NECKLACE_SET_TYPES.includes(job.necklace_set_type) ? job.necklace_set_type : null;
 }
 
 // Identical pair, catalogue slot: the AI generates one bangle and the system
@@ -736,6 +762,16 @@ const SET_EARRING_FIDELITY =
 
 const NECKLACE_SET_NOTE_CATALOGUE =
   `If the uploaded reference shows a necklace set — the necklace together with matching earrings — the earrings are part of this product: lay the necklace AND the matching earrings out together in this one product image, reproducing both exactly as in the reference. ${SET_EARRING_FIDELITY} Do not drop the earrings or the necklace from a set. If the reference shows only a necklace, do not add any earrings.`;
+// Necklace confirmed as NECKLACE_ONLY, presenter images: the conditional set
+// note above mentions matching (stud) earrings several times, and the image
+// model kept adding small studs copying the necklace motif (production, Fine
+// Trace necklace, 16 Nov 2026). A confirmed necklace-only product gets this
+// plain rule instead; sets and unknown jobs keep the set note unchanged.
+const NECKLACE_ONLY_NOTE_PRESENTER =
+  'This product is a necklace only — the uploaded reference contains no earrings. The presenter wears no earrings: both ears are completely bare. Do not add studs, drops, hoops, jhumkas or any earring, and never create earrings that copy the necklace motif. The necklace is the only jewellery in the image.';
+const NECKLACE_ONLY_PRESENTER_EXCLUDED =
+  'No earrings of any kind — both ears bare — and no rings, bracelet, bangle, nose pin or additional necklace.';
+
 const NECKLACE_SET_NOTE_PRESENTER =
   `If the uploaded reference shows a necklace set — the necklace together with matching earrings — the earrings are part of this product: the presenter must wear both, the necklace on the neck and the matching earrings on both ears, clearly visible and not hidden by hair, reproducing both exactly as in the reference. ${SET_EARRING_FIDELITY} Do not drop the earrings or the necklace from a set. If the reference shows only a necklace, do not add any earrings.`;
 
@@ -1404,6 +1440,60 @@ const BANGLE_PAIR_UPRIGHT_RING_COUNT =
 const BANGLE_PAIR_MACRO_CLOSE =
   "Macro closeness for this image: move the camera visibly closer than every other catalogue image — the primary bangle fills most of the frame height, with the outer face of its band turned toward the camera so its motifs, band finish and construction are large, sharp and clearly readable. The second bangle is smaller, slightly behind on the opposite side, with nothing overlapping it. Keep both bangles complete inside the frame, with only a narrow white margin. Do not repeat the Slight Alternate Angle composition of two similar-sized upright bangles side by side.";
 
+// --- Necklace catalogue: four fixed shots ----------------------------------
+// The generic catalogue views asked Images 2 and 3 for the same small
+// 15–25° turn, which on a necklace lying flat looks like the front view —
+// all four images came out as the same flat U at different zooms (local job
+// c05036b9, 16 Nov 2026). Each Necklace catalogue slot now has its own
+// clearly different camera position. Image 2 uses the Box Diamonds hero
+// angle (about 40° turn, camera 15–20° above). Same slot-to-shot mapping as
+// Bangle (bangleCatalogueShotFor). Presenter images are unaffected.
+const NECKLACE_CATALOGUE_SHOTS = {
+  1: {
+    title: 'Necklace catalogue Image 1 of 4 — front catalogue view, the main featured image.',
+    composition:
+      'FRONT CATALOGUE VIEW: the complete necklace laid flat on the surface in a clean, symmetrical U-shape, photographed straight-on from in front and slightly above, centred, with the main motif at the bottom centre facing the camera and both sides of the chain running evenly upward. The whole necklace fills about 75–85% of the frame width with comfortable white space around it.',
+    negatives: ['Do not tilt, rotate or angle the necklace in this image.'],
+  },
+  2: {
+    title: 'Necklace catalogue Image 2 of 4 — hero three-quarter view.',
+    composition:
+      'HERO THREE-QUARTER VIEW: a clearly different camera position from Image 1 — rotate the necklace approximately 40 degrees horizontally from the straight front position and raise the camera to approximately 15–20 degrees above the surface, so the chain curves away in visible perspective (the nearer side larger, the far side smaller) while the main motif stays facing the camera and fully readable. Centre the motif; the necklace occupies about 70–75% of the frame width. Add a subtle natural grounding shadow so it does not appear to float.',
+    negatives: [
+      'Do not use the straight-on, symmetrical front layout of Image 1 — the perspective must be clearly visible.',
+      'Do not rotate so far that the main motif is hidden or seen edge-on.',
+    ],
+  },
+  3: {
+    title: 'Necklace catalogue Image 3 of 4 — low side detail view.',
+    composition:
+      "LOW SIDE DETAIL VIEW: the camera close to the surface (approximately 5–15 degrees above it), in front of the main motif and slightly to one side, so the motif's thickness, edges and setting height are clearly visible, with the chain receding behind it into soft depth of field. The motif is the sharp focal point in the lower-middle of the frame; part of the chain may fall softly out of focus. It must look clearly different from Images 1 and 2.",
+    negatives: ['Do not use a top-down or straight-on front layout in this image.'],
+  },
+  4: {
+    title: 'Necklace catalogue Image 4 of 4 — macro detail view.',
+    composition:
+      "MACRO DETAIL VIEW: a genuine close-up of the necklace's main motif — the motif fills about 60–70% of the frame width, with its stones, settings, enamel, metal finishing and craftsmanship large, sharp and clearly readable; the chain may run out of the frame on both sides. Use a slightly angled viewpoint, not perfectly flat, so the motif keeps its depth. It must look clearly closer than Images 1, 2 and 3.",
+    negatives: ['Do not show the whole necklace in this image.'],
+  },
+};
+
+const NECKLACE_CATALOGUE_DIVERSITY =
+  'Necklace catalogue set: the four catalogue images must be compositionally distinct — Image 1 is the flat front U-shape; Image 2 is a hero three-quarter view at about 40 degrees with visible perspective; Image 3 is a low side detail view close to surface level; Image 4 is a macro close-up of the motif. They must never differ only by zoom. Change only the camera position, product orientation and composition — never the product design.';
+
+const NECKLACE_CATALOGUE_SAFETY =
+  'The uploaded reference defines the necklace design only — not the camera angle, arrangement, background or any text labels on it. Never show or invent the reverse side of the necklace or its motif.';
+
+function necklaceCatalogueSectionsFor(assetType) {
+  const shot = NECKLACE_CATALOGUE_SHOTS[bangleCatalogueShotFor(assetType)];
+  if (!shot) return null;
+  return {
+    composition: `${CATALOGUE_SIZE_NOTE} ${shot.title}`,
+    placement: `${shot.composition} ${NECKLACE_CATALOGUE_DIVERSITY} ${NECKLACE_CATALOGUE_SAFETY}`,
+    negatives: [CATALOGUE_NO_PERSON_NOTE, ...shot.negatives],
+  };
+}
+
 // Identical pair, catalogue slots: the AI generates ONE bangle (the
 // "source"), sized to leave room, and bangleComposite.js places the second,
 // identical copy locally — the model kept drawing a doubled pair at each
@@ -1536,6 +1626,7 @@ function buildAssetPromptSections({
   // Bangle only: 'SINGLE_BANGLE' | 'TWO_BANGLE_SET' | null (see bangleQuantityFromAnalysis).
   bangleQuantity,
   bangleSetType,
+  necklaceSetType,
 }) {
   const metalColor = metalColorForAssetType(assetType, generateRoseGold);
   const metalColourNote = `The metal colour is ${metalColor.toLowerCase()} gold — preserve it exactly.`;
@@ -1569,8 +1660,17 @@ function buildAssetPromptSections({
   const negativeParts = ['Do not redesign, reinterpret or add/remove/resize/reposition any component.'];
   if (RING_ASSET_TYPE_SET.has(assetType)) negativeParts.push(RING_FIDELITY_EXTRA);
   if (hidesFastening(confirmedType)) negativeParts.push(HIDDEN_FASTENING_NOTE);
+  // A confirmed necklace-only product gets a plain "no earrings" rule on
+  // presenter images; sets and unknown jobs keep the set note unchanged.
+  const isNecklaceOnlyPresenter = confirmedType === 'NECKLACE' && necklaceSetType === 'NECKLACE_ONLY' && !CATALOGUE_ASSET_TYPES.has(assetType);
   if (confirmedType === 'NECKLACE') {
-    negativeParts.push(CATALOGUE_ASSET_TYPES.has(assetType) ? NECKLACE_SET_NOTE_CATALOGUE : NECKLACE_SET_NOTE_PRESENTER);
+    negativeParts.push(
+      CATALOGUE_ASSET_TYPES.has(assetType)
+        ? NECKLACE_SET_NOTE_CATALOGUE
+        : isNecklaceOnlyPresenter
+          ? NECKLACE_ONLY_NOTE_PRESENTER
+          : NECKLACE_SET_NOTE_PRESENTER,
+    );
   }
   if (CATALOGUE_ASSET_TYPES.has(assetType)) negativeParts.push(CATALOGUE_NO_PERSON_NOTE);
   if (metalColor === 'ROSE') negativeParts.push(ROSE_GOLD_CONVERSION_NOTE);
@@ -1678,7 +1778,7 @@ function buildAssetPromptSections({
           : `Place only this exact ${itemLabel} on the selected presenter's ${rule.location}.`;
       // A pair's second bangle is required, so the shared "no additional
       // wrist jewellery" exclusion is replaced for it.
-      const excluded = isBanglePair ? BANGLE_PAIR_EXCLUDED : rule.excluded;
+      const excluded = isBanglePair ? BANGLE_PAIR_EXCLUDED : isNecklaceOnlyPresenter ? NECKLACE_ONLY_PRESENTER_EXCLUDED : rule.excluded;
       categoryPlacement = `${placementLead} ${excluded} Do not create a similar replacement design. Do not add accessory jewellery for styling. Keep the product clearly visible and unobstructed — do not allow clothing, hair or hands to cover it.`;
       // Gents ONLY: a real master identity photo is attached as the FIRST
       // input image (see generateShot's identityReferenceBuffer / GENTS_
@@ -1867,6 +1967,20 @@ function buildAssetPromptSections({
     };
   }
 
+  // Necklace catalogue: the fixed shot replaces the generic view (its
+  // composition and view negatives), exactly like Bangle below. Everything
+  // pushed before sharedNegativeCount — the set / no-earrings note, hidden
+  // fastening, no-person note — is kept.
+  if (confirmedType === 'NECKLACE' && CATALOGUE_ASSET_TYPES.has(assetType)) {
+    const shot = necklaceCatalogueSectionsFor(assetType);
+    if (shot) {
+      negativeParts.length = sharedNegativeCount;
+      creativeDefaults = { ...creativeDefaults, composition: shot.composition };
+      categoryPlacement = shot.placement;
+      negativeParts.push(...shot.negatives.filter((n) => !negativeParts.includes(n)));
+    }
+  }
+
   if (isBangle) {
     if (CATALOGUE_ASSET_TYPES.has(assetType)) {
       // The fixed shot replaces the generic view: its composition, its
@@ -1932,6 +2046,7 @@ function buildPrompt({
   slotReferences,
   bangleQuantity,
   bangleSetType,
+  necklaceSetType,
 }) {
   return assemblePrompt(
     buildAssetPromptSections({
@@ -1947,6 +2062,7 @@ function buildPrompt({
       slotReferences,
       bangleQuantity,
       bangleSetType,
+      necklaceSetType,
     }),
   );
 }
@@ -1971,6 +2087,7 @@ export function previewPromptsForJob({
   // Bangle only (see bangleQuantityFromAnalysis); ignored for other categories.
   bangleQuantity,
   bangleSetType,
+  necklaceSetType,
 }) {
   const plan = buildJobPlan({
     jewelleryCategory: confirmedType,
@@ -1994,6 +2111,7 @@ export function previewPromptsForJob({
       slotReferences,
       bangleQuantity,
       bangleSetType,
+      necklaceSetType,
     });
     return {
       slotKey,
@@ -2056,6 +2174,7 @@ export async function generateShot({
   // Bangle only — used whenever the prompt is rebuilt (e.g. a retry after a failed validation).
   bangleQuantity,
   bangleSetType,
+  necklaceSetType,
 }) {
   const openai = getClient();
   const extension = extensionFor(mimetype);
@@ -2079,6 +2198,7 @@ export async function generateShot({
       slotReferences: outputSlot?.references,
       bangleQuantity,
       bangleSetType,
+      necklaceSetType,
     });
 
   // Identity reference (Gents master or the first presenter image) goes
@@ -2178,7 +2298,19 @@ EXTRA_VIEW_VALIDATION_CONTEXT.RING_ROSE_HERO = EXTRA_VIEW_VALIDATION_CONTEXT.RIN
 const LENIENT_WHITE_BACKGROUND_VALIDATION =
   ' The background is a white studio background: a soft contact shadow, a slight light-grey falloff or an off-white tone are expected and must NOT be flagged. Only a clearly coloured, dark, patterned or fabric background is worth a "warning", never "failed".';
 
+// Necklace catalogue: each image is checked against its own fixed shot.
+const NECKLACE_SHOT_VALIDATION = {
+  1: ' This is the Necklace FRONT CATALOGUE view: the complete necklace laid flat in a U-shape, seen straight-on. Set validationStatus to "failed" if part of the necklace is cropped out of frame.',
+  2: ' This is the Necklace HERO THREE-QUARTER view: the necklace turned about 40 degrees with the camera 15–20 degrees above the surface, so the chain recedes in visible perspective while the motif faces the camera. Set validationStatus to "failed" if it is essentially the same straight-on, symmetrical flat layout as a front view.',
+  3: ' This is the Necklace LOW SIDE DETAIL view: a camera close to the surface beside the motif, showing its thickness and setting height, with the chain receding behind it; soft focus on the chain is EXPECTED. Set validationStatus to "failed" if it is a top-down or straight-on flat front layout.',
+  4: ' This is the Necklace MACRO DETAIL view: a close-up of the main motif. The chain extending outside the frame is EXPECTED and must not be flagged. Set validationStatus to "failed" only if the motif itself is cropped, or if the whole necklace is visible instead of a close-up.',
+};
+
 function extraViewValidationContextFor(assetType, confirmedType) {
+  if (confirmedType === 'NECKLACE' && CATALOGUE_ASSET_TYPES.has(assetType)) {
+    const shotText = NECKLACE_SHOT_VALIDATION[bangleCatalogueShotFor(assetType)];
+    if (shotText) return `${shotText}${LENIENT_WHITE_BACKGROUND_VALIDATION}`;
+  }
   // A bracelet's side and macro views have their own geometry checks (see
   // BRACELET_VIEW_VALIDATION); the generic ones would contradict them.
   if (confirmedType === 'BRACELET' && (assetType === 'YELLOW_SIDE' || assetType === 'YELLOW_MACRO')) {
@@ -2236,8 +2368,13 @@ function braceletValidationContextFor(confirmedType, assetType) {
   return ` This is the Bracelet category.${geometry} Set validationStatus to "failed" if links are tangled, stacked, merged or overlapping in a way the reference does not show, if links or connectors are duplicated or missing compared with the reference, or if the central decorative element, connectors or clasp design differ from the reference. Set validationStatus to at least "warning" if any link or connector shows black, grey, brown or olive patches or dark smudges, if links differ visibly in gold tone from their neighbours, if the gold looks pale, washed-out, orange or oversaturated rather than natural polished gold, if any section looks dull, matte or tarnished instead of polished, or if link edges and connections are blurry.${view}${shadow} Only use "passed" when you can clearly confirm every check above from the image; if you are not confident, use "warning" so a person verifies it.`;
 }
 
-function necklaceValidationContextFor(confirmedType) {
+// Necklace confirmed as NECKLACE_ONLY by the admin: any earring fails.
+const NECKLACE_ONLY_VALIDATION =
+  ' The admin confirmed this product is a necklace only, with no earrings: set validationStatus to "failed" if any earring is visible in the generated image, and say so explicitly, e.g. "Failed: Earrings were added to a necklace-only product."';
+
+function necklaceValidationContextFor(confirmedType, necklaceSetType) {
   if (confirmedType !== 'NECKLACE') return '';
+  if (necklaceSetType === 'NECKLACE_ONLY') return `${necklaceValidationContextFor(confirmedType)}${NECKLACE_ONLY_VALIDATION}`;
   return ' This is the Necklace category: if the original reference shows the necklace together with matching earrings (a necklace set), those earrings are part of the product and must NOT be flagged as additional jewellery. In that case set validationStatus to "failed" if the generated image is missing the necklace or the matching earrings, or — on a presenter shot — if the presenter is not wearing both (necklace on the neck, matching earrings on the ears). Also compare the earrings closely with the reference: set validationStatus to "failed" if their type, size or length differs — e.g. the reference shows small stud earrings but the generated image shows drop, dangle, chandelier or hoop earrings, or the earrings are visibly longer or larger than in the reference — and say so explicitly, e.g. "Failed: Earrings changed from studs to long drops." If the reference shows only a necklace, set validationStatus to "failed" if any earrings appear in the generated image.';
 }
 
@@ -2740,12 +2877,12 @@ function audienceValidationContextFor(confirmedCustomerCategory, assetType) {
 
 // The per-image instructions sent with the two images — pure, so tests can
 // pin the exact text every category receives.
-export function buildValidationText({ confirmedType, metalColor, assetType, confirmedCustomerCategory, bangleQuantity, bangleSetType, composite = false }) {
+export function buildValidationText({ confirmedType, metalColor, assetType, confirmedCustomerCategory, bangleQuantity, bangleSetType, composite = false, necklaceSetType }) {
   // Bangle catalogue shots carry their own fixed-shot check, which replaces
   // the generic side/macro view notes (a Bangle detail view must keep every
   // band in frame, and its low side view is not a pure side profile).
   const extraView = confirmedType === 'BANGLE' ? '' : extraViewValidationContextFor(assetType, confirmedType);
-  return `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference.${ringValidationContextFor(assetType)}${extraView}${necklaceValidationContextFor(confirmedType)}${hiddenFasteningValidationContextFor(confirmedType)}${braceletValidationContextFor(confirmedType, assetType)}${catalogueValidationContextFor(assetType)}${bangleValidationContextFor(confirmedType, bangleQuantity, assetType, { bangleSetType, composite })}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
+  return `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference.${ringValidationContextFor(assetType)}${extraView}${necklaceValidationContextFor(confirmedType, necklaceSetType)}${hiddenFasteningValidationContextFor(confirmedType)}${braceletValidationContextFor(confirmedType, assetType)}${catalogueValidationContextFor(assetType)}${bangleValidationContextFor(confirmedType, bangleQuantity, assetType, { bangleSetType, composite })}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
 }
 
 // Runs after every successful generation (Problem 1 & 2 downstream): a second
@@ -2773,6 +2910,8 @@ export async function validateGeneratedImage({
   bangleQuantity,
   // Bangle two-bangle sets only: 'IDENTICAL_PAIR' | 'DISTINCT_PAIR' | null.
   bangleSetType,
+  // Necklace only: the admin-confirmed 'NECKLACE_ONLY' | 'NECKLACE_SET' | null.
+  necklaceSetType,
   // Identical-pair catalogue composite only: the single generated source
   // bangle. Sent as a THIRD image in the SAME request — the final composite
   // stays the first image — so source and final are checked in one call.
@@ -2787,7 +2926,7 @@ export async function validateGeneratedImage({
   const isBangle = confirmedType === 'BANGLE';
   const composite = Boolean(isBangle && compositeSourceBuffer && bangleUsesLocalPairComposite(assetType, bangleQuantity, bangleSetType));
 
-  let text = buildValidationText({ confirmedType, metalColor, assetType, confirmedCustomerCategory, bangleQuantity, bangleSetType, composite });
+  let text = buildValidationText({ confirmedType, metalColor, assetType, confirmedCustomerCategory, bangleQuantity, bangleSetType, composite, necklaceSetType });
 
   const content = [
     { type: 'text', text },

@@ -4,6 +4,7 @@ import {
   fetchPromptPreview,
   type CustomerCategory,
   type JewelleryType,
+  type NecklaceSetType,
   type PromptOverrides,
   type PromptCreativeOverride,
 } from '../../api/aiStudio';
@@ -37,6 +38,7 @@ interface ReviewPromptsStepProps {
   promptOverrides: PromptOverrides;
   onPromptOverridesChange: (_v: PromptOverrides) => void;
   customerCategory: CustomerCategory | '';
+  necklaceSetType: NecklaceSetType | '';
 }
 
 // "Review Prompts" — the third Choose-Presenter sub-screen. Only ever
@@ -53,6 +55,7 @@ export function ReviewPromptsStep({
   promptOverrides,
   onPromptOverridesChange,
   customerCategory,
+  necklaceSetType,
 }: ReviewPromptsStepProps) {
   const [expandedAssetType, setExpandedAssetType] = useState<string | null>(null);
 
@@ -76,6 +79,7 @@ export function ReviewPromptsStep({
       generateRoseGold,
       debouncedOverrides,
       customerCategory,
+      necklaceSetType,
     ],
     queryFn: () =>
       fetchPromptPreview(productId, jobId, {
@@ -84,6 +88,7 @@ export function ReviewPromptsStep({
         generateRoseGold,
         promptOverrides: debouncedOverrides,
         customerCategory: customerCategory || undefined,
+        necklaceSetType: jewelleryType === 'NECKLACE' && necklaceSetType ? necklaceSetType : undefined,
       }),
     placeholderData: (previousData) => previousData,
   });

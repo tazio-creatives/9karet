@@ -14,6 +14,7 @@ import {
   isCatalogueAssetType,
   bangleQuantityForJob,
   bangleSetTypeForJob,
+  necklaceSetTypeForJob,
   bangleUsesLocalPairComposite,
   bangleCatalogueShotFor,
 } from '../services/aiStudioService.js';
@@ -187,6 +188,8 @@ async function generateOneAsset({
   bangleQuantity,
   // Bangle two-bangle sets only — 'IDENTICAL_PAIR' | 'DISTINCT_PAIR' | null.
   bangleSetType,
+  // Necklace only — the admin-confirmed 'NECKLACE_ONLY' | 'NECKLACE_SET' | null.
+  necklaceSetType,
 }) {
   // A cancelled job's late-arriving results are discarded, never written
   // back (plan §12) — checked immediately before each write, not just once
@@ -234,6 +237,7 @@ async function generateOneAsset({
         viewReferenceBuffers: viewReferenceBuffers ?? [],
         bangleQuantity,
         bangleSetType,
+        necklaceSetType,
       });
 
       // Identical two-bangle set, catalogue slot: the model generated ONE
@@ -277,6 +281,7 @@ async function generateOneAsset({
           identityKind,
           bangleQuantity,
           bangleSetType,
+          necklaceSetType,
           compositeSourceBuffer: sourceBuffer,
         });
         validationStatus = result.validationStatus;
@@ -441,6 +446,7 @@ export async function generateHandler(jobs) {
       gentsMasterPresenterBuffer,
       bangleQuantity: bangleQuantityForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
       bangleSetType: bangleSetTypeForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
+      necklaceSetType: necklaceSetTypeForJob(aiStudioJob),
     };
     const { firstWave, chained } = splitGenerationWaves(targets, manifest);
 

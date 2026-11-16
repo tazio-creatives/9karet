@@ -14,6 +14,7 @@ import {
   changeGentsPresenter,
   type JewelleryType,
   type CustomerCategory,
+  type NecklaceSetType,
   type PromptOverrides,
   type PromptCreativeOverride,
   type ReferenceUpload,
@@ -73,6 +74,8 @@ export function AiImageStudioPage() {
   // rationale as Problem 1's category-confirmation audit trail).
   const [customerCategory, setCustomerCategory] = useState<CustomerCategory | ''>('');
   const [customerCategoryConfirmed, setCustomerCategoryConfirmed] = useState(false);
+  // Necklace only — pre-filled from the AI's suggestion, changeable by the admin.
+  const [necklaceSetType, setNecklaceSetType] = useState<NecklaceSetType | ''>('');
   // "Generate Rose Gold" always starts OFF for a new generation session —
   // never restored from a previous product or from browser storage. The
   // backend saves the confirmed value on the job and works from that.
@@ -156,6 +159,15 @@ export function AiImageStudioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.analysis]);
 
+  // Necklace: the AI's suggested necklace-only / set answer pre-fills the
+  // choice on Analyse & Confirm; the admin can change it before generating.
+  useEffect(() => {
+    if (!job?.analysis || necklaceSetType) return;
+    const suggested = job.analysis.necklaceSetType;
+    if (suggested === 'NECKLACE_ONLY' || suggested === 'NECKLACE_SET') setNecklaceSetType(suggested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.analysis]);
+
   const createMutation = useMutation({
     mutationFn: (references: ReferenceUpload[]) => createStudioJob(productId as string, references),
     onSuccess: (res) => {
@@ -164,6 +176,7 @@ export function AiImageStudioPage() {
       setCategoryConfirmed(false);
       setCustomerCategory('');
       setCustomerCategoryConfirmed(false);
+      setNecklaceSetType('');
       setPromptOverrides({});
       setGenerateRoseGold(false);
     },
@@ -178,6 +191,7 @@ export function AiImageStudioPage() {
         generateRoseGold: effectiveRoseGold,
         promptOverrides,
         customerCategory: customerCategory || undefined,
+        necklaceSetType: jewelleryType === 'NECKLACE' && necklaceSetType ? necklaceSetType : undefined,
       }),
     onSuccess: invalidateJob,
   });
@@ -318,6 +332,8 @@ export function AiImageStudioPage() {
               onCustomerCategoryConfirmedChange={setCustomerCategoryConfirmed}
               includeProductSizeImage={includeProductSizeImage}
               onIncludeProductSizeImageChange={setIncludeProductSizeImage}
+              necklaceSetType={necklaceSetType}
+              onNecklaceSetTypeChange={setNecklaceSetType}
             />
             {confirmError && isRing && <p className={sharedStyles.error}>{confirmError}</p>}
             <div className={styles.actions}>
@@ -450,6 +466,7 @@ export function AiImageStudioPage() {
               promptOverrides={promptOverrides}
               onPromptOverridesChange={setPromptOverrides}
               customerCategory={customerCategory}
+              necklaceSetType={necklaceSetType}
             />
             {confirmError && <p className={sharedStyles.error}>{confirmError}</p>}
             <div className={styles.actions}>

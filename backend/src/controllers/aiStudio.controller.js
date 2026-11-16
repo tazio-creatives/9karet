@@ -20,6 +20,9 @@ import {
   DEFAULT_CUSTOMER_CATEGORY,
   bangleQuantityForJob,
   bangleSetTypeForJob,
+  NECKLACE_SET_TYPES,
+  necklaceSetTypeSuggestion,
+  necklaceSetTypeForJob,
 } from '../services/aiStudioService.js';
 import { findPresenterById } from '../repositories/presenters.repository.js';
 import { findCategoryById } from '../repositories/categories.repository.js';
@@ -99,6 +102,9 @@ export const confirmSchema = z.object({
   // admin who never sees/uses the new Customer Category control gets
   // exactly the same generation as before this feature existed.
   customerCategory: z.enum(CUSTOMER_CATEGORIES).optional(),
+  // Necklace only — necklace alone or necklace + matching earrings set.
+  // Optional: when omitted, the AI's suggestion from the analysis is used.
+  necklaceSetType: z.enum(NECKLACE_SET_TYPES).optional(),
 });
 
 const promptPreviewSchema = z.object({
@@ -107,6 +113,7 @@ const promptPreviewSchema = z.object({
   generateRoseGold: z.boolean().optional(),
   promptOverrides: promptOverridesSchema.optional(),
   customerCategory: z.enum(CUSTOMER_CATEGORIES).optional(),
+  necklaceSetType: z.enum(NECKLACE_SET_TYPES).optional(),
 });
 
 const selectionSchema = z.object({
@@ -403,6 +410,10 @@ export async function confirmJob(req, res, next) {
     // the admin turned it on for this generation.
     const generateRoseGold = effectiveGenerateRoseGold(input.jewelleryType, input.generateRoseGold ?? false);
     const customerCategory = input.customerCategory ?? DEFAULT_CUSTOMER_CATEGORY;
+    // Necklace only: the admin's choice, else the AI's suggestion; null for
+    // every other category (and when neither is known — today's prompts).
+    const necklaceSetType =
+      input.jewelleryType === 'NECKLACE' ? (input.necklaceSetType ?? necklaceSetTypeSuggestion(job.analysis)) : null;
 
     // The complete six-slot plan — counts and metals from the Rose Gold
     // switch, views from the jewellery category, presenter identity from the
@@ -428,6 +439,7 @@ export async function confirmJob(req, res, next) {
       output_manifest: JSON.stringify(manifest),
       customer_category: customerCategory,
       customer_category_confirmed_at: new Date(),
+      necklace_set_type: necklaceSetType,
       confirmed_at: new Date(),
       category_confirmed_at: new Date(),
       status: 'generating',
@@ -447,6 +459,7 @@ export async function confirmJob(req, res, next) {
       references,
       bangleQuantity: bangleQuantityForJob(input.jewelleryType, job.analysis),
       bangleSetType: bangleSetTypeForJob(input.jewelleryType, job.analysis),
+      necklaceSetType,
     });
 
     const insertedAssets = await insertAssets(
@@ -514,6 +527,10 @@ export async function previewPrompts(req, res, next) {
       references: referencesForPlan(job),
       bangleQuantity: bangleQuantityForJob(jewelleryType, job.analysis),
       bangleSetType: bangleSetTypeForJob(jewelleryType, job.analysis),
+      necklaceSetType:
+        jewelleryType === 'NECKLACE'
+          ? (input.necklaceSetType ?? necklaceSetTypeForJob(job) ?? necklaceSetTypeSuggestion(job.analysis))
+          : null,
     });
 
     res.json({ prompts: previews });
@@ -546,6 +563,7 @@ async function refreshBraceletPrompt(job, asset) {
     references: referencesForPlan(job),
     bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
     bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
+    necklaceSetType: necklaceSetTypeForJob(job),
   }).find((p) => p.assetType === asset.asset_type);
   if (preview) await updateAsset(asset.id, { assembled_final_prompt: preview.finalPrompt });
 }
@@ -668,6 +686,7 @@ export async function updateAssetSelection(req, res, next) {
         references: referencesForPlan(job),
         bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
         bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
+        necklaceSetType: necklaceSetTypeForJob(job),
       });
       const preview = previews.find((p) => p.assetType === asset.asset_type);
       if (!preview) throw new AppError(400, 'This asset type is not part of the current generation plan');

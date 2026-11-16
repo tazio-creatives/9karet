@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { CUSTOMER_CATEGORIES, REAL_JEWELLERY_TYPES, type CustomerCategory, type JewelleryType, type StudioJob } from '../../api/aiStudio';
+import {
+  CUSTOMER_CATEGORIES,
+  REAL_JEWELLERY_TYPES,
+  type CustomerCategory,
+  type JewelleryType,
+  type NecklaceSetType,
+  type StudioJob,
+} from '../../api/aiStudio';
 import { Toggle } from '../../components/Toggle';
 import { formatCustomerCategory, presenterDemographicSummary } from './generationRules';
 import { GenerationSummary } from './GenerationSummary';
@@ -30,7 +37,14 @@ interface AnalyseConfirmStepProps {
   onCustomerCategoryConfirmedChange: (_v: boolean) => void;
   includeProductSizeImage: boolean;
   onIncludeProductSizeImageChange: (_v: boolean) => void;
+  necklaceSetType: NecklaceSetType | '';
+  onNecklaceSetTypeChange: (_v: NecklaceSetType) => void;
 }
+
+const NECKLACE_SET_OPTIONS: { value: NecklaceSetType; label: string }[] = [
+  { value: 'NECKLACE_ONLY', label: 'Necklace only' },
+  { value: 'NECKLACE_SET', label: 'Necklace + earrings set' },
+];
 
 // AI-detected attributes are suggestions only — nothing here is ever applied
 // to the product without the admin explicitly confirming it below. The
@@ -54,6 +68,8 @@ export function AnalyseConfirmStep({
   onCustomerCategoryConfirmedChange,
   includeProductSizeImage,
   onIncludeProductSizeImageChange,
+  necklaceSetType,
+  onNecklaceSetTypeChange,
 }: AnalyseConfirmStepProps) {
   const [isPickingCategory, setIsPickingCategory] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -286,6 +302,39 @@ export function AnalyseConfirmStep({
           </p>
         )}
       </section>
+
+      {/* Necklace only: necklace alone or necklace + matching earrings set.
+          Pre-filled from the AI's suggestion; decides whether the presenter
+          wears earrings. Not shown for any other jewellery type. */}
+      {jewelleryType === 'NECKLACE' && (
+        <section className={styles.generationPlan}>
+          <h3 className={styles.generationPlanTitle}>Necklace Type</h3>
+          {analysis?.necklaceSetType === 'NECKLACE_ONLY' || analysis?.necklaceSetType === 'NECKLACE_SET' ? (
+            <p className={styles.attrLabel}>
+              AI suggestion: {NECKLACE_SET_OPTIONS.find((o) => o.value === analysis.necklaceSetType)?.label}
+            </p>
+          ) : null}
+          <div className={styles.categoryGrid}>
+            {NECKLACE_SET_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                className={necklaceSetType === o.value ? styles.categoryCardSelected : styles.categoryCard}
+                onClick={() => onNecklaceSetTypeChange(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <p className={styles.attrLabel}>
+            {necklaceSetType === 'NECKLACE_ONLY'
+              ? 'Presenter images: necklace only — the presenter wears no earrings.'
+              : necklaceSetType === 'NECKLACE_SET'
+                ? 'Presenter images: the presenter wears the necklace and the matching earrings.'
+                : 'Choose whether the reference is a necklace only or a necklace with matching earrings.'}
+          </p>
+        </section>
+      )}
 
       <section className={styles.generationPlan}>
         <h3 className={styles.generationPlanTitle}>Generation Plan</h3>

@@ -36,6 +36,8 @@ export const REAL_JEWELLERY_TYPES: Exclude<JewelleryType, 'UNKNOWN'>[] = [
 // presenter, Kids -> child model ~2-4). 'WOMEN' is the default and matches
 // today's only presenter styling.
 export type CustomerCategory = 'WOMEN' | 'GENTS' | 'KIDS' | 'UNISEX';
+// Necklace only: a necklace on its own, or a necklace + matching earrings set.
+export type NecklaceSetType = 'NECKLACE_ONLY' | 'NECKLACE_SET';
 export const CUSTOMER_CATEGORIES: CustomerCategory[] = ['WOMEN', 'GENTS', 'KIDS', 'UNISEX'];
 
 // Metal color is now encoded directly in the asset type (e.g. ROSE_FRONT)
@@ -107,6 +109,8 @@ export interface StudioAnalysis {
   suggestedCategorySlug: string | null;
   customerCategory: CustomerCategory;
   customerCategoryConfidence: number;
+  // Absent on jobs analysed before this field existed.
+  necklaceSetType?: NecklaceSetType | 'NOT_APPLICABLE';
 }
 
 // The only fields a "Customise Prompt" admin can edit on the Review Prompts
@@ -307,6 +311,7 @@ export function confirmStudioJob(
     generateRoseGold: boolean;
     promptOverrides?: PromptOverrides;
     customerCategory?: CustomerCategory;
+    necklaceSetType?: NecklaceSetType;
   },
 ) {
   return apiFetch<{ jobId: string }>(`/admin/products/${productId}/ai-studio/${jobId}/confirm`, {
@@ -327,6 +332,7 @@ export function fetchPromptPreview(
     generateRoseGold?: boolean;
     promptOverrides?: PromptOverrides;
     customerCategory?: CustomerCategory;
+    necklaceSetType?: NecklaceSetType;
   },
 ) {
   return apiFetch<{ prompts: PromptPreview[] }>(`/admin/products/${productId}/ai-studio/${jobId}/prompt-preview`, {
