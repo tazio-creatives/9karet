@@ -9,10 +9,10 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL ?? 'http://localhost:5173'
 // shown/linked once its URL is filled in here.
 export const SOCIAL_LINKS: { instagram?: string; facebook?: string } = {};
 
-// Header "Explore Diamonds Collection" button. Set VITE_BOX_DIAMONDS_URL (or
-// fill it in here); until then the button shows but is not clickable.
-export const BOX_DIAMONDS_URL: string | undefined = import.meta.env.VITE_BOX_DIAMONDS_URL || undefined;
+// Header "Explore Diamonds Collection" button (opens in a new tab).
+// VITE_BOX_DIAMONDS_URL overrides it.
+export const BOX_DIAMONDS_URL: string | undefined = import.meta.env.VITE_BOX_DIAMONDS_URL || 'https://boxdiamonds.com';
 
-// Header "Stores" button. No store-locator page exists yet, so it opens the
-// Contact page (which has the store address) until one does.
-export const STORES_URL = '/contact';
+// Header "Stores" button. Not linked yet (shows as a label) — set a path
+// here, e.g. '/stores', once the stores page exists.
+export const STORES_URL: string | undefined = undefined;

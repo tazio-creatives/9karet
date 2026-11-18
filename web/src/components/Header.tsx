@@ -64,10 +64,17 @@ export function Header() {
               <DiamondsLinkContent />
             </span>
           )}
-          <Link to={STORES_URL} className={`${styles.quickLink} ${styles.storesLink}`}>
-            <StoreIcon />
-            <span className={styles.quickLinkText}>Stores</span>
-          </Link>
+          {STORES_URL ? (
+            <Link to={STORES_URL} className={`${styles.quickLink} ${styles.storesLink}`}>
+              <StoreIcon />
+              <span className={styles.quickLinkText}>Stores</span>
+            </Link>
+          ) : (
+            <span className={`${styles.quickLink} ${styles.storesLink}`}>
+              <StoreIcon />
+              <span className={styles.quickLinkText}>Stores</span>
+            </span>
+          )}
         </div>
 
         <nav className={styles.actions} aria-label="Account actions">
@@ -171,10 +178,17 @@ export function Header() {
             <span>Explore Diamonds</span>
           </span>
         )}
-        <Link to={STORES_URL} className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
-          <StoreIcon />
-          <span>Stores</span>
-        </Link>
+        {STORES_URL ? (
+          <Link to={STORES_URL} className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
+            <StoreIcon />
+            <span>Stores</span>
+          </Link>
+        ) : (
+          <span className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
+            <StoreIcon />
+            <span>Stores</span>
+          </span>
+        )}
       </div>
 
       {isMobileSearchOpen && (
