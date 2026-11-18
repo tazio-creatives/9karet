@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { fetchAdminProducts, deleteProduct, setFeatured, setBestSeller, bulkSetCollection } from '../../api/products';
+import { fetchAdminProducts, deleteProduct, setFeatured, setBestSeller, setTrending, bulkSetCollection } from '../../api/products';
 import { fetchAdminCollections } from '../../api/collections';
 import { fetchAdminCategories } from '../../api/categories';
 import type { ProductStatus } from '../../api/types';
@@ -36,6 +36,15 @@ function StarIcon({ filled }: { filled: boolean }) {
       strokeLinejoin="round"
     >
       <path d="M12 3.3l2.5 5.3 5.8.6-4.3 3.9 1.2 5.7-5.2-3-5.2 3 1.2-5.7-4.3-3.9 5.8-.6L12 3.3z" />
+    </svg>
+  );
+}
+
+function TrendingIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.4 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 17l6-6 4 4 8-8" />
+      <path d="M15 7h6v6" />
     </svg>
   );
 }
@@ -170,6 +179,12 @@ export function ProductsListPage() {
     onError: (err) => window.alert(err instanceof Error ? err.message : 'Could not update best seller status.'),
   });
 
+  const trendingMutation = useMutation({
+    mutationFn: ({ id, trending }: { id: string; trending: boolean }) => setTrending(id, trending),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+    onError: (err) => window.alert(err instanceof Error ? err.message : 'Could not update trending status.'),
+  });
+
   return (
     <div>
       {flashMessage && <Toast message={flashMessage} variant="success" onDismiss={() => setFlashMessage(null)} />}
@@ -293,6 +308,7 @@ export function ProductsListPage() {
                 <th>Status</th>
                 <th>Featured</th>
                 <th>Best Seller</th>
+                <th>Trending</th>
                 <th></th>
               </tr>
             </thead>
@@ -353,6 +369,18 @@ export function ProductsListPage() {
                       onClick={() => bestSellerMutation.mutate({ id: product.id, bestSeller: !product.isBestSeller })}
                     >
                       <FlameIcon filled={product.isBestSeller} />
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className={`${styles.trendingButton} ${product.isTrending ? styles.trendingActive : ''}`}
+                      aria-label={product.isTrending ? `Remove ${product.name} from Trending` : `Mark ${product.name} as Trending`}
+                      aria-pressed={!!product.isTrending}
+                      disabled={trendingMutation.isPending}
+                      onClick={() => trendingMutation.mutate({ id: product.id, trending: !product.isTrending })}
+                    >
+                      <TrendingIcon active={!!product.isTrending} />
                     </button>
                   </td>
                   <td>

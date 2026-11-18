@@ -5,6 +5,7 @@ import {
   updateProductSchema,
   featuredSchema,
   bestSellerSchema,
+  trendingSchema,
   bulkCollectionSchema,
   variantPricePreviewQuerySchema,
   updateVariantSchema,
@@ -264,6 +265,7 @@ export function toListDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     ratingCount: row.rating_count,
     isFeatured: row.is_featured,
     isBestSeller: row.is_best_seller,
+    isTrending: row.is_trending ?? false,
     isNew: isRecentlyPublished(row.created_at),
     deliveryEstimate,
     ...(row.status ? { status: row.status } : {}),
@@ -348,6 +350,7 @@ function toDetailDto(row, deliveryEstimate = calculateDeliveryEstimate()) {
     isPriceLocked: row.is_price_locked,
     isFeatured: row.is_featured,
     isBestSeller: row.is_best_seller,
+    isTrending: row.is_trending ?? false,
     showDeliveryChecker: row.show_delivery_checker,
     // Own flag (admin form) vs. effective (own or via category) — the
     // storefront only needs the effective one.
@@ -619,6 +622,16 @@ export async function setFeatured(req, res, next) {
     const { featured } = featuredSchema.parse(req.body);
     const product = await productsService.adminUpdateProduct(req.params.id, { isFeatured: featured });
     res.json({ id: product.id, isFeatured: product.is_featured });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function setTrending(req, res, next) {
+  try {
+    const { trending } = trendingSchema.parse(req.body);
+    const product = await productsService.adminUpdateProduct(req.params.id, { isTrending: trending });
+    res.json({ id: product.id, isTrending: product.is_trending });
   } catch (err) {
     next(err);
   }

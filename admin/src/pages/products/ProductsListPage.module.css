@@ -122,6 +122,36 @@
   color: #dc2626;
 }
 
+.trendingButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.trendingButton:hover:not(:disabled) {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.trendingButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trendingActive {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
 .deleteButton {
   display: inline-flex;
   align-items: center;

@@ -1,0 +1,415 @@
+.section {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--space-6) 24px var(--space-8);
+  background: var(--color-white);
+}
+
+/* Tabs: centred text tabs, the active one bold with a burgundy underline. */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 44px;
+  margin-bottom: 28px;
+}
+
+.tab {
+  position: relative;
+  padding: 6px 2px 10px;
+  border: none;
+  background: none;
+  color: #8a8486;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.tabActive {
+  color: #3e0a14;
+  font-weight: 600;
+}
+
+.tabActive::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-burgundy);
+}
+
+/* 5-column grid, cards divided by thin lines; the promo card fills the
+   10th cell. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid #ececec;
+  border-left: 1px solid #ececec;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--color-white);
+  border-right: 1px solid #ececec;
+  border-bottom: 1px solid #ececec;
+}
+
+.media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: #f7f6f4;
+  overflow: hidden;
+}
+
+.mediaLink {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mediaLink img,
+.placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s ease;
+}
+
+.card:hover .mediaLink img {
+  transform: scale(1.04);
+}
+
+/* Pink ribbon with a notched right edge. */
+.ribbon {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  padding: 3px 18px 3px 8px;
+  background: #c8235a;
+  color: var(--color-white);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 50%, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+
+.wishlist {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #2b2b2b;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wishlist:hover {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-burgundy);
+}
+
+.wishlist[aria-pressed='true'] {
+  color: #c8235a;
+}
+
+.rating {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #3a3a3a;
+  font-size: 11px;
+  line-height: 16px;
+  pointer-events: none;
+}
+
+.star {
+  color: #e8a33d;
+}
+
+.ratingCount {
+  margin-left: 2px;
+  color: #6f6f6f;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 16px;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.price {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.strike {
+  margin-left: 6px;
+  color: #8c8c8c;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+.addButton {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: #151515;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  background: var(--color-burgundy);
+  transform: scale(1.06);
+}
+
+.addButton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.addButton:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.addButtonDone,
+.addButtonDone:disabled {
+  background: #2f7d4a;
+  opacity: 1;
+}
+
+.addButtonError {
+  background: #b3261e;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--color-white);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.offer {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  margin: 0;
+  padding: 3px 9px 3px 5px;
+  border: 1px solid #ecdcb8;
+  border-radius: 999px;
+  background: #fdf8ec;
+  color: #6b5a3a;
+  font-size: 11px;
+  line-height: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.name {
+  overflow: hidden;
+  color: #2b2b2b;
+  font-size: 13px;
+  line-height: 18px;
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.name:hover {
+  color: var(--color-burgundy);
+}
+
+/* Promo card: image (or burgundy gradient), text top-left, cream button at
+   the bottom. */
+.promo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-self: stretch;
+  margin: 6px;
+  min-height: 0;
+  padding: 18px 12px 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #7a1733 0%, #4a0814 60%, #2c040b 100%);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+.promoImage,
+.promoImage img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.promo:hover .promoImage img {
+  transform: scale(1.04);
+}
+
+.promoShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(30, 3, 8, 0.55) 0%, rgba(30, 3, 8, 0) 45%, rgba(30, 3, 8, 0.25) 100%);
+}
+
+.promoText {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.promoEyebrow {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.promoTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.promoButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 34px;
+  border-radius: 3px;
+  background: #fdf8f0;
+  color: #2b1a1d;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.promo:hover .promoButton {
+  background: var(--color-white);
+}
+
+.promo:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+/* Tablet: 3 columns — 8 products + promo card fill a neat 3 × 3. */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .card:nth-child(9) {
+    display: none;
+  }
+}
+
+/* Phone: 2 columns, tabs scroll sideways if they don't fit. */
+@media (max-width: 767px) {
+  .section {
+    padding: var(--space-5) 12px var(--space-6);
+  }
+
+  .tabs {
+    justify-content: flex-start;
+    gap: 24px;
+    margin-bottom: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card:nth-child(9) {
+    display: flex;
+  }
+
+  .body {
+    padding: 10px 10px 12px;
+  }
+
+  .price {
+    font-size: 14px;
+  }
+
+  .strike {
+    font-size: 12px;
+  }
+
+  .promo {
+    min-height: 260px;
+  }
+}

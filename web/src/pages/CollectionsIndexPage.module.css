@@ -1,0 +1,30 @@
+.page {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--space-4) 24px var(--space-10);
+}
+
+.title {
+  margin: var(--space-4) 0 var(--space-2);
+  color: #4a0e1c;
+  font-weight: 700;
+  text-align: center;
+}
+
+.intro {
+  margin: 0 0 var(--space-8);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.status {
+  padding: var(--space-8) 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: var(--space-3) 16px var(--space-8);
+  }
+}

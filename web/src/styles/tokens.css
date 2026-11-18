@@ -18,6 +18,8 @@
   --color-surface: #ffffff;
   --color-burgundy: #5a0f1c;
   --color-burgundy-dark: #46060f;
+  /* Header top strip + category menu bar background. */
+  --color-burgundy-header: #530711;
   --color-gold: #c6a15b;
   --color-gold-light: #dcc391;
   --color-text: #2e1519;

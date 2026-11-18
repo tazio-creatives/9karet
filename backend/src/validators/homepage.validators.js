@@ -26,6 +26,23 @@ const SECTION_TYPES = [
   // 1 large square banner (left) + 2 wide banners stacked (right), image-only
   // (the artwork carries its own text) — each banner fully clickable.
   'BANNER_TRIO',
+  // Tabbed product grid (New Arrivals / Trending / Bestsellers) with one
+  // admin-managed promo card — products are auto-derived per tab.
+  'PRODUCT_TABS',
+  // Tall collection cards in a sideways-scrolling row (one item per
+  // collection) with a "View All Collections" button underneath.
+  'COLLECTION_SPOTLIGHT',
+  // Two wide banners side by side, each with a small label, a serif title
+  // and a "Discover more" link written over the left of the image.
+  'EDIT_BANNERS',
+  // Heading + two rows of product cards from one category or collection
+  // (picked on the section's first item) + a "View All Products" button.
+  'PRODUCT_GRID',
+  // Heading + short description + one sideways-scrolling row of products
+  // from a category or collection (picked on the section's first item).
+  'PRODUCT_ROW',
+  // One edge-to-edge image banner (desktop + mobile image), no products.
+  'FULL_WIDTH_BANNER',
   // Square collection images in a looping carousel — 3 visible on desktop
   // with the centre one enlarged, arrows + autoplay, swipe on mobile —
   // with the section's own subtitle and "View All" button.

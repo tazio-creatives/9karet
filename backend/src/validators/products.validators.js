@@ -261,6 +261,10 @@ export const bestSellerSchema = z.object({
   bestSeller: z.boolean(),
 });
 
+export const trendingSchema = z.object({
+  trending: z.boolean(),
+});
+
 // Product list bulk action: put many products into one collection at once
 // (collectionId null = remove them from any collection).
 export const bulkCollectionSchema = z.object({

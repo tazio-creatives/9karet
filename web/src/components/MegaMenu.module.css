@@ -1,15 +1,23 @@
+/* Soft centre-lit gradient: lighter behind the centred categories, deeper
+   burgundy at both edges. */
 .megaNav {
-  background: var(--color-white);
-  border-top: 1px solid var(--color-border);
+  background: var(--color-burgundy-header);
+  background: linear-gradient(90deg, #3e0710 0%, #6e1028 50%, #3e0710 100%);
+  /* Soft drop shadow under the bar plus a faint top highlight. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 10px rgba(62, 7, 16, 0.28);
 }
 
 .list {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 34px;
   list-style: none;
 }
 
@@ -21,24 +29,25 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 14px 14px;
+  min-height: 49px;
+  padding: 0 4px;
   background: none;
   border: none;
-  color: var(--color-text);
-  font-size: 14px;
+  color: var(--color-white);
+  font-size: 16px;
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
 }
 
 .topLink:hover,
 .topLink[aria-expanded='true'] {
-  color: var(--color-burgundy);
+  color: var(--color-gold-light);
 }
 
 .topLink:focus-visible {
-  outline: 2px solid var(--color-burgundy);
+  outline: 2px solid var(--color-white);
   outline-offset: -2px;
 }
 

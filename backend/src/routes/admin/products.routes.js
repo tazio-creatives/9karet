@@ -8,6 +8,7 @@ import {
   setFeatured,
   bulkSetCollection,
   setBestSeller,
+  setTrending,
   listVariants,
   updateVariant,
   bulkUpdateVariants,
@@ -69,6 +70,7 @@ adminProductsRouter.delete('/:id', adminDelete);
 adminProductsRouter.patch('/:id/price-lock', setPriceLock);
 adminProductsRouter.patch('/:id/featured', setFeatured);
 adminProductsRouter.patch('/:id/best-seller', setBestSeller);
+adminProductsRouter.patch('/:id/trending', setTrending);
 
 // Variant editor (attribute + variant model) — per-combination stock/
 // weight/availability, each with its own live price.

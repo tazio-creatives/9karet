@@ -23,19 +23,31 @@ const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
   COLLECTION_SHOWCASE:
     'Heading (shown on the storefront as a small eyebrow line above the banner title)',
   NEW_ARRIVALS: 'Heading (shown on the storefront as the banner title)',
+  FULL_WIDTH_BANNER: 'Heading (optional big title on the banner — leave empty if the image has its own text)',
+  PRODUCT_ROW: 'Heading (not shown — the section heading is the title)',
+  PRODUCT_GRID: 'Heading (not shown — the section heading is the title)',
+  EDIT_BANNERS: 'Heading (the big title, e.g. "A beautiful little twist.")',
+  COLLECTION_SPOTLIGHT: 'Heading (optional — the name on the card; leave empty to use the collection name)',
+  PRODUCT_TABS: 'Heading (promo card title, e.g. "Little luxuries. Every day.")',
   CATEGORY_PRODUCTS: 'Heading (not used for this section type — see note above)',
-  SHOP_BY_BOND: 'Heading (the label shown under the photo, e.g. "Mother")',
+  SHOP_BY_BOND: 'Heading (the label on the photo, e.g. "Mother")',
   BANNER_TRIO:
     'Heading (not shown — used as the image description, e.g. "Emerald drop earrings")',
   COLLECTION_CAROUSEL:
     'Heading (not shown — used as the image description, e.g. "Bella collection")',
   IMAGE_MOSAIC: 'Heading (caption shown under the image, e.g. "Gold Jewellery")',
+  SHOP_BY_PRICE: 'Heading (the label on the photo, e.g. "Under 10k")',
   PRICE_SHOWCASE: 'Heading (the price on the card, e.g. "Under ₹5,000" or "₹5,000 – ₹10,000")',
   VIDEO_STORY:
     'Heading (not shown — used as the video description, e.g. "Jewellery manufacturing process")',
 };
 
 const SUBHEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
+  FULL_WIDTH_BANNER: 'Subheading (optional small label above the title)',
+  EDIT_BANNERS: 'Subheading (small label above the title, e.g. "The Earring Edit")',
+  COLLECTION_SPOTLIGHT: 'Subheading (short line under the name, e.g. "Delicate designs with a little sparkle")',
+  PRODUCT_TABS: 'Subheading (small line above the promo title, e.g. "THE EVERYDAY EDIT")',
+  SHOP_BY_PRICE: 'Subheading (not shown — image description, e.g. "Diamond stud earrings")',
   PRICE_SHOWCASE: 'Subheading (not shown — image description, e.g. "Ruby flower stud earrings")',
   VIDEO_STORY: 'Subheading (small gold line above the title, e.g. "Our Manufacturing Process")',
 };

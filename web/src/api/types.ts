@@ -48,6 +48,10 @@ export interface ProductCard {
   ratingAvg: number;
   ratingCount: number;
   isNew: boolean;
+  // Admin 'Best Seller' flag (sent with list products; optional so older
+  // payloads/caches still type-check).
+  isBestSeller?: boolean;
+  isTrending?: boolean;
   deliveryEstimate: DeliveryEstimate | null;
 }
 
@@ -130,6 +134,12 @@ export type HomepageSectionType =
   | 'CATEGORY_PRODUCTS'
   | 'SHOP_BY_BOND'
   | 'BANNER_TRIO'
+  | 'PRODUCT_TABS'
+  | 'COLLECTION_SPOTLIGHT'
+  | 'EDIT_BANNERS'
+  | 'PRODUCT_GRID'
+  | 'PRODUCT_ROW'
+  | 'FULL_WIDTH_BANNER'
   | 'COLLECTION_CAROUSEL'
   | 'IMAGE_MOSAIC'
   | 'VIDEO_STORY'

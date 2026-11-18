@@ -95,3 +95,55 @@
     max-width: none;
   }
 }
+
+/* Desktop header variant: wide field with a burgundy search button on the
+   right. The mobile search row keeps the default look above. */
+.headerVariant {
+  max-width: none;
+}
+
+.headerVariant .input {
+  height: 40px;
+  padding: 0 58px 0 var(--space-4);
+  border: 1px solid var(--color-burgundy);
+  border-radius: 9px;
+  background: #f7f3f5;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.headerVariant .input::placeholder {
+  color: #6f6264;
+}
+
+.headerVariant .input:focus {
+  background: var(--color-white);
+}
+
+.searchButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px;
+  /* Burgundy-to-wine gradient, the 9karet take on the reference's
+     purple gradient button. */
+  background: linear-gradient(135deg, #c43a5e 0%, #8a1a3a 45%, #4a0814 100%);
+  color: var(--color-white);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.searchButton:hover {
+  filter: brightness(1.15);
+}
+
+.searchButton:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}

@@ -11,6 +11,7 @@ import { PLPPage } from './pages/PLPPage';
 import { NewArrivalsPage } from './pages/NewArrivalsPage';
 import { AllJewelleryPage } from './pages/AllJewelleryPage';
 import { CollectionPage } from './pages/CollectionPage';
+import { CollectionsIndexPage } from './pages/CollectionsIndexPage';
 import { PDPPage } from './pages/PDPPage';
 
 // Only the four public SSR route types (Home/PLP/Collection/PDP, plan §1a)
@@ -85,6 +86,7 @@ export function App() {
             <Route path="profile" element={<AccountProfilePage />} />
           </Route>
 
+          <Route path="/collections" element={<CollectionsIndexPage />} />
           <Route path="/collections/:collectionSlug" element={<CollectionPage />} />
           <Route path="/new-arrivals" element={<NewArrivalsPage />} />
           <Route path="/jewellery" element={<AllJewelleryPage />} />

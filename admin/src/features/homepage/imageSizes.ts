@@ -49,9 +49,9 @@ export const IMAGE_SIZE_HINTS: Record<HomepageSectionType, ImageSizeHint> = {
     mobile: 'not needed',
   },
   SHOP_BY_PRICE: {
-    summary: 'No images — text price cards',
-    desktop: null,
-    mobile: null,
+    summary: 'Square 800 × 800 px — keep the bottom-left plain, the label is written there',
+    desktop: '800 × 800 px, square',
+    mobile: 'not needed',
   },
   OCCASION_CARDS: {
     summary:
@@ -90,9 +90,39 @@ export const IMAGE_SIZE_HINTS: Record<HomepageSectionType, ImageSizeHint> = {
     mobile: '1200 × 900 px, 4:3',
   },
   SHOP_BY_BOND: {
-    summary: 'Portrait 600 × 800 px (3:4)',
-    desktop: '600 × 800 px, portrait 3:4',
+    summary: 'Square 800 × 800 px — keep the bottom-left plain, the label is written there',
+    desktop: '800 × 800 px, square',
     mobile: 'not needed',
+  },
+  FULL_WIDTH_BANNER: {
+    summary: 'Desktop 1920 × 600 px (wide 3.2:1) · Mobile 1200 × 900 px (4:3)',
+    desktop: '1920 × 600 px, wide 3.2:1',
+    mobile: '1200 × 900 px, 4:3',
+  },
+  PRODUCT_ROW: {
+    summary: 'No upload — uses the products’ own photos',
+    desktop: null,
+    mobile: null,
+  },
+  PRODUCT_GRID: {
+    summary: 'No upload — uses the products’ own photos',
+    desktop: null,
+    mobile: null,
+  },
+  EDIT_BANNERS: {
+    summary: 'Each banner: 1400 × 860 px (wide) — keep the left side plain, the text is written there',
+    desktop: '1400 × 860 px, wide',
+    mobile: 'optional — same shape as desktop',
+  },
+  COLLECTION_SPOTLIGHT: {
+    summary: 'Each card: 800 × 960 px (portrait 5:6) — keep the bottom fairly plain, the name is written there',
+    desktop: '800 × 960 px, portrait 5:6',
+    mobile: 'optional — same shape as desktop',
+  },
+  PRODUCT_TABS: {
+    summary: 'Promo card: 600 × 1000 px (portrait 3:5) — products need no upload',
+    desktop: '600 × 1000 px, portrait 3:5',
+    mobile: 'optional — same shape as desktop',
   },
   BANNER_TRIO: {
     summary: 'Item 1: 1200 × 1200 px (square) · Items 2–3: 1250 × 590 px (wide ~2.1:1)',

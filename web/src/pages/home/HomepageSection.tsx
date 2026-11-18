@@ -1,6 +1,5 @@
 import type { HomepageSection as HomepageSectionData } from '../../api/types';
 import { BentoCard } from './BentoCard';
-import { BondGrid } from './BondGrid';
 import { BannerTrio } from './BannerTrio';
 import { CollectionCarousel } from './CollectionCarousel';
 import { ImageMosaic } from './ImageMosaic';
@@ -12,11 +11,17 @@ import { CategoryShowcase } from './CategoryShowcase';
 import { CollectionShowcase } from './CollectionShowcase';
 import { CollectionProductShowcase } from './CollectionProductShowcase';
 import { DuoBanner } from './DuoBanner';
+import { EditBanners } from './EditBanners';
+import { FullWidthBanner } from './FullWidthBanner';
+import { ProductGridSection } from './ProductGridSection';
+import { ProductRowSection } from './ProductRowSection';
 import { HeroCarousel } from './HeroCarousel';
+import { ProductTabsSection } from './ProductTabsSection';
+import { CollectionSpotlight } from './CollectionSpotlight';
 import { NewArrivalsSection } from './NewArrivalsSection';
 import { NewsletterForm } from './NewsletterForm';
 import { ProductCarousel } from './ProductCarousel';
-import { PriceTierCard } from './PriceTierCard';
+import { ShopByBudget } from './ShopByBudget';
 import { TrustStripSection } from './TrustStripSection';
 import styles from './HomepageSection.module.css';
 
@@ -101,16 +106,7 @@ export function HomepageSection({ section, alternate }: Props) {
       );
 
     case 'SHOP_BY_PRICE':
-      return (
-        <section className={sectionClass}>
-          {section.heading && <h2 className={styles.heading}>{section.heading}</h2>}
-          <div className={styles.priceRow}>
-            {section.items.map((item) => (
-              <PriceTierCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      );
+      return <ShopByBudget items={section.items} heading={section.heading} subheading={section.subheading} />;
 
     case 'OCCASION_CARDS':
     case 'COLLECTION_CARDS':
@@ -148,6 +144,24 @@ export function HomepageSection({ section, alternate }: Props) {
         </section>
       );
 
+    case 'FULL_WIDTH_BANNER':
+      return <FullWidthBanner items={section.items} />;
+
+    case 'PRODUCT_ROW':
+      return <ProductRowSection items={section.items} heading={section.heading} subheading={section.subheading} />;
+
+    case 'PRODUCT_GRID':
+      return <ProductGridSection items={section.items} heading={section.heading} />;
+
+    case 'EDIT_BANNERS':
+      return <EditBanners items={section.items} />;
+
+    case 'COLLECTION_SPOTLIGHT':
+      return <CollectionSpotlight items={section.items} heading={section.heading} />;
+
+    case 'PRODUCT_TABS':
+      return <ProductTabsSection items={section.items} heading={section.heading} />;
+
     case 'NEW_ARRIVALS':
       return <NewArrivalsSection items={section.items} />;
 
@@ -184,10 +198,12 @@ export function HomepageSection({ section, alternate }: Props) {
 
     case 'SHOP_BY_BOND':
       return (
-        <section className={`${sectionClass} ${styles.bond}`}>
-          <h2 className={styles.heading}>{section.heading || 'Shop by Bond'}</h2>
-          <BondGrid items={section.items} />
-        </section>
+        <ShopByBudget
+          items={section.items}
+          heading={section.heading}
+          subheading={section.subheading}
+          defaultTitle="Shop by Bond"
+        />
       );
 
     // BEST_SELLERS

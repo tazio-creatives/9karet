@@ -8,7 +8,8 @@ import { formatPrice } from '../../utils/formatPrice';
 import { useDebouncedValue } from './useDebouncedValue';
 import styles from './SearchBar.module.css';
 
-export function SearchBar() {
+export function SearchBar({ variant = 'default' }: { variant?: 'default' | 'header' } = {}) {
+  const isHeader = variant === 'header';
   const [term, setTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const debouncedTerm = useDebouncedValue(term.trim(), 300);
@@ -19,6 +20,7 @@ export function SearchBar() {
     if (settledTerm.length >= 3) pixelSearch(settledTerm);
   }, [settledTerm]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data, isFetching } = useQuery({
     queryKey: ['search', debouncedTerm],
@@ -34,17 +36,31 @@ export function SearchBar() {
     (data.products.length > 0 || data.categories.length > 0 || data.collections.length > 0);
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={`${styles.container} ${isHeader ? styles.headerVariant : ''}`} ref={containerRef}>
       <input
+        ref={inputRef}
         type="search"
         className={styles.input}
-        placeholder="Search rings, earrings, necklaces..."
+        placeholder={isHeader ? 'Search jewellery...' : 'Search rings, earrings, necklaces...'}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         onFocus={() => setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
         aria-label="Search products"
       />
+      {isHeader ? (
+        <button
+          type="button"
+          className={styles.searchButton}
+          aria-label="Search"
+          onClick={() => inputRef.current?.focus()}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
+          </svg>
+        </button>
+      ) : (
       <svg
         className={styles.searchIcon}
         width="18"
@@ -58,6 +74,7 @@ export function SearchBar() {
         <circle cx="11" cy="11" r="7" />
         <path d="M21 21l-4.3-4.3" />
       </svg>
+      )}
       {isOpen && debouncedTerm.length > 0 && (
         <div className={styles.dropdown} role="listbox">
           {isFetching && <p className={styles.empty}>Searching…</p>}

@@ -1,11 +1,9 @@
 import { Fragment } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchHomepage } from '../api/homepage';
-import { AssuranceStrip } from './home/AssuranceStrip';
 import { HomepageSection } from './home/HomepageSection';
-import { HomeFaq, HOME_FAQ } from './home/HomeFaq';
 import { useHead, defaultHead } from '../seo/head';
-import { breadcrumbJsonLd, faqPageJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd';
+import { breadcrumbJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd';
 import styles from './HomePage.module.css';
 
 export function HomePage() {
@@ -15,7 +13,6 @@ export function HomePage() {
       organizationJsonLd(),
       websiteJsonLd(),
       breadcrumbJsonLd([{ name: 'Home', path: '/' }]),
-      faqPageJsonLd(HOME_FAQ),
     ],
   });
 
@@ -39,11 +36,6 @@ export function HomePage() {
     return <p className={styles.error}>Couldn't load the homepage right now.</p>;
   }
 
-  // Only the FIRST Hero section counts — the admin's section list can (and in
-  // production does) contain more than one enabled HERO row, and matching on
-  // type alone rendered the strip once per row, showing it twice on the page.
-  const firstHeroIndex = data.sections.findIndex((s) => s.type === 'HERO');
-
   return (
     <div className={styles.page}>
       {/* The page's one H1 — the brand otherwise only appears inside the
@@ -53,14 +45,8 @@ export function HomePage() {
       {data.sections.map((section, i) => (
         <Fragment key={section.id}>
           <HomepageSection section={section} alternate={i % 2 === 1} />
-          {/* Static, homepage-only strip — not a homepage_sections row, so
-              it's placed here positionally right after HERO rather than in
-              HomepageSection.tsx's data-driven switch (plan: "Add only the
-              assurance strip" / "Do not add an admin configuration screen"). */}
-          {i === firstHeroIndex && <AssuranceStrip />}
         </Fragment>
       ))}
-      <HomeFaq />
     </div>
   );
 }

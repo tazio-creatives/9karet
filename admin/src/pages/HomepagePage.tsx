@@ -32,50 +32,49 @@ import styles from './HomepagePage.module.css';
 // that file's special-cased section types.
 const AUTO_SYNCED_TYPES: HomepageSectionType[] = ['BENTO_CATEGORIES', 'FEATURED_PRODUCT'];
 
-// Instagram Feed and Newsletter were removed from the homepage (no longer
-// offered here); the storefront still renders any old rows harmlessly.
+// Only the current homepage design's sections can be added. Older types
+// (Shop by Category, New Arrivals, Curated Collections, Instagram, etc.)
+// are no longer offered; any existing section of an old type still shows
+// in the list below with its name, and can be edited or deleted.
 const SECTION_TYPES: HomepageSectionType[] = [
   'HERO',
-  'BENTO_CATEGORIES',
-  'NEW_ARRIVALS',
-  'COLLECTION_CARDS',
-  'SHOP_BY_MATERIAL',
-  'FEATURED_PRODUCT',
-  'BEST_SELLERS',
+  'PRODUCT_TABS',
+  'COLLECTION_SPOTLIGHT',
+  'EDIT_BANNERS',
+  'PRODUCT_GRID',
+  'PRODUCT_ROW',
   'SHOP_BY_PRICE',
-  'OCCASION_CARDS',
-  'TRUST_STRIP',
-  'CAMPAIGN_BANNERS',
-  'CATEGORY_PRODUCTS',
-  'COLLECTION_SHOWCASE',
   'SHOP_BY_BOND',
+  'FULL_WIDTH_BANNER',
   'BANNER_TRIO',
-  'COLLECTION_CAROUSEL',
-  'IMAGE_MOSAIC',
-  'VIDEO_STORY',
-  'PRICE_SHOWCASE',
 ];
 
 // Friendly names matching the actual storefront headings — the raw type
 // name (e.g. "OCCASION CARDS") doesn't read as "Shop by Occasion", which
 // made the option hard to find by eye in the Add Section dropdown.
 const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
-  HERO: 'Hero Banner (full-width sliding banner at the top)',
+  HERO: 'Slider (sliding banners at the top of the homepage)',
+  PRODUCT_TABS: 'Product Tabs (New Arrivals / Trending / Bestsellers + promo card)',
+  COLLECTION_SPOTLIGHT: 'Our Collections (tall collection cards, scrolling sideways)',
+  FULL_WIDTH_BANNER: 'Full Width Banner (one edge-to-edge image banner, no products)',
+  PRODUCT_ROW: 'Product Row (heading + short description + one scrolling row of products from a category or collection)',
+  PRODUCT_GRID: 'Product Grid (heading + 2 rows of products from a category or collection + View All button)',
+  EDIT_BANNERS: 'Collection Edit Banners (2 wide banners side by side — small label, big title, "Discover more" link)',
   BENTO_CATEGORIES: 'Shop by Category (category tiles + products of the chosen category)',
   NEW_ARRIVALS: 'New Arrivals (one banner + 10 newest products)',
   COLLECTION_CARDS: 'Curated Collections (2–3 large image tiles)',
   SHOP_BY_MATERIAL: 'Shop by Material (grid of small image tiles)',
   FEATURED_PRODUCT: 'Featured Products (product slider, 4 per view)',
   BEST_SELLERS: 'Best Sellers (scrolling row of image tiles)',
-  SHOP_BY_PRICE: 'Shop by Price (row of price-range cards)',
+  SHOP_BY_PRICE: 'Shop by Budget (square photo cards — "Under 10k", "Under 20k"…)',
   OCCASION_CARDS: 'Shop by Occasion (2–3 large image tiles)',
   INSTAGRAM: 'Instagram Feed (scrolling row of small photos)',
   NEWSLETTER: 'Newsletter (heading + email signup box)',
   TRUST_STRIP: 'Trust Strip (row of trust badges with icons)',
   CAMPAIGN_BANNERS: 'Campaign Banners (row of promotional banners)',
   CATEGORY_PRODUCTS: 'Category Products (5 newest products per category)',
-  COLLECTION_SHOWCASE: 'Full Width Banner with Products (collection banner + up to 15 products)',
-  SHOP_BY_BOND: 'Shop by Bond (portrait photo tiles — 6 per row desktop, 3 on mobile)',
+  COLLECTION_SHOWCASE: 'Banner with Products (collection banner + up to 15 products underneath)',
+  SHOP_BY_BOND: 'Shop by Bond (square photo cards — "Mother", "Wife"… same design as Shop by Budget)',
   BANNER_TRIO: 'Banner Trio (1 large square banner + 2 wide banners stacked, image only)',
   COLLECTION_CAROUSEL: 'Collections Carousel (square images sliding, 3 visible — centre one larger, with View All button)',
   IMAGE_MOSAIC: 'Jewellery Mosaic (tall image · 2 stacked images with captions · tall image)',
@@ -355,8 +354,8 @@ export function HomepagePage() {
               <div className={styles.itemsPanel}>
                 {section.type === 'HERO' && (
                   <p className={sharedStyles.empty}>
-                    Each item below is one slide. The uploaded image already contains its own heading, description
-                    and call-to-action artwork — nothing is overlaid on top of it. Choose what the whole banner links
+                    Each item below is one slide of the Slider. The uploaded image already contains its own heading, description
+                    and call-to-action artwork — nothing is overlaid on top of it. Choose what the whole slide links
                     to (or "No Redirect" to make it a plain, non-clickable image), and use Status to hide a slide
                     without deleting it.
                   </p>
@@ -386,6 +385,22 @@ export function HomepagePage() {
                     &amp; mobile images are used as the banner's button text and background. Up to 10 most recently
                     published products in that collection show automatically underneath.
                   </p>
+                )}
+                {section.type === 'SHOP_BY_PRICE' && (
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Add one item per budget (4 looks best). Heading = the label written on the photo (e.g. &quot;Under
+                      10k&quot;). Upload a square photo (about 800 × 800 px) and keep the bottom-left fairly plain — the label
+                      goes there. Set where it opens with CTA URL (e.g. /products?priceMax=10000) or a category /
+                      collection. The section heading is the title (e.g. &quot;Shop by Budget&quot;); the subtitle below is the
+                      small grey line under it.
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      showButton={false}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
                 )}
                 {section.type === 'COLLECTION_CAROUSEL' && (
                   <>
@@ -442,6 +457,70 @@ export function HomepagePage() {
                     />
                   </>
                 )}
+                {section.type === 'FULL_WIDTH_BANNER' && (
+                  <p className={sharedStyles.empty}>
+                    Add ONE item. Upload the desktop image (1920 × 600 px) and the mobile image (1200 × 900 px) — the
+                    banner runs edge to edge. Choose where it opens with Link to Collection / Category / Product or CTA
+                    URL. Text is optional: if the artwork already has its wording, leave Heading, Subheading and CTA
+                    Label empty. Otherwise Subheading = small label, Heading = big title, CTA Label = link text (on the left).
+                  </p>
+                )}
+                {section.type === 'PRODUCT_ROW' && (
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Put the title in the section heading above (e.g. &quot;Everyday Studs&quot;) and the short description in
+                      the subtitle below. Then add ONE item and choose &quot;Link to Category&quot; or &quot;Link to
+                      Collection&quot; — up to 15 of its products show in one row (5 visible on desktop, arrows to scroll;
+                      swipe on phones). No image is needed. A small &quot;View all&quot; link opens that category /
+                      collection; to change its text, fill in the item&apos;s CTA Label.
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      showButton={false}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
+                )}
+                {section.type === 'PRODUCT_GRID' && (
+                  <p className={sharedStyles.empty}>
+                    Put the title in the section heading above (e.g. &quot;Everyday Earrings&quot;). Then add ONE item and
+                    choose either &quot;Link to Category&quot; or &quot;Link to Collection&quot; — its products fill two rows
+                    automatically (10 on desktop). No image is needed. The &quot;View All Products&quot; button opens that
+                    category / collection; to change its text, fill in the item&apos;s CTA Label.
+                  </p>
+                )}
+                {section.type === 'EDIT_BANNERS' && (
+                  <p className={sharedStyles.empty}>
+                    Add 2 items (one per banner) and choose a collection with &quot;Link to Collection&quot; — the banner
+                    opens it. Upload a wide image (about 1400 × 860 px) with the jewellery or model on the right; the text
+                    is written on the left. Subheading = the small label (e.g. &quot;THE EARRING EDIT&quot;), Heading = the big
+                    title (e.g. &quot;A beautiful little twist.&quot;), CTA Label = the link text (default &quot;Discover more&quot;).
+                    Text colour is automatic: banner 1 uses dark text (for a light image), banner 2 uses white text
+                    (for a dark image). If your image already has the wording in it, leave Heading, Subheading and CTA
+                    Label empty — then only the image is shown.
+                  </p>
+                )}
+                {section.type === 'COLLECTION_SPOTLIGHT' && (
+                  <p className={sharedStyles.empty}>
+                    Add one item per collection and choose it with &quot;Link to Collection&quot; — the card opens that
+                    collection. Upload a portrait image (about 800 × 960 px). The collection name is written on the card
+                    in white at the bottom (or the item Heading, if you fill it in), with the Subheading as a short line
+                    underneath (e.g. &quot;Delicate designs with a little sparkle&quot;) — so keep the bottom of the image fairly
+                    plain and don&apos;t put the name in the artwork. The section Heading is the title above the cards.
+                  </p>
+                )}
+                {section.type === 'PRODUCT_TABS' && (
+                  <p className={sharedStyles.empty}>
+                    Products fill in automatically: New Arrivals shows the 9 newest products; Bestsellers shows products
+                    marked &quot;Best Seller&quot; on the Products page, then the most sold; Trending shows products marked
+                    &quot;Trending&quot; on the Products page, then the most ordered / added to cart / wishlisted in the last 30 days. Trending
+                    and Bestsellers appear only once they have at least 5 products. Add one item for the promo card next
+                    to the products: upload a portrait image (about 600 × 1000 px), Subheading = the small line on top
+                    (e.g. &quot;THE EVERYDAY EDIT&quot;), Heading = the title (e.g. &quot;Little luxuries. Every day.&quot;), CTA
+                    Label = the button text (e.g. &quot;Explore now&quot;) and CTA URL or a Category / Collection link = where it
+                    opens.
+                  </p>
+                )}
                 {section.type === 'BANNER_TRIO' && (
                   <p className={sharedStyles.empty}>
                     Add exactly 3 items. Item 1 is the large square banner on the left (upload about 1200×1200); items 2
@@ -453,13 +532,21 @@ export function HomepagePage() {
                   </p>
                 )}
                 {section.type === 'SHOP_BY_BOND' && (
-                  <p className={sharedStyles.empty}>
-                    Add one item per tile (e.g. Mother, Husband, Wife, Sister, Brother, Friends) — six fill one row on
-                    desktop and two rows of three on mobile. Heading is the label under the photo. Upload a portrait
-                    photo (about 3:4, e.g. 600×800) as "Banner image — desktop", and pick where the tile opens with
-                    "Link to Collection" (e.g. a "Gifts for Mother" collection) or Category / CTA URL. The section
-                    heading above (e.g. "Shop by Bond") is shown as the title on the storefront.
-                  </p>
+                  <>
+                    <p className={sharedStyles.empty}>
+                      Same design as Shop by Budget. Add one item per card (e.g. Mother, Husband, Wife, Sister, Brother,
+                      Friends) — up to 6 share one row on desktop, 3 per row on tablet, 2 on phones. Heading = the label
+                      written on the photo. Upload a square photo (about 800 × 800 px) and keep the bottom-left fairly
+                      plain. Pick where the card opens with &quot;Link to Collection&quot; (e.g. a &quot;Gifts for
+                      Mother&quot; collection) or Category / CTA URL. The section heading is the title; the subtitle
+                      below is the small grey line under it.
+                    </p>
+                    <CarouselSettings
+                      section={section}
+                      showButton={false}
+                      onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
+                    />
+                  </>
                 )}
                 {section.items.map((item, itemIndex) =>
                   editingItem?.id === item.id ? (
@@ -563,7 +650,7 @@ export function HomepagePage() {
                     className={sharedStyles.button}
                     onClick={() => setAddingItemTo(section.id)}
                   >
-                    {section.type === 'HERO' ? '+ Add Banner' : '+ Add Item'}
+                    {section.type === 'HERO' ? '+ Add Slide' : '+ Add Item'}
                   </button>
                 )}
               </div>

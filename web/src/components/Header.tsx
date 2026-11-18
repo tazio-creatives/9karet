@@ -9,6 +9,7 @@ import { useCustomer } from '../features/auth/useCustomer';
 import { useAuthModal } from '../features/auth/AuthModalContext';
 import { MegaMenu } from './MegaMenu';
 import { MobileNavDrawer } from './MobileNavDrawer';
+import { BOX_DIAMONDS_URL, STORES_URL } from '../config';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -42,25 +43,34 @@ export function Header() {
 
   return (
     <header className={`${styles.header} ${isScrolled ? styles.scrolled : ''}`}>
-      {/* Desktop/tablet header (>=768px) — unchanged markup, hidden below
-          768px via CSS where the dedicated mobile bar below takes over. */}
+      {/* Desktop/tablet header (>=768px), hidden below 768px via CSS where
+          the dedicated mobile bar below takes over. */}
       <div className={styles.inner}>
         <Link to="/" className={styles.logo} aria-label="9Karet — home">
           <img src="/images/logo.png" alt="9Karet" className={styles.logoImg} width={535} height={198} />
         </Link>
 
         <div className={styles.searchArea}>
-          <SearchBar />
+          <SearchBar variant="header" />
+        </div>
+
+        <div className={styles.quickLinks}>
+          {BOX_DIAMONDS_URL ? (
+            <a href={BOX_DIAMONDS_URL} className={`${styles.quickLink} ${styles.diamondsLink}`} target="_blank" rel="noopener noreferrer">
+              <DiamondsLinkContent />
+            </a>
+          ) : (
+            <span className={`${styles.quickLink} ${styles.diamondsLink}`}>
+              <DiamondsLinkContent />
+            </span>
+          )}
+          <Link to={STORES_URL} className={`${styles.quickLink} ${styles.storesLink}`}>
+            <StoreIcon />
+            <span className={styles.quickLinkText}>Stores</span>
+          </Link>
         </div>
 
         <nav className={styles.actions} aria-label="Account actions">
-          <Link to="/wishlist" className={styles.actionLink} aria-label="Wishlist">
-            <span className={styles.iconWrap}>
-              <HeartIcon />
-              {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount}</span>}
-            </span>
-            <span className={styles.actionLabel}>Wishlist</span>
-          </Link>
           {isLoggedIn ? (
             <Link to="/account/orders" className={styles.actionLink} aria-label="Account">
               <span className={styles.iconWrap}>
@@ -81,6 +91,13 @@ export function Header() {
               <span className={styles.actionLabel}>My Account</span>
             </button>
           )}
+          <Link to="/wishlist" className={styles.actionLink} aria-label="Wishlist">
+            <span className={styles.iconWrap}>
+              <HeartIcon />
+              {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount}</span>}
+            </span>
+            <span className={styles.actionLabel}>Wishlist</span>
+          </Link>
           <Link to="/cart" className={`${styles.actionLink} ${styles.cartAction}`} aria-label="Cart">
             <span className={styles.iconWrap}>
               <BagIcon />
@@ -138,6 +155,26 @@ export function Header() {
             {cartCount > 0 && <span className={styles.mobileBadge}>{cartCount > 9 ? '9+' : cartCount}</span>}
           </Link>
         </div>
+      </div>
+
+      {/* Phones: "Explore Diamonds" + "Stores" side by side right under the
+          logo row (no room for them beside the centred logo). */}
+      <div className={styles.mobileQuickRow}>
+        {BOX_DIAMONDS_URL ? (
+          <a href={BOX_DIAMONDS_URL} className={`${styles.mobileQuickLink} ${styles.diamondsLink}`} target="_blank" rel="noopener noreferrer">
+            <DiamondIcon />
+            <span>Explore Diamonds</span>
+          </a>
+        ) : (
+          <span className={`${styles.mobileQuickLink} ${styles.diamondsLink}`}>
+            <DiamondIcon />
+            <span>Explore Diamonds</span>
+          </span>
+        )}
+        <Link to={STORES_URL} className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
+          <StoreIcon />
+          <span>Stores</span>
+        </Link>
       </div>
 
       {isMobileSearchOpen && (
@@ -209,6 +246,36 @@ function SearchIcon({ size = 22, strokeWidth = 1.5 }: IconProps) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} aria-hidden="true">
       <circle cx="11" cy="11" r="7" />
       <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// "Explore Diamonds Collection" button contents (shared by the link and the
+// not-yet-linked fallback).
+function DiamondsLinkContent() {
+  return (
+    <>
+      <DiamondIcon />
+      <span className={styles.quickLinkText}>Explore Diamonds Collection</span>
+    </>
+  );
+}
+
+function DiamondIcon() {
+  return (
+    <svg className={styles.quickLinkIcon} width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6.5 3.5h11l4 5.5L12 21 2.5 9l4-5.5z" fill="#f3e3c3" stroke="#c6a15b" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M2.5 9h19M9 3.5 7.8 9 12 21l4.2-12L15 3.5M7.8 9 12 3.5 16.2 9" fill="none" stroke="#c6a15b" strokeWidth="1.1" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StoreIcon() {
+  return (
+    <svg className={styles.quickLinkIcon} width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3.5 9.5 5 4h14l1.5 5.5" />
+      <path d="M3.5 9.5c0 1.4 1.1 2.5 2.4 2.5s2.4-1.1 2.4-2.5c0 1.4 1.2 2.5 2.6 2.5h.2c1.4 0 2.6-1.1 2.6-2.5 0 1.4 1.1 2.5 2.4 2.5s2.4-1.1 2.4-2.5" />
+      <path d="M5 12v8h14v-8M10 20v-4.5h4V20" />
     </svg>
   );
 }

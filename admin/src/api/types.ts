@@ -28,6 +28,7 @@ export interface ProductListItem {
   ratingCount: number;
   isFeatured: boolean;
   isBestSeller: boolean;
+  isTrending?: boolean;
   status?: ProductStatus;
   // Admin list only — the collection this product is in, if any.
   collectionId?: string | null;
@@ -129,6 +130,7 @@ export interface ProductDetail {
   isPriceLocked: boolean;
   isFeatured: boolean;
   isBestSeller: boolean;
+  isTrending?: boolean;
   showDeliveryChecker: boolean;
   isNonReturnable: boolean;
   metaTitle: string | null;
@@ -806,6 +808,12 @@ export type HomepageSectionType =
   | 'COLLECTION_SHOWCASE'
   | 'SHOP_BY_BOND'
   | 'BANNER_TRIO'
+  | 'PRODUCT_TABS'
+  | 'COLLECTION_SPOTLIGHT'
+  | 'EDIT_BANNERS'
+  | 'PRODUCT_GRID'
+  | 'PRODUCT_ROW'
+  | 'FULL_WIDTH_BANNER'
   | 'COLLECTION_CAROUSEL'
   | 'IMAGE_MOSAIC'
   | 'VIDEO_STORY'

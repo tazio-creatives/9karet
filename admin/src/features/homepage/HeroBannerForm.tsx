@@ -118,8 +118,8 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!name.trim()) return setError('Internal Banner Name is required.');
-    if (!imageUrl) return setError('Desktop Banner Image is required.');
+    if (!name.trim()) return setError('Internal Slide Name is required.');
+    if (!imageUrl) return setError('Desktop Slide Image is required.');
     if (redirectType === 'CATEGORY' && !categoryId) return setError('Select a category for the redirect destination.');
     if (redirectType === 'COLLECTION' && !collectionId)
       return setError('Select a collection for the redirect destination.');
@@ -147,7 +147,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
         ctaUrl: null,
       });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save banner.');
+      setError(err instanceof ApiError ? err.message : 'Could not save slide.');
     } finally {
       setIsSubmitting(false);
     }
@@ -157,7 +157,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
     <form onSubmit={handleSubmit} className={sharedStyles.cardPadded}>
       <div className={sharedStyles.formGrid}>
         <label className={sharedStyles.field}>
-          Internal Banner Name
+          Internal Slide Name
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -182,7 +182,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
 
       <div className={`${sharedStyles.formGrid2} ${sharedStyles.formSection}`}>
         <div className={sharedStyles.field}>
-          Desktop Banner Image (recommended 1600 × 500px)
+          Desktop Slide Image (recommended 1600 × 500px)
           {imageUrl && (
             <>
               <img
@@ -217,7 +217,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
         </div>
 
         <div className={sharedStyles.field}>
-          Mobile Banner Image (recommended 800 × 1000px, 4:5 — falls back to the desktop image if left empty)
+          Mobile Slide Image (recommended 800 × 1000px, 4:5 — falls back to the desktop image if left empty)
           {imageUrlMobile && (
             <>
               <img
@@ -310,7 +310,7 @@ export function HeroBannerForm({ initial, onSubmit, onCancel }: HeroBannerFormPr
 
       <div className={sharedStyles.formActions}>
         <button type="submit" className={sharedStyles.buttonPrimary} disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Save Banner'}
+          {isSubmitting ? 'Saving…' : 'Save Slide'}
         </button>
         <button type="button" className={sharedStyles.button} onClick={onCancel}>
           Cancel

@@ -74,6 +74,13 @@ export function bulkSetCollection(productIds: string[], collectionId: string | n
   });
 }
 
+export function setTrending(id: string, trending: boolean) {
+  return apiFetch<{ id: string; isTrending: boolean }>(`/admin/products/${id}/trending`, {
+    method: 'PATCH',
+    body: JSON.stringify({ trending }),
+  });
+}
+
 export function setBestSeller(id: string, bestSeller: boolean) {
   return apiFetch<{ id: string; isBestSeller: boolean }>(`/admin/products/${id}/best-seller`, {
     method: 'PATCH',

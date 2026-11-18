@@ -1,0 +1,90 @@
+.section {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--space-6) 24px var(--space-8);
+}
+
+.title {
+  margin: 0 0 28px;
+  color: #3e0a14;
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Same thin-divider grid as Product Tabs: 5 across, two rows. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid #ececec;
+  border-left: 1px solid #ececec;
+}
+
+.ctaRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min(280px, 100%);
+  min-height: 48px;
+  padding: 0 32px;
+  border: 1.5px solid var(--color-burgundy);
+  border-radius: 8px;
+  color: var(--color-burgundy);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cta:hover {
+  background: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 3px;
+}
+
+/* Tablet: 3 across, two rows (6 products). */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .grid > :nth-child(n + 7) {
+    display: none;
+  }
+}
+
+/* Phone: 2 across, 3 rows (6 products). */
+@media (max-width: 767px) {
+  .section {
+    padding: var(--space-5) 12px var(--space-6);
+  }
+
+  .title {
+    margin-bottom: 18px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ctaRow {
+    margin-top: 22px;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}

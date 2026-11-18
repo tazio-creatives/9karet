@@ -43,7 +43,7 @@ const LIST_COLUMNS = `
   p.id, p.name, p.slug, p.sku, p.category_id, p.collection_id,
   p.metal_type, p.purity, p.gold_color, p.gold_value, p.stone_value, p.making_charge,
   p.gst_percent, p.product_size, p.mrp, p.selling_price, p.status, p.stock_quantity,
-  p.rating_avg, p.rating_count, p.created_at, p.is_featured, p.is_best_seller,
+  p.rating_avg, p.rating_count, p.created_at, p.is_featured, p.is_best_seller, p.is_trending,
   p.net_weight_grams, p.gross_weight_grams, p.gold_weight_grams, p.stone_weight_carats,
   p.making_charge_discount_percent, p.stone_discount_percent,
   p.effective_making_charge_discount_percent, p.effective_stone_discount_percent,
@@ -252,6 +252,51 @@ export async function findProductBySlug(slug) {
   return rows[0] ?? null;
 }
 
+// Homepage "Product Tabs" section: product IDs for the Trending and
+// Bestsellers tabs, best first. Only products with a real signal are
+// returned (never padded with unrelated products), so a tab with too few
+// can be hidden instead of repeating the New Arrivals list.
+//   TRENDING    — admin "Trending" flag first, then activity in the last 30
+//                 days (units ordered ×3, cart adds ×2, wishlist adds ×1).
+//   BESTSELLERS — admin "Best Seller" flag first, then units sold (all time).
+const ORDER_COUNTED_STATUSES_SQL = `('PENDING_PAYMENT', 'PAYMENT_FAILED', 'EXPIRED', 'CANCELLED')`;
+
+export async function findHomepageTabProductIds(kind, limit) {
+  const sql =
+    kind === 'TRENDING'
+      ? `SELECT p.id FROM products p
+         LEFT JOIN LATERAL (
+           SELECT COUNT(*)::int AS n FROM wishlist_items w
+           WHERE w.product_id = p.id AND w.created_at > now() - interval '30 days'
+         ) wl ON true
+         LEFT JOIN LATERAL (
+           SELECT COUNT(*)::int AS n FROM cart_items ci
+           WHERE ci.product_id = p.id AND ci.created_at > now() - interval '30 days'
+         ) ca ON true
+         LEFT JOIN LATERAL (
+           SELECT COALESCE(SUM(oi.quantity), 0)::int AS n
+           FROM order_items oi JOIN orders o ON o.id = oi.order_id
+           WHERE oi.product_id = p.id AND o.created_at > now() - interval '30 days'
+             AND o.status NOT IN ${ORDER_COUNTED_STATUSES_SQL}
+         ) so ON true
+         WHERE p.status = 'PUBLISHED' AND p.selling_price > 0
+           AND (p.is_trending OR wl.n > 0 OR ca.n > 0 OR so.n > 0)
+         ORDER BY p.is_trending DESC, (so.n * 3 + ca.n * 2 + wl.n) DESC, p.created_at DESC, p.id
+         LIMIT $1`
+      : `SELECT p.id FROM products p
+         LEFT JOIN LATERAL (
+           SELECT COALESCE(SUM(oi.quantity), 0)::int AS n
+           FROM order_items oi JOIN orders o ON o.id = oi.order_id
+           WHERE oi.product_id = p.id AND o.status NOT IN ${ORDER_COUNTED_STATUSES_SQL}
+         ) so ON true
+         WHERE p.status = 'PUBLISHED' AND p.selling_price > 0
+           AND (p.is_best_seller OR so.n > 0)
+         ORDER BY p.is_best_seller DESC, so.n DESC, p.created_at DESC, p.id
+         LIMIT $1`;
+  const { rows } = await query(sql, [limit]);
+  return rows.map((r) => r.id);
+}
+
 // Used by cart/wishlist (plan §11/§27) to hydrate item rows (which only
 // store product_id) with current name/price/stock in one round trip.
 export async function findProductsByIds(ids) {
@@ -321,6 +366,7 @@ const INSERT_COLUMNS = [
   'is_price_locked',
   'is_featured',
   'is_best_seller',
+  'is_trending',
   'show_delivery_checker',
   'is_non_returnable',
   'stock_quantity',

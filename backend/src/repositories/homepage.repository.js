@@ -1,6 +1,6 @@
 import { query } from '../config/db.js';
 import { getCategoryAndDescendantIds } from './categories.repository.js';
-import { listProducts } from './products.repository.js';
+import { findHomepageTabProductIds, findProductsByIds, listProducts } from './products.repository.js';
 
 export async function getEnabledSectionsWithItems() {
   const { rows: sections } = await query(
@@ -131,6 +131,39 @@ export async function getEnabledSectionsWithItems() {
     }
   }
 
+  // PRODUCT_TABS: items[0] is the admin-managed promo card (the first
+  // ordinary item — image/heading/subheading/CTA; a blank stand-in if none
+  // exists yet), followed by one synthetic item per tab whose heading is the
+  // tab name and whose `products` are auto-derived. A Trending/Bestsellers
+  // tab with fewer than PRODUCT_TABS_MIN products is left out entirely.
+  const productTabsSections = sections.filter((s) => s.type === 'PRODUCT_TABS');
+  if (productTabsSections.length > 0) {
+    const { items: newest } = await listProducts(
+      { status: 'PUBLISHED', excludeZeroPrice: true },
+      { sort: 'newest', page: 1, limit: PRODUCT_TABS_LIMIT },
+    );
+    const byIds = async (ids) => {
+      const rows = await findProductsByIds(ids);
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      return ids.map((id) => byId.get(id)).filter(Boolean);
+    };
+    const [trending, bestsellers] = await Promise.all([
+      findHomepageTabProductIds('TRENDING', PRODUCT_TABS_LIMIT).then(byIds),
+      findHomepageTabProductIds('BESTSELLERS', PRODUCT_TABS_LIMIT).then(byIds),
+    ]);
+    const tabs = [
+      { key: 'new-arrivals', name: 'New Arrivals', products: newest },
+      { key: 'trending', name: 'Trending', products: trending },
+      { key: 'bestsellers', name: 'Bestsellers', products: bestsellers },
+    ].filter((t) => t.key === 'new-arrivals' || t.products.length >= PRODUCT_TABS_MIN);
+
+    for (const section of productTabsSections) {
+      const promo = (itemsBySection.get(section.id) ?? [])[0] ?? blankHomepageItem('product-tabs-promo');
+      const tabItems = tabs.map((t) => ({ ...blankHomepageItem(`tab-${t.key}`), heading: t.name, products: t.products }));
+      itemsBySection.set(section.id, [promo, ...tabItems]);
+    }
+  }
+
   // FEATURED_PRODUCT is likewise auto-derived — whichever product(s) an
   // admin has flagged is_featured on the product itself (Products list),
   // most recently updated first — rather than manually attached via
@@ -253,8 +286,68 @@ export async function getEnabledSectionsWithItems() {
     }
   }
 
+  // PRODUCT_GRID / PRODUCT_ROW: the section's first item picks a category OR
+  // a collection; its published, priced products fill two rows of 5 (grid)
+  // or one sideways-scrolling row (row).
+  const productGridSections = sections.filter((s) => s.type === 'PRODUCT_GRID' || s.type === 'PRODUCT_ROW');
+  for (const section of productGridSections) {
+    const PRODUCT_GRID_LIMIT = section.type === 'PRODUCT_ROW' ? PRODUCT_ROW_LIMIT : PRODUCT_GRID_DEFAULT_LIMIT;
+    for (const item of itemsBySection.get(section.id) ?? []) {
+      if (item.collection_id) {
+        const { items: products } = await listProducts(
+          { collectionId: item.collection_id, status: 'PUBLISHED', excludeZeroPrice: true },
+          { sort: 'featured', page: 1, limit: PRODUCT_GRID_LIMIT, placement: { type: 'homepage_collection', id: item.collection_id } },
+        );
+        item.products = products;
+      } else if (item.category_id) {
+        const categoryIds = await getCategoryAndDescendantIds(item.category_id);
+        const { items: products } = await listProducts(
+          { categoryIds, status: 'PUBLISHED', excludeZeroPrice: true },
+          { sort: 'newest', page: 1, limit: PRODUCT_GRID_LIMIT },
+        );
+        item.products = products;
+      } else {
+        item.products = [];
+      }
+    }
+  }
+
   return sections.map((section) => ({
     ...section,
     items: itemsBySection.get(section.id) ?? [],
   }));
+}
+
+// Product Grid: two rows of 5 on desktop. Product Row: one row, scrolling
+// through up to 15.
+const PRODUCT_GRID_DEFAULT_LIMIT = 10;
+const PRODUCT_ROW_LIMIT = 15;
+
+// Product Tabs: up to 9 products per tab (two rows of 5 on desktop, the
+// 10th cell being the promo card); Trending/Bestsellers need at least 5
+// (one full row) to be shown.
+const PRODUCT_TABS_LIMIT = 9;
+const PRODUCT_TABS_MIN = 5;
+
+function blankHomepageItem(id) {
+  return {
+    id,
+    image_url: null,
+    image_url_mobile: null,
+    heading: null,
+    subheading: null,
+    cta_label: null,
+    cta_url: null,
+    category_id: null,
+    category_name: null,
+    category_slug: null,
+    category_image_url: null,
+    collection_id: null,
+    collection_name: null,
+    collection_slug: null,
+    product_id: null,
+    product_name: null,
+    product_slug: null,
+    product_selling_price: null,
+  };
 }
