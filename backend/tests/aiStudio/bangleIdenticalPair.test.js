@@ -86,8 +86,10 @@ let chatReply = () => ({});
 globalThis.fetch = async (url, init) => {
   const u = String(url);
   if (init?.body instanceof FormData) {
-    calls.push({ kind: 'image', url: u, prompt: init.body.get('prompt') });
-    return new Response(JSON.stringify({ data: [{ b64_json: imageReply.toString('base64') }] }), {
+    const prompt = init.body.get('prompt');
+    calls.push({ kind: 'image', url: u, prompt });
+    const reply = typeof imageReply === 'function' ? await imageReply(prompt) : imageReply;
+    return new Response(JSON.stringify({ data: [{ b64_json: reply.toString('base64') }] }), {
       headers: { 'content-type': 'application/json' },
     });
   }
@@ -425,9 +427,13 @@ describe('prompts by set type', () => {
       assert.match(p.finalPrompt, /The second identical bangle is added afterwards by the system/);
       assert.doesNotMatch(p.finalPrompt, /this image must contain exactly two physical bangles/);
     }
-    // Presenter images are never composited: identical-pair presenter prompts equal the existing pair prompts.
+    // Presenter images are never composited. Since 2026-11-20 they get the
+    // single generated bangle as product image, so the identical-pair prompt
+    // = the existing pair prompt + one identical-pair note, nothing else.
+    const NOTE = ' Identical pair: both bangles of this set are the same single design. The uploaded product image may show just ONE bangle of that design — that one bangle is the design to copy, and the set is two identical copies of it. Each wrist wears exactly ONE copy: one single band on the left wrist and one single band on the right wrist — never two bands, a double band or a stack on the same wrist, and never four bangles in the image.';
     const pres = (list) => list.filter((x) => x.kind === 'presenter').map((x) => x.finalPrompt);
-    assert.deepEqual(pres(identical), pres(older));
+    assert.deepEqual(pres(identical).map((t) => t.split(NOTE).join('')), pres(older));
+    for (const t of pres(identical)) assert.ok(t.includes(NOTE));
     for (const p of identical.filter((x) => x.kind === 'presenter')) {
       assert.equal(p.adminNote, undefined);
       assert.match(
@@ -797,6 +803,72 @@ describe('job: identical-pair catalogue generation', () => {
       } finally {
         await close(job.id);
       }
+    }
+  });
+
+  // 20 Nov 2026: with the stacked pair reference the model put the whole pair
+  // on each wrist (4 bangles). Presenter images of an identical pair now wait
+  // for the catalogue images and get the single generated bangle instead.
+  test('identical pair: presenter images run after the catalogue and use the single generated bangle', async () => {
+    const photos = {};
+    for (const field of ['main_preview_image_url', 'front_portrait_url', 'face_45_url', 'side_profile_url', 'jewellery_placement_url']) {
+      const saved = await storageProvider.save(
+        `9karet/presenters/test/${field}.png`,
+        await sharp({ create: { width: 64, height: 64, channels: 3, background: '#c08a6a' } }).png().toBuffer(),
+      );
+      photos[field] = saved.url;
+    }
+    await query(
+      `UPDATE presenters SET main_preview_image_url = $2, front_portrait_url = $3, face_45_url = $4,
+         side_profile_url = $5, jewellery_placement_url = $6 WHERE id = $1`,
+      [presenterId, photos.main_preview_image_url, photos.front_portrait_url, photos.face_45_url, photos.side_profile_url, photos.jewellery_placement_url],
+    );
+    const job = await confirmedJob({ wristPieceCount: 2, bangleSetType: 'IDENTICAL_PAIR' });
+    try {
+      const presenters = (await findAssetsByJobId(job.id)).filter((a) => a.asset_type.startsWith('PRESENTER_'));
+      for (const a of presenters) assert.match(a.assembled_final_prompt, /The uploaded product image may show just ONE bangle of that design/);
+      chatReply = (body) => review(assetTypeFrom(body));
+      const shotOf = (prompt) => Number(/Bangle catalogue Image (\d) of 4/.exec(prompt)?.[1] ?? 0);
+      imageReply = async (prompt) => {
+        const shot = shotOf(prompt);
+        return shot ? png(ringSvg(SINGLE[shot])) : png(ringSvg(SINGLE[1]));
+      };
+      await generateHandler([{ data: { jobId: job.id } }]);
+      const images = calls.filter((c) => c.kind === 'image');
+      assert.equal(images.length, 6);
+      const lastCatalogue = Math.max(...images.map((c, i) => (shotOf(c.prompt) ? i : -1)));
+      const firstPresenter = images.findIndex((c) => !shotOf(c.prompt));
+      assert.ok(firstPresenter > lastCatalogue, 'presenter images are generated after every catalogue image');
+
+      const assets = await findAssetsByJobId(job.id);
+      const metaOf = (a) => (typeof a.generation_metadata === 'string' ? JSON.parse(a.generation_metadata) : a.generation_metadata);
+      const front = assets.find((a) => a.asset_type === 'YELLOW_FRONT');
+      assert.equal(front.status, 'READY', front.error);
+      const sourceKey = metaOf(front).composite.sourceImageKey;
+      for (const a of assets.filter((x) => x.asset_type.startsWith('PRESENTER_'))) {
+        assert.equal(a.status, 'READY', `${a.asset_type}: ${a.error}`);
+        assert.equal(metaOf(a).productReferenceKey, sourceKey, a.asset_type);
+      }
+      for (const a of assets.filter((x) => !x.asset_type.startsWith('PRESENTER_'))) {
+        assert.equal(metaOf(a).productReferenceKey, undefined, a.asset_type);
+      }
+    } finally {
+      await close(job.id);
+    }
+  });
+
+  test('identical pair: no single bangle available yet → presenter falls back to the original reference', async () => {
+    const job = await confirmedJob({ wristPieceCount: 2, bangleSetType: 'IDENTICAL_PAIR' });
+    try {
+      const presenter = (await findAssetsByJobId(job.id)).find((a) => a.asset_type === 'PRESENTER_YELLOW_1');
+      chatReply = (body) => review(assetTypeFrom(body));
+      imageReply = await png(ringSvg(SINGLE[1]));
+      await generateHandler([{ data: { jobId: job.id, assetIds: [presenter.id] } }]);
+      const saved = (await findAssetsByJobId(job.id)).find((a) => a.id === presenter.id);
+      const meta = typeof saved.generation_metadata === 'string' ? JSON.parse(saved.generation_metadata) : saved.generation_metadata;
+      if (saved.status === 'READY') assert.equal(meta.productReferenceKey, undefined);
+    } finally {
+      await close(job.id);
     }
   });
 });

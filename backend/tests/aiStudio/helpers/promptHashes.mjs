@@ -12,7 +12,7 @@ process.env.OPENAI_API_KEY ??= 'sk-test';
 process.env.OPENAI_VISION_MODEL ??= 'vision-test';
 process.env.OPENAI_IMAGE_MODEL ??= 'image-test';
 
-const { JEWELLERY_TYPES, previewPromptsForJob, buildValidationText } = await import('../../../src/services/aiStudioService.js');
+const { JEWELLERY_TYPES, previewPromptsForJob, buildValidationText, REFERENCE_TEXT_NOTE, REFERENCE_TEXT_VALIDATION_NOTE } = await import('../../../src/services/aiStudioService.js');
 
 export const TEMPLATE = {
   front_prompt: 'FRONT_PROMPT_TEXT',
@@ -34,7 +34,11 @@ const QUANTITIES = [undefined, 'SINGLE_BANGLE', 'TWO_BANGLE_SET'];
 const sha = (s) => createHash('sha256').update(s).digest('hex');
 
 // key -> { quantity, type, assetType, kind, prompt: sha, validation: sha }
-export function computePromptHashes() {
+// stripReferenceTextNote: remove the "ignore printed text on the reference"
+// notes (added 2026-11-20 to every prompt and validation text) before
+// hashing, to compare everything else against older baselines.
+export function computePromptHashes({ stripReferenceTextNote = false } = {}) {
+  const strip = (s, note) => (stripReferenceTextNote ? s.split(` ${note}`).join('') : s);
   const out = {};
   for (const type of JEWELLERY_TYPES) {
     for (const rose of [false, true]) {
@@ -69,8 +73,8 @@ export function computePromptHashes() {
                 type,
                 assetType: p.assetType,
                 kind: p.kind,
-                prompt: sha(p.finalPrompt),
-                validation: sha(validation),
+                prompt: sha(strip(p.finalPrompt, REFERENCE_TEXT_NOTE)),
+                validation: sha(strip(validation, REFERENCE_TEXT_VALIDATION_NOTE)),
               };
             }
           }

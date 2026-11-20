@@ -38,6 +38,8 @@ export const REAL_JEWELLERY_TYPES: Exclude<JewelleryType, 'UNKNOWN'>[] = [
 export type CustomerCategory = 'WOMEN' | 'GENTS' | 'KIDS' | 'UNISEX';
 // Necklace only: a necklace on its own, or a necklace + matching earrings set.
 export type NecklaceSetType = 'NECKLACE_ONLY' | 'NECKLACE_SET';
+// Bangle only: one bangle, two identical bangles, or two different designs.
+export type BangleSetType = 'SINGLE' | 'IDENTICAL_PAIR' | 'DISTINCT_PAIR';
 export const CUSTOMER_CATEGORIES: CustomerCategory[] = ['WOMEN', 'GENTS', 'KIDS', 'UNISEX'];
 
 // Metal color is now encoded directly in the asset type (e.g. ROSE_FRONT)
@@ -111,6 +113,10 @@ export interface StudioAnalysis {
   customerCategoryConfidence: number;
   // Absent on jobs analysed before this field existed.
   necklaceSetType?: NecklaceSetType | 'NOT_APPLICABLE';
+  // Bangle: how many wrist pieces the AI counted and whether two of them
+  // look like the same design. Absent on older jobs.
+  wristPieceCount?: number;
+  bangleSetType?: 'IDENTICAL_PAIR' | 'DISTINCT_PAIR' | 'NOT_APPLICABLE';
 }
 
 // The only fields a "Customise Prompt" admin can edit on the Review Prompts
@@ -209,6 +215,8 @@ export interface StudioJob {
   presenterId: string | null;
   presenter: { id: string; displayName: string; styleLabel: string } | null;
   generateRoseGold: boolean;
+  // Admin-confirmed bangle set (null before confirm / non-Bangle / older jobs).
+  bangleSetType?: BangleSetType | null;
   error: string | null;
   createdAt: string;
   confirmedAt: string | null;
@@ -312,6 +320,7 @@ export function confirmStudioJob(
     promptOverrides?: PromptOverrides;
     customerCategory?: CustomerCategory;
     necklaceSetType?: NecklaceSetType;
+    bangleSetType?: BangleSetType;
   },
 ) {
   return apiFetch<{ jobId: string }>(`/admin/products/${productId}/ai-studio/${jobId}/confirm`, {
@@ -333,6 +342,7 @@ export function fetchPromptPreview(
     promptOverrides?: PromptOverrides;
     customerCategory?: CustomerCategory;
     necklaceSetType?: NecklaceSetType;
+    bangleSetType?: BangleSetType;
   },
 ) {
   return apiFetch<{ prompts: PromptPreview[] }>(`/admin/products/${productId}/ai-studio/${jobId}/prompt-preview`, {

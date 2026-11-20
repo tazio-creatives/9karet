@@ -15,6 +15,7 @@ import {
   type JewelleryType,
   type CustomerCategory,
   type NecklaceSetType,
+  type BangleSetType,
   type PromptOverrides,
   type PromptCreativeOverride,
   type ReferenceUpload,
@@ -76,6 +77,9 @@ export function AiImageStudioPage() {
   const [customerCategoryConfirmed, setCustomerCategoryConfirmed] = useState(false);
   // Necklace only — pre-filled from the AI's suggestion, changeable by the admin.
   const [necklaceSetType, setNecklaceSetType] = useState<NecklaceSetType | ''>('');
+  // Bangle only — single / identical pair / two designs. Pre-filled from the
+  // AI's count when it is 1 or 2; the admin must have one chosen to continue.
+  const [bangleSetType, setBangleSetType] = useState<BangleSetType | ''>('');
   // "Generate Rose Gold" always starts OFF for a new generation session —
   // never restored from a previous product or from browser storage. The
   // backend saves the confirmed value on the job and works from that.
@@ -168,6 +172,16 @@ export function AiImageStudioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.analysis]);
 
+  // Bangle: pre-fill from the AI's count (only when it counted 1 or 2).
+  useEffect(() => {
+    if (!job?.analysis || bangleSetType) return;
+    const count = job.analysis.wristPieceCount;
+    const pair = job.analysis.bangleSetType;
+    if (count === 1) setBangleSetType('SINGLE');
+    else if (count === 2 && (pair === 'IDENTICAL_PAIR' || pair === 'DISTINCT_PAIR')) setBangleSetType(pair);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.analysis]);
+
   const createMutation = useMutation({
     mutationFn: (references: ReferenceUpload[]) => createStudioJob(productId as string, references),
     onSuccess: (res) => {
@@ -177,6 +191,7 @@ export function AiImageStudioPage() {
       setCustomerCategory('');
       setCustomerCategoryConfirmed(false);
       setNecklaceSetType('');
+      setBangleSetType('');
       setPromptOverrides({});
       setGenerateRoseGold(false);
     },
@@ -192,6 +207,7 @@ export function AiImageStudioPage() {
         promptOverrides,
         customerCategory: customerCategory || undefined,
         necklaceSetType: jewelleryType === 'NECKLACE' && necklaceSetType ? necklaceSetType : undefined,
+        bangleSetType: jewelleryType === 'BANGLE' && bangleSetType ? bangleSetType : undefined,
       }),
     onSuccess: invalidateJob,
   });
@@ -334,6 +350,8 @@ export function AiImageStudioPage() {
               onIncludeProductSizeImageChange={setIncludeProductSizeImage}
               necklaceSetType={necklaceSetType}
               onNecklaceSetTypeChange={setNecklaceSetType}
+              bangleSetType={bangleSetType}
+              onBangleSetTypeChange={setBangleSetType}
             />
             {confirmError && isRing && <p className={sharedStyles.error}>{confirmError}</p>}
             <div className={styles.actions}>
@@ -344,6 +362,7 @@ export function AiImageStudioPage() {
                   !jewelleryType ||
                   !categoryConfirmed ||
                   !customerCategoryConfirmed ||
+                  (jewelleryType === 'BANGLE' && !bangleSetType) ||
                   !manifestOk ||
                   (isRing && !includeProductSizeImage && confirmMutation.isPending)
                 }
@@ -467,6 +486,7 @@ export function AiImageStudioPage() {
               onPromptOverridesChange={setPromptOverrides}
               customerCategory={customerCategory}
               necklaceSetType={necklaceSetType}
+              bangleSetType={bangleSetType}
             />
             {confirmError && <p className={sharedStyles.error}>{confirmError}</p>}
             <div className={styles.actions}>

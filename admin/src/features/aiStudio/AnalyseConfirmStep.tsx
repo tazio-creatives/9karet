@@ -5,6 +5,7 @@ import {
   type CustomerCategory,
   type JewelleryType,
   type NecklaceSetType,
+  type BangleSetType,
   type StudioJob,
 } from '../../api/aiStudio';
 import { Toggle } from '../../components/Toggle';
@@ -39,6 +40,32 @@ interface AnalyseConfirmStepProps {
   onIncludeProductSizeImageChange: (_v: boolean) => void;
   necklaceSetType: NecklaceSetType | '';
   onNecklaceSetTypeChange: (_v: NecklaceSetType) => void;
+  bangleSetType: BangleSetType | '';
+  onBangleSetTypeChange: (_v: BangleSetType) => void;
+}
+
+export const BANGLE_SET_OPTIONS: { value: BangleSetType; label: string; help: string }[] = [
+  { value: 'SINGLE', label: 'Single bangle', help: 'Every image shows exactly one bangle.' },
+  {
+    value: 'IDENTICAL_PAIR',
+    label: 'Pair — same design',
+    help: 'Two identical bangles. Catalogue images draw one bangle and copy it, so there are always exactly two.',
+  },
+  {
+    value: 'DISTINCT_PAIR',
+    label: 'Pair — two different designs',
+    help: 'Two bangles with different designs; each design is shown once.',
+  },
+];
+
+// What the AI counted, in words, for the "AI suggestion" line.
+function bangleAiSuggestionText(analysis: StudioJob['analysis']): string | null {
+  const count = analysis?.wristPieceCount;
+  if (count == null) return null;
+  if (count === 1) return 'Single bangle';
+  if (count === 2 && analysis?.bangleSetType === 'IDENTICAL_PAIR') return 'Pair — same design';
+  if (count === 2 && analysis?.bangleSetType === 'DISTINCT_PAIR') return 'Pair — two different designs';
+  return `${count} pieces (not a single or a pair) — please choose below`;
 }
 
 const NECKLACE_SET_OPTIONS: { value: NecklaceSetType; label: string }[] = [
@@ -70,6 +97,8 @@ export function AnalyseConfirmStep({
   onIncludeProductSizeImageChange,
   necklaceSetType,
   onNecklaceSetTypeChange,
+  bangleSetType,
+  onBangleSetTypeChange,
 }: AnalyseConfirmStepProps) {
   const [isPickingCategory, setIsPickingCategory] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -332,6 +361,34 @@ export function AnalyseConfirmStep({
               : necklaceSetType === 'NECKLACE_SET'
                 ? 'Presenter images: the presenter wears the necklace and the matching earrings.'
                 : 'Choose whether the reference is a necklace only or a necklace with matching earrings.'}
+          </p>
+        </section>
+      )}
+
+      {/* Bangle only: single, identical pair or two different designs.
+          Pre-filled from the AI's count when it is 1 or 2; required before
+          continuing. Replaces the AI's own count for every image. */}
+      {jewelleryType === 'BANGLE' && (
+        <section className={styles.generationPlan}>
+          <h3 className={styles.generationPlanTitle}>Bangle Set</h3>
+          {bangleAiSuggestionText(analysis) && (
+            <p className={styles.attrLabel}>AI suggestion: {bangleAiSuggestionText(analysis)}</p>
+          )}
+          <div className={styles.categoryGrid}>
+            {BANGLE_SET_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                className={bangleSetType === o.value ? styles.categoryCardSelected : styles.categoryCard}
+                onClick={() => onBangleSetTypeChange(o.value)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <p className={styles.attrLabel}>
+            {BANGLE_SET_OPTIONS.find((o) => o.value === bangleSetType)?.help ??
+              'Look at the reference and choose how many bangles the product has. Text on the photo (sizes, design number) is ignored.'}
           </p>
         </section>
       )}

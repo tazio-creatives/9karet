@@ -210,10 +210,14 @@
   min-width: 0;
 }
 
+/* Same thin-divider grid as the homepage product sections: the cards
+   (TabProductCard) draw their own right/bottom lines, the grid the top/left. */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  gap: 0;
+  border-top: 1px solid #ececec;
+  border-left: 1px solid #ececec;
   /* Stretch (grid's default, restated for clarity) so every card in a row
      matches the tallest one — otherwise a card with an offer banner sits
      taller than its neighbour without one, staggering the row's bottom
@@ -321,9 +325,6 @@
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
-  .grid {
-    gap: 16px;
-  }
 }
 
 /* Tablet: sidebar becomes a drawer, grid moves to 3 columns with a slightly
@@ -340,7 +341,6 @@
 
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
   }
 
   .filtersButton {
@@ -416,6 +416,5 @@
 
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 4px;
   }
 }

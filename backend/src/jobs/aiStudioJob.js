@@ -14,6 +14,8 @@ import {
   isCatalogueAssetType,
   bangleQuantityForJob,
   bangleSetTypeForJob,
+  bangleSetChoiceForJob,
+  banglePresenterUsesSingleSource,
   necklaceSetTypeForJob,
   bangleUsesLocalPairComposite,
   bangleCatalogueShotFor,
@@ -190,6 +192,10 @@ async function generateOneAsset({
   bangleSetType,
   // Necklace only — the admin-confirmed 'NECKLACE_ONLY' | 'NECKLACE_SET' | null.
   necklaceSetType,
+  // Identical bangle pair, presenter images: the single bangle generated for
+  // a catalogue image, sent to the image model INSTEAD of the stacked pair
+  // reference (validation still compares against the original reference).
+  productReference,
 }) {
   // A cancelled job's late-arriving results are discarded, never written
   // back (plan §12) — checked immediately before each write, not just once
@@ -220,8 +226,8 @@ async function generateOneAsset({
 
     async function attemptOnce(priorFailure) {
       let { buffer: generatedBuffer, prompt } = await generateShot({
-        referenceBuffer,
-        mimetype,
+        referenceBuffer: productReference?.buffer ?? referenceBuffer,
+        mimetype: productReference ? 'image/png' : mimetype,
         template,
         assetType: asset.asset_type,
         confirmedType,
@@ -333,9 +339,12 @@ async function generateOneAsset({
     await updateAsset(asset.id, {
       status: 'READY',
       image_key: saved.key,
-      generation_metadata: JSON.stringify(
-        composite ? { prompt, imageModel, composite: { ...composite, sourceImageKey: savedSource.key } } : { prompt, imageModel },
-      ),
+      generation_metadata: JSON.stringify({
+        prompt,
+        imageModel,
+        ...(composite ? { composite: { ...composite, sourceImageKey: savedSource.key } } : {}),
+        ...(productReference ? { productReferenceKey: productReference.key } : {}),
+      }),
       generation_completed_at: new Date(),
       validation_status: validationStatus,
       validation_result: validationResult ? JSON.stringify(validationResult) : null,
@@ -444,14 +453,28 @@ export async function generateHandler(jobs) {
       generateRoseGold: aiStudioJob.generate_rose_gold,
       confirmedCustomerCategory: aiStudioJob.customer_category,
       gentsMasterPresenterBuffer,
-      bangleQuantity: bangleQuantityForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
-      bangleSetType: bangleSetTypeForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis),
+      bangleQuantity: bangleQuantityForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis, bangleSetChoiceForJob(aiStudioJob)),
+      bangleSetType: bangleSetTypeForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis, bangleSetChoiceForJob(aiStudioJob)),
       necklaceSetType: necklaceSetTypeForJob(aiStudioJob),
     };
     const { firstWave, chained } = splitGenerationWaves(targets, manifest);
 
-    await runWithConcurrency(firstWave, env.aiStudioGenerationConcurrency, (asset) =>
-      generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset), viewReferenceBuffers: viewReferencesFor(asset) }),
+    // Identical bangle pair: presenter images wait for the catalogue images,
+    // then get the single generated bangle as their product image.
+    const usesSingleSource = (asset) =>
+      shared.confirmedType === 'BANGLE' &&
+      banglePresenterUsesSingleSource(asset.asset_type, shared.bangleQuantity, shared.bangleSetType);
+    const afterCatalogue = firstWave.filter(usesSingleSource);
+    await runWithConcurrency(
+      firstWave.filter((a) => !afterCatalogue.includes(a)),
+      env.aiStudioGenerationConcurrency,
+      (asset) => generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset), viewReferenceBuffers: viewReferencesFor(asset) }),
+    );
+    const productReference =
+      afterCatalogue.length || chained.some(usesSingleSource) ? await singleBangleSourceFor(jobId) : null;
+    if ((await findJobById(jobId)).status === 'cancelled') return;
+    await runWithConcurrency(afterCatalogue, env.aiStudioGenerationConcurrency, (asset) =>
+      generateOneAsset({ ...shared, asset, outputSlot: slotOf(asset), viewReferenceBuffers: viewReferencesFor(asset), productReference }),
     );
 
     // Second presenter images wait for the first, then use it as identity.
@@ -468,7 +491,13 @@ export async function generateHandler(jobs) {
         continue;
       }
       const chainedIdentityBuffer = await storageProvider.read(reference.image_key);
-      await generateOneAsset({ ...shared, asset, outputSlot, chainedIdentityBuffer });
+      await generateOneAsset({
+        ...shared,
+        asset,
+        outputSlot,
+        chainedIdentityBuffer,
+        productReference: usesSingleSource(asset) ? productReference : null,
+      });
     }
 
     const refreshedJob = await findJobById(jobId);
@@ -481,6 +510,27 @@ export async function generateHandler(jobs) {
   } catch (err) {
     await updateJob(jobId, { status: 'failed', error: err.message });
   }
+}
+
+// Identical bangle pair: the single bangle the model generated for a
+// catalogue image (kept as the composite's audit source), preferring the
+// Front image. null when none exists yet (e.g. the Front image failed) — the
+// presenter images then use the original reference, as before.
+const SINGLE_SOURCE_PREFERENCE = ['YELLOW_FRONT', 'YELLOW_SLIGHT_ANGLE', 'YELLOW_ELEVATED_DETAIL', 'YELLOW_MACRO'];
+export async function singleBangleSourceFor(jobId) {
+  const assets = await findAssetsByJobId(jobId);
+  for (const type of SINGLE_SOURCE_PREFERENCE) {
+    const asset = assets.find((a) => a.asset_type === type && a.status === 'READY');
+    const meta = typeof asset?.generation_metadata === 'string' ? JSON.parse(asset.generation_metadata) : asset?.generation_metadata;
+    const key = meta?.composite?.sourceImageKey;
+    if (!key) continue;
+    try {
+      return { key, buffer: await storageProvider.read(key) };
+    } catch (err) {
+      console.error('AI Image Studio: single bangle source unreadable:', key, err.message);
+    }
+  }
+  return null;
 }
 
 export async function registerAiStudioWorker() {

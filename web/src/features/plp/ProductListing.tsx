@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useInfiniteQuery, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchCategoryFilterCounts } from '../../api/categories';
 import type { CategoryBanner as CategoryBannerData } from '../../api/types';
-import { PlpProductCard } from '../../components/PlpProductCard';
+import { TabProductCard } from '../../pages/home/ProductTabsSection';
 import { Breadcrumbs, type Crumb } from '../../components/Breadcrumbs';
 import { CategoryBanner } from './CategoryBanner';
 import { productsQueryKey, fetchProductsPage, getNextProductsPageParam } from './productsQuery';
@@ -270,11 +270,11 @@ export function ProductListing({
             <>
               <div className={styles.grid}>
                 {products.map((product, i) => (
-                  <PlpProductCard
+                  <TabProductCard
                     key={product.id}
                     product={product}
                     index={i}
-                    onAddToCart={() => quickAdd.addToCart(product)}
+                    onAdd={() => quickAdd.addToCart(product)}
                     isAdding={quickAdd.pendingProductId === product.id}
                     justAdded={quickAdd.justAddedProductId === product.id}
                     hasError={quickAdd.errorProductId === product.id}

@@ -226,9 +226,11 @@ describe('Two-bangle set prompts', () => {
   test('4. gold: the reference is the colour authority on all six images; catalogue neutral white balance, presenter lighting never changes the gold', () => {
     for (const job of allPairJobs()) {
       for (const p of job) {
-        assert.match(p.finalPrompt, /the uploaded product reference is the authority for the metal colour — match its gold hue, saturation, brightness and finish as a natural, polished yellow gold/, p.assetType);
-        assert.match(p.finalPrompt, /balanced highlights and darker reflective areas that keep the surface depth, so every motif and edge stays clearly visible/, p.assetType);
-        assert.match(p.finalPrompt, /Never pale beige, lemon yellow, orange, copper, brown, black, burnt or overexposed metal/, p.assetType);
+        // 2026-11-20: real, rich yellow gold with depth (was: copy the reference colour).
+        assert.match(p.finalPrompt, /render the metal as real, solid, polished yellow gold jewellery/, p.assetType);
+        assert.match(p.finalPrompt, /bright warm highlights, honey-gold midtones and deeper amber-gold reflections/, p.assetType);
+        assert.match(p.finalPrompt, /If the uploaded reference is a dull, grey or flat render, take only the design from it/, p.assetType);
+        assert.match(p.finalPrompt, /Never flat or uniform lemon yellow, brassy or plastic-looking yellow, pale beige, washed out, orange, copper, brown, black, burnt or overexposed metal/, p.assetType);
         assert.match(p.finalPrompt, /Apply this to the jewellery only — do not recolour the whole image/, p.assetType);
         assert.doesNotMatch(p.finalPrompt, /rich, warm, premium yellow gold|high mirror polish/, p.assetType);
       }
@@ -238,7 +240,7 @@ describe('Two-bangle set prompts', () => {
       }
       for (const p of catalogue(job)) {
         assert.match(p.finalPrompt, /Use neutral white balance and keep the background pure white/, p.assetType);
-        const elevated = /Elevated Detail gold: clean, bright, neutral yellow gold — never pale beige, orange, copper, black or burnt/;
+        const elevated = /Elevated Detail gold: warm, rich, real yellow gold with natural depth — never flat lemon yellow, pale beige, orange, copper, black or burnt/;
         if (SHOT[p.assetType] === 3) {
           assert.match(p.finalPrompt, elevated, p.assetType);
           assert.match(p.finalPrompt, /realistic, polished highlights that never wash out the design/, p.assetType);
@@ -477,15 +479,18 @@ describe('Two-bangle set: regeneration, API calls and unchanged behaviour', () =
       assert.equal(calls[0].kind, 'image');
       assert.match(calls[0].prompt, /this image must contain exactly two physical bangles in total/, p.assetType);
       if (p.assetType === 'PRESENTER_YELLOW_2') assert.match(calls[0].prompt, /do not hold one wrist with the other hand/);
-      if (SHOT[p.assetType] === 3) assert.match(calls[0].prompt, /clean, bright, neutral yellow gold/);
+      if (SHOT[p.assetType] === 3) assert.match(calls[0].prompt, /warm, rich, real yellow gold with natural depth/);
       if (SHOT[p.assetType] === 2) assert.match(calls[0].prompt, /Each position contains only one object/);
       if (SHOT[p.assetType] === 4) assert.match(calls[0].prompt, /move the camera visibly closer than every other catalogue image/);
-      assert.match(calls[0].prompt, /natural, polished yellow gold/, p.assetType);
+      assert.match(calls[0].prompt, /real, solid, polished yellow gold jewellery/, p.assetType);
     }
   });
 
   test('8 & 9. single-bangle, unknown-count and every non-Bangle prompt and validation text are byte-for-byte unchanged', () => {
-    const now = computePromptHashes();
+    // The reference-text note (2026-11-20) is added to every prompt and
+    // validation text on purpose; stripped here so everything else must
+    // still match the baseline byte for byte.
+    const now = computePromptHashes({ stripReferenceTextNote: true });
     assert.equal(Object.keys(now).length, Object.keys(BASELINE).length);
     let unchanged = 0;
     let pairChanged = 0;

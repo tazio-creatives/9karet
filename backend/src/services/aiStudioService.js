@@ -109,7 +109,7 @@ const AnalysisSchema = z.object({
   necklaceSetType: z.enum(['NECKLACE_ONLY', 'NECKLACE_SET', 'NOT_APPLICABLE']),
 });
 
-const ANALYSIS_SYSTEM_PROMPT = `You are a jewellery product analyst. Examine the uploaded photograph and identify the jewellery item's type, metal colour, gemstone, and dominant shape, each with a confidence score from 0 to 1. Use "UNKNOWN" for jewelleryType only if the item genuinely does not match any of the listed types or the photo is too unclear to tell. Also suggest which customer category the piece is designed for — WOMEN, GENTS, KIDS, or UNISEX — based on styling cues such as scale, motif and design language (e.g. a small, simple band suggests KIDS; a broad, plain band suggests GENTS), with its own confidence score from 0 to 1; default to WOMEN when the cues are ambiguous. Also report wristPieceCount: the number of separate physical bangles, bracelets or other wrist pieces in the photo (0 if the item is not a wrist piece). Count actual jewellery pieces only — do not count reflections, shadows, overlapping edges, or the same piece shown again from another camera view as additional pieces. Also report bangleSetType: IDENTICAL_PAIR when the photo shows exactly two bangles with the same design, DISTINCT_PAIR when it shows exactly two bangles whose designs differ, and NOT_APPLICABLE for a single bangle, any other count, or any item that is not a bangle. Also report necklaceSetType: NECKLACE_ONLY when the photo shows a necklace with no earrings, NECKLACE_SET when it shows a necklace together with matching earrings, and NOT_APPLICABLE for any item that is not a necklace. This is a suggestion for a human reviewer, not a final decision — always report your best honest confidence, do not artificially inflate it.`;
+const ANALYSIS_SYSTEM_PROMPT = `You are a jewellery product analyst. Examine the uploaded photograph and identify the jewellery item's type, metal colour, gemstone, and dominant shape, each with a confidence score from 0 to 1. Use "UNKNOWN" for jewelleryType only if the item genuinely does not match any of the listed types or the photo is too unclear to tell. Also suggest which customer category the piece is designed for — WOMEN, GENTS, KIDS, or UNISEX — based on styling cues such as scale, motif and design language (e.g. a small, simple band suggests KIDS; a broad, plain band suggests GENTS), with its own confidence score from 0 to 1; default to WOMEN when the cues are ambiguous. Also report wristPieceCount: the number of separate physical bangles, bracelets or other wrist pieces in the photo (0 if the item is not a wrist piece). Count actual jewellery pieces only — do not count reflections, shadows, overlapping edges, or the same piece shown again from another camera view as additional pieces. Ignore any text printed on the photo (design numbers, size lists such as "2.2 / 2.4 / 2.6", weights, volumes, labels, logos or watermarks): it is not jewellery and must never be used to decide the type, the count or the set. Also report bangleSetType: IDENTICAL_PAIR when the photo shows exactly two bangles with the same design, DISTINCT_PAIR when it shows exactly two bangles whose designs differ, and NOT_APPLICABLE for a single bangle, any other count, or any item that is not a bangle. Also report necklaceSetType: NECKLACE_ONLY when the photo shows a necklace with no earrings, NECKLACE_SET when it shows a necklace together with matching earrings, and NOT_APPLICABLE for any item that is not a necklace. This is a suggestion for a human reviewer, not a final decision — always report your best honest confidence, do not artificially inflate it.`;
 
 // Bangle quantity — an automatic Bangle-only rule (no admin option), derived
 // from the job's stored analysis so every prompt, validation and
@@ -133,9 +133,44 @@ export function bangleQuantityFromAnalysis(analysis) {
   return null;
 }
 
+// Admin-confirmed bangle set (ai_studio_jobs.bangle_set_type), chosen on
+// Analyse & Confirm. When present it replaces the AI's own count/pair answer
+// everywhere; null (older jobs) keeps the analysis-derived behaviour.
+export const BANGLE_SET_CHOICES = ['SINGLE', 'IDENTICAL_PAIR', 'DISTINCT_PAIR'];
+
+function parseAnalysis(analysis) {
+  if (typeof analysis !== 'string') return analysis;
+  try {
+    return JSON.parse(analysis);
+  } catch {
+    return null;
+  }
+}
+
+// The AI's answer expressed as a choice, used to pre-fill Analyse & Confirm.
+// null when the AI's count is anything other than 1 or 2 (e.g. it saw 3) —
+// the admin must then pick one themselves.
+export function bangleSetChoiceSuggestion(analysis) {
+  const parsed = parseAnalysis(analysis);
+  const count = parsed?.wristPieceCount;
+  if (count === 1) return 'SINGLE';
+  if (count === 2 && (parsed?.bangleSetType === 'IDENTICAL_PAIR' || parsed?.bangleSetType === 'DISTINCT_PAIR')) {
+    return parsed.bangleSetType;
+  }
+  return null;
+}
+
+// The confirmed value saved on a job (Bangle jobs only).
+export function bangleSetChoiceForJob(job) {
+  return job?.jewellery_type === 'BANGLE' && BANGLE_SET_CHOICES.includes(job.bangle_set_type) ? job.bangle_set_type : null;
+}
+
 // Only Bangle jobs carry a quantity; every other category gets null.
-export function bangleQuantityForJob(jewelleryType, analysis) {
-  return jewelleryType === 'BANGLE' ? bangleQuantityFromAnalysis(analysis) : null;
+export function bangleQuantityForJob(jewelleryType, analysis, confirmedChoice = null) {
+  if (jewelleryType !== 'BANGLE') return null;
+  if (confirmedChoice === 'SINGLE') return 'SINGLE_BANGLE';
+  if (confirmedChoice === 'IDENTICAL_PAIR' || confirmedChoice === 'DISTINCT_PAIR') return 'TWO_BANGLE_SET';
+  return bangleQuantityFromAnalysis(analysis);
 }
 
 // Two-bangle set type: 'IDENTICAL_PAIR' | 'DISTINCT_PAIR' | null. Only a
@@ -143,7 +178,11 @@ export function bangleQuantityForJob(jewelleryType, analysis) {
 // the field existed get null and keep the existing two-bangle flow.
 export const BANGLE_SET_TYPES = ['IDENTICAL_PAIR', 'DISTINCT_PAIR'];
 
-export function bangleSetTypeForJob(jewelleryType, analysis) {
+export function bangleSetTypeForJob(jewelleryType, analysis, confirmedChoice = null) {
+  if (jewelleryType === 'BANGLE' && (confirmedChoice === 'IDENTICAL_PAIR' || confirmedChoice === 'DISTINCT_PAIR')) {
+    return confirmedChoice;
+  }
+  if (confirmedChoice === 'SINGLE') return null;
   if (bangleQuantityForJob(jewelleryType, analysis) !== 'TWO_BANGLE_SET') return null;
   let parsed = analysis;
   if (typeof analysis === 'string') {
@@ -215,6 +254,15 @@ export async function analyseJewellery(imageBuffer, mimetype) {
     throw mapOpenAiError(err);
   }
 }
+
+// Reference photos often carry printed text (design number, a list of
+// sizes, volumes, logos). It is never part of the product: the analysis, the
+// generation prompts and the validator all ignore it, so e.g. a five-line
+// size list can never turn into five bangles.
+export const REFERENCE_TEXT_NOTE =
+  'The reference image may contain printed text such as a design number, a list of sizes, weights, volumes, labels, logos or watermarks — ignore all of it completely. It is not part of the jewellery: never draw it, and never let it change the jewellery design, the number of pieces or their arrangement. Use only the jewellery itself.';
+export const REFERENCE_TEXT_VALIDATION_NOTE =
+  'Ignore any text, numbers, labels or watermarks printed on the reference image — compare the jewellery only.';
 
 const FIDELITY_BLOCK = `The uploaded jewellery reference is the definitive product. Preserve its exact jewellery type, stone count and apparent arrangement, stone shape and position, prongs and setting, metal colour, band or chain proportions, clasps, and every other distinctive construction detail. Do not redesign, reinterpret or add/remove/resize/reposition any component. Photorealistic, premium e-commerce jewellery photography. No text, logos, or watermarks.`;
 
@@ -1418,11 +1466,13 @@ const BANGLE_PAIR_PHYSICAL_COUNT =
 const BANGLE_PAIR_NO_DUPLICATED_PAIR =
   'Do not draw either bangle as two parallel loops, a doubled ring or a double band, and do not show two duplicated pairs, four loops or four rings.';
 
-// Gold for every pair image. Results were pale, washed out and sometimes
-// orange. The uploaded reference is the authority for the metal colour; the
-// correction applies to the jewellery only, never the whole image.
+// Gold for every pair image. Results were first pale, washed out and
+// sometimes orange; then (20 Nov 2026) a flat, bright lemon / brass yellow
+// that did not read as real gold — references are often dull 3D renders on
+// grey, so copying their colour is not enough. Ask for real, rich yellow
+// gold with depth. Applies to the jewellery only, never the whole image.
 const BANGLE_PAIR_GOLD_CORE =
-  'Gold colour and finish (every image of this set): the uploaded product reference is the authority for the metal colour — match its gold hue, saturation, brightness and finish as a natural, polished yellow gold, with balanced highlights and darker reflective areas that keep the surface depth, so every motif and edge stays clearly visible. Never pale beige, lemon yellow, orange, copper, brown, black, burnt or overexposed metal. Apply this to the jewellery only — do not recolour the whole image.';
+  "Gold colour and finish (every image of this set): render the metal as real, solid, polished yellow gold jewellery, as in a premium jeweller's studio photograph — a warm, rich golden yellow with natural depth: bright warm highlights, honey-gold midtones and deeper amber-gold reflections in the curves and recesses, so it reads as real precious gold, not paint or plastic. Keep every motif and edge clearly visible. If the uploaded reference is a dull, grey or flat render, take only the design from it and still show real, rich yellow gold. Never flat or uniform lemon yellow, brassy or plastic-looking yellow, pale beige, washed out, orange, copper, brown, black, burnt or overexposed metal. Apply this to the jewellery only — do not recolour the whole image.";
 const BANGLE_PAIR_GOLD = {
   catalogue: `${BANGLE_PAIR_GOLD_CORE} Use neutral white balance and keep the background pure white.`,
   presenter: `${BANGLE_PAIR_GOLD_CORE} Do not change the skin, clothing or background colours, and do not let the scene lighting turn the jewellery into a different gold tone.`,
@@ -1430,7 +1480,7 @@ const BANGLE_PAIR_GOLD = {
 
 // Image 3 (Elevated Detail) for a pair: a clean yellow gold.
 const BANGLE_PAIR_ELEVATED_GOLD =
-  'Elevated Detail gold: clean, bright, neutral yellow gold — never pale beige, orange, copper, black or burnt in any area — with realistic, polished highlights that never wash out the design.';
+  'Elevated Detail gold: warm, rich, real yellow gold with natural depth — never flat lemon yellow, pale beige, orange, copper, black or burnt in any area — with realistic, polished highlights that never wash out the design.';
 
 // Image 2 for a pair: each position holds one object only.
 const BANGLE_PAIR_UPRIGHT_RING_COUNT =
@@ -1502,12 +1552,12 @@ export const BANGLE_IDENTICAL_PAIR_ADMIN_NOTE =
   'AI generates one verified bangle; the system creates the second identical catalogue copy locally.';
 
 const BANGLE_IDENTICAL_SOURCE_RULE =
-  "Single-bangle source image (mandatory): the uploaded reference shows a set of two IDENTICAL bangles. Generate exactly ONE of them — one physical bangle, one solid band forming one closed circumference — never both, never a doubled ring, two parallel bands or a stacked pair, and never the stacked look of the reference photo. The second identical bangle is added afterwards by the system, so leave clean, empty pure white space around this one. Preserve the exact band width, motifs, construction and proportions of ONE reference bangle. The reference defines the bangle's design only — do not copy its camera angle, arrangement, background or text.";
+  "Single-bangle source image (mandatory): the uploaded reference shows a set of two IDENTICAL bangles. Generate exactly ONE of them — one physical bangle, one solid band forming one closed circumference — never both, never a doubled ring, two parallel bands or a stacked pair, and never the stacked look of the reference photo. The second identical bangle is added afterwards by the system, so leave clean, empty pure white space around this one. Preserve the exact band width, motifs, construction and proportions of ONE reference bangle. Keep the band height of ONE reference bangle: its outer face shows the same number of motif rows as one reference bangle — if one reference bangle has a single row of motifs, draw exactly one row, never two rows stacked one above the other and never a band twice as tall. The reference defines the bangle's design only — do not copy its camera angle, arrangement, background or text.";
 
 const BANGLE_IDENTICAL_SOURCE_ARRANGEMENT = {
   1: 'Show exactly ONE complete bangle lying in a clean, front-facing horizontal orientation, centred, spanning about 85% of the frame width, with plenty of empty white space above and below it.',
   2: 'Show exactly ONE complete bangle standing upright on its lower edge at the 30–40 degree three-quarter angle, centred, about 80% of the frame height and no wider than about 40% of the frame width.',
-  3: 'Show exactly ONE complete bangle in the low elevated side view, centred, spanning about 60% of the frame width.',
+  3: 'Show exactly ONE complete bangle in the low elevated side view, centred, spanning about 60% of the frame width. Seen from this low, slightly raised angle, the near side, the far side and the inner surface all belong to the same single band — show one band of one band height only, never a second band stacked on top of it.',
   4: 'Show exactly ONE complete bangle standing upright, slightly angled so its decorated outer face is toward the camera, filling about 90% of the frame height so its motifs, band finish and construction are large, sharp and clearly readable — the whole bangle stays inside the frame.',
 };
 
@@ -1573,11 +1623,31 @@ function bangleCatalogueSectionsFor(assetType, bangleQuantity, bangleSetType) {
 // singular wording (lead, framing, exclusion) is replaced at the call site.
 // Presenter images are never composited — any two-bangle set is generated
 // worn, one bangle per wrist.
+// Identical pair, presenter images: the generation job sends the single
+// bangle generated for the Front catalogue image as the product image
+// (see banglePresenterUsesSingleSource), because with the stacked pair
+// reference the model kept putting the whole pair on each wrist (4 bangles,
+// 20 Nov 2026). Worded to stay correct if the job had to fall back to the
+// original pair reference.
+const BANGLE_IDENTICAL_PAIR_PRESENTER_NOTE =
+  'Identical pair: both bangles of this set are the same single design. The uploaded product image may show just ONE bangle of that design — that one bangle is the design to copy, and the set is two identical copies of it. Each wrist wears exactly ONE copy: one single band on the left wrist and one single band on the right wrist — never two bands, a double band or a stack on the same wrist, and never four bangles in the image.';
+
+// True for the presenter images of an identical two-bangle set — they are
+// generated after the catalogue images, from the single generated bangle.
+export function banglePresenterUsesSingleSource(assetType, bangleQuantity, bangleSetType) {
+  return bangleQuantity === 'TWO_BANGLE_SET' && bangleSetType === 'IDENTICAL_PAIR' && !CATALOGUE_ASSET_TYPES.has(assetType);
+}
+
 function banglePresenterRulesFor(assetType, bangleQuantity, bangleSetType) {
   const key = bangleKey(bangleQuantity);
   if (key === 'TWO_BANGLE_SET') {
     const pose = BANGLE_PAIR_PRESENTER_POSE[assetType === 'PRESENTER_YELLOW_2' ? 2 : 1];
-    const distinct = bangleSetType === 'DISTINCT_PAIR' ? ` ${BANGLE_DISTINCT_PAIR_NOTE.presenter}` : '';
+    const distinct =
+      bangleSetType === 'DISTINCT_PAIR'
+        ? ` ${BANGLE_DISTINCT_PAIR_NOTE.presenter}`
+        : bangleSetType === 'IDENTICAL_PAIR'
+          ? ` ${BANGLE_IDENTICAL_PAIR_PRESENTER_NOTE}`
+          : '';
     return {
       placement: `${BANGLE_PAIR_PRESENTER_RULE} ${pose} ${BANGLE_PAIR_PHYSICAL_COUNT} ${BANGLE_PAIR_GOLD.presenter}${distinct}`,
       negatives: [BANGLE_PAIR_OTHER_JEWELLERY],
@@ -1642,7 +1712,7 @@ function buildAssetPromptSections({
   const audienceOverride = audiencePresenterOverrideFor(confirmedCustomerCategory);
 
   const locked = {
-    productIdentity: 'Use the uploaded product reference as the only jewellery design.',
+    productIdentity: `Use the uploaded product reference as the only jewellery design. ${REFERENCE_TEXT_NOTE}`,
     confirmedCategory: categoryLabel ? `The confirmed product category is ${categoryLabel}.` : '',
     confirmedCustomerCategory: audienceOverride
       ? `The confirmed customer category is ${formatCustomerCategory(confirmedCustomerCategory)}.`
@@ -2882,7 +2952,7 @@ export function buildValidationText({ confirmedType, metalColor, assetType, conf
   // the generic side/macro view notes (a Bangle detail view must keep every
   // band in frame, and its low side view is not a pure side profile).
   const extraView = confirmedType === 'BANGLE' ? '' : extraViewValidationContextFor(assetType, confirmedType);
-  return `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference.${ringValidationContextFor(assetType)}${extraView}${necklaceValidationContextFor(confirmedType, necklaceSetType)}${hiddenFasteningValidationContextFor(confirmedType)}${braceletValidationContextFor(confirmedType, assetType)}${catalogueValidationContextFor(assetType)}${bangleValidationContextFor(confirmedType, bangleQuantity, assetType, { bangleSetType, composite })}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
+  return `Expected jewellery category: ${confirmedType}. Expected metal colour: ${metalColor}. Asset type: ${assetType}. The first image is the generated result; the second image is the original product reference. ${REFERENCE_TEXT_VALIDATION_NOTE}${ringValidationContextFor(assetType)}${extraView}${necklaceValidationContextFor(confirmedType, necklaceSetType)}${hiddenFasteningValidationContextFor(confirmedType)}${braceletValidationContextFor(confirmedType, assetType)}${catalogueValidationContextFor(assetType)}${bangleValidationContextFor(confirmedType, bangleQuantity, assetType, { bangleSetType, composite })}${audienceValidationContextFor(confirmedCustomerCategory, assetType)}`;
 }
 
 // Runs after every successful generation (Problem 1 & 2 downstream): a second

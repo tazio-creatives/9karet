@@ -105,7 +105,7 @@ describe('two-bangle set regenerate', () => {
       assert.match(prompt, /this image must contain exactly two physical bangles in total/, asset.asset_type);
       assert.match(prompt, /The metal colour is yellow gold/, asset.asset_type);
       if (asset.asset_type === 'PRESENTER_YELLOW_2') assert.match(prompt, /do not hold one wrist with the other hand/);
-      if (asset.asset_type === 'YELLOW_ELEVATED_DETAIL') assert.match(prompt, /clean, bright, neutral yellow gold/);
+      if (asset.asset_type === 'YELLOW_ELEVATED_DETAIL') assert.match(prompt, /warm, rich, real yellow gold with natural depth/);
       assert.equal(refreshed.slot_key, asset.slot_key);
       assert.equal(refreshed.asset_type, asset.asset_type);
     }
@@ -127,7 +127,7 @@ describe('two-bangle set regenerate', () => {
       const res = await call(retryAsset, { params: { id: productId, jobId: job.id, assetId: asset.id } });
       assert.equal(res.status, 202);
       const refreshed = (await findAssetsByJobId(job.id)).find((a) => a.id === asset.id);
-      assert.doesNotMatch(refreshed.assembled_final_prompt, /physical bangles in total|duplicated pairs|neutral yellow gold/, asset.asset_type);
+      assert.doesNotMatch(refreshed.assembled_final_prompt, /physical bangles in total|duplicated pairs|real yellow gold with natural depth/, asset.asset_type);
       assert.match(refreshed.assembled_final_prompt, /contains exactly one bangle/, asset.asset_type);
     }
     await query("UPDATE ai_studio_jobs SET status = 'cancelled' WHERE id = $1", [job.id]);

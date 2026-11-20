@@ -20,6 +20,9 @@ import {
   DEFAULT_CUSTOMER_CATEGORY,
   bangleQuantityForJob,
   bangleSetTypeForJob,
+  BANGLE_SET_CHOICES,
+  bangleSetChoiceSuggestion,
+  bangleSetChoiceForJob,
   NECKLACE_SET_TYPES,
   necklaceSetTypeSuggestion,
   necklaceSetTypeForJob,
@@ -105,6 +108,9 @@ export const confirmSchema = z.object({
   // Necklace only — necklace alone or necklace + matching earrings set.
   // Optional: when omitted, the AI's suggestion from the analysis is used.
   necklaceSetType: z.enum(NECKLACE_SET_TYPES).optional(),
+  // Bangle only — one bangle, an identical pair or two different designs.
+  // Optional: when omitted, the AI's suggestion from the analysis is used.
+  bangleSetType: z.enum(BANGLE_SET_CHOICES).optional(),
 });
 
 const promptPreviewSchema = z.object({
@@ -114,6 +120,7 @@ const promptPreviewSchema = z.object({
   promptOverrides: promptOverridesSchema.optional(),
   customerCategory: z.enum(CUSTOMER_CATEGORIES).optional(),
   necklaceSetType: z.enum(NECKLACE_SET_TYPES).optional(),
+  bangleSetType: z.enum(BANGLE_SET_CHOICES).optional(),
 });
 
 const selectionSchema = z.object({
@@ -177,6 +184,7 @@ function jobDto(job, assets, presenter) {
       ? { id: presenter.id, displayName: presenter.display_name, styleLabel: presenter.style_label }
       : null,
     generateRoseGold: job.generate_rose_gold,
+    bangleSetType: job.bangle_set_type ?? null,
     error: job.error,
     createdAt: job.created_at,
     confirmedAt: job.confirmed_at,
@@ -414,6 +422,10 @@ export async function confirmJob(req, res, next) {
     // every other category (and when neither is known — today's prompts).
     const necklaceSetType =
       input.jewelleryType === 'NECKLACE' ? (input.necklaceSetType ?? necklaceSetTypeSuggestion(job.analysis)) : null;
+    // Bangle only: the admin's choice, else the AI's suggestion (null when
+    // the AI's count was unusable — then the old analysis-derived rules).
+    const bangleSetChoice =
+      input.jewelleryType === 'BANGLE' ? (input.bangleSetType ?? bangleSetChoiceSuggestion(job.analysis)) : null;
 
     // The complete six-slot plan — counts and metals from the Rose Gold
     // switch, views from the jewellery category, presenter identity from the
@@ -440,6 +452,7 @@ export async function confirmJob(req, res, next) {
       customer_category: customerCategory,
       customer_category_confirmed_at: new Date(),
       necklace_set_type: necklaceSetType,
+      bangle_set_type: bangleSetChoice,
       confirmed_at: new Date(),
       category_confirmed_at: new Date(),
       status: 'generating',
@@ -457,8 +470,8 @@ export async function confirmJob(req, res, next) {
       overridesByAssetType: input.promptOverrides,
       confirmedCustomerCategory: customerCategory,
       references,
-      bangleQuantity: bangleQuantityForJob(input.jewelleryType, job.analysis),
-      bangleSetType: bangleSetTypeForJob(input.jewelleryType, job.analysis),
+      bangleQuantity: bangleQuantityForJob(input.jewelleryType, job.analysis, bangleSetChoice),
+      bangleSetType: bangleSetTypeForJob(input.jewelleryType, job.analysis, bangleSetChoice),
       necklaceSetType,
     });
 
@@ -516,6 +529,10 @@ export async function previewPrompts(req, res, next) {
       input.generateRoseGold ?? job.generate_rose_gold ?? false,
     );
     const customerCategory = input.customerCategory ?? job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY;
+    const previewBangleChoice =
+      jewelleryType === 'BANGLE'
+        ? (input.bangleSetType ?? bangleSetChoiceForJob(job) ?? bangleSetChoiceSuggestion(job.analysis))
+        : null;
 
     const previews = previewPromptsForJob({
       confirmedType: jewelleryType,
@@ -525,8 +542,8 @@ export async function previewPrompts(req, res, next) {
       overridesByAssetType: input.promptOverrides,
       confirmedCustomerCategory: customerCategory,
       references: referencesForPlan(job),
-      bangleQuantity: bangleQuantityForJob(jewelleryType, job.analysis),
-      bangleSetType: bangleSetTypeForJob(jewelleryType, job.analysis),
+      bangleQuantity: bangleQuantityForJob(jewelleryType, job.analysis, previewBangleChoice),
+      bangleSetType: bangleSetTypeForJob(jewelleryType, job.analysis, previewBangleChoice),
       necklaceSetType:
         jewelleryType === 'NECKLACE'
           ? (input.necklaceSetType ?? necklaceSetTypeForJob(job) ?? necklaceSetTypeSuggestion(job.analysis))
@@ -561,8 +578,8 @@ async function refreshBraceletPrompt(job, asset) {
     overridesByAssetType: override ? { [asset.asset_type]: override } : undefined,
     confirmedCustomerCategory: job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY,
     references: referencesForPlan(job),
-    bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
-    bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
+    bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
+    bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
     necklaceSetType: necklaceSetTypeForJob(job),
   }).find((p) => p.assetType === asset.asset_type);
   if (preview) await updateAsset(asset.id, { assembled_final_prompt: preview.finalPrompt });
@@ -684,8 +701,8 @@ export async function updateAssetSelection(req, res, next) {
         // individual regeneration never re-derives or resets it.
         confirmedCustomerCategory: job.customer_category ?? DEFAULT_CUSTOMER_CATEGORY,
         references: referencesForPlan(job),
-        bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis),
-        bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis),
+        bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
+        bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
         necklaceSetType: necklaceSetTypeForJob(job),
       });
       const preview = previews.find((p) => p.assetType === asset.asset_type);
