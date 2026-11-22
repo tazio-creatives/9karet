@@ -1,5 +1,6 @@
 .footer {
-  background: #38040b;
+  /* Same rose-burgundy as the menu bar (was #38040b). */
+  background: #78333d;
   color: rgba(255, 255, 255, 0.7);
   margin-top: var(--space-12);
 }
