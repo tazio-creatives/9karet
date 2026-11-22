@@ -8,9 +8,60 @@ import { formatPrice } from '../../utils/formatPrice';
 import { useDebouncedValue } from './useDebouncedValue';
 import styles from './SearchBar.module.css';
 
+// The search box hint cycles through these while the box is empty and not
+// focused, so customers see what they can search for.
+// Typing effect: "Search for " stays, the item is typed letter by letter,
+// held, deleted, then the next one is typed.
+const HINT_PREFIX = 'Search for ';
+const SEARCH_HINTS = [
+  'Gold Rings',
+  'Earrings',
+  'Necklaces',
+  'Bracelets & Bangles',
+  'Pendants',
+  'Mangalsutra',
+  "Men's Jewellery",
+  'Kids Jewellery',
+];
+const TYPE_MS = 90;
+const DELETE_MS = 45;
+const HOLD_MS = 1600;
+const NEXT_MS = 350;
+
 export function SearchBar({ variant = 'default' }: { variant?: 'default' | 'header' } = {}) {
   const isHeader = variant === 'header';
   const [term, setTerm] = useState('');
+  const [hintIndex, setHintIndex] = useState(0);
+  const [typedLength, setTypedLength] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Typing effect — runs only while the box is empty and not being used.
+  useEffect(() => {
+    if (isFocused || term) return undefined;
+    const word = SEARCH_HINTS[hintIndex];
+    let delay: number;
+    let step: () => void;
+    if (!isDeleting && typedLength < word.length) {
+      delay = TYPE_MS;
+      step = () => setTypedLength((n) => n + 1);
+    } else if (!isDeleting) {
+      delay = HOLD_MS;
+      step = () => setIsDeleting(true);
+    } else if (typedLength > 0) {
+      delay = DELETE_MS;
+      step = () => setTypedLength((n) => n - 1);
+    } else {
+      delay = NEXT_MS;
+      step = () => {
+        setIsDeleting(false);
+        setHintIndex((i) => (i + 1) % SEARCH_HINTS.length);
+      };
+    }
+    const timer = window.setTimeout(step, delay);
+    return () => window.clearTimeout(timer);
+  }, [isFocused, term, hintIndex, typedLength, isDeleting]);
+  const typedHint = HINT_PREFIX + SEARCH_HINTS[hintIndex].slice(0, typedLength);
   const [isOpen, setIsOpen] = useState(false);
   const debouncedTerm = useDebouncedValue(term.trim(), 300);
   // Results update live while typing; the Search event waits for the term to
@@ -41,11 +92,17 @@ export function SearchBar({ variant = 'default' }: { variant?: 'default' | 'head
         ref={inputRef}
         type="search"
         className={styles.input}
-        placeholder={isHeader ? 'Search jewellery...' : 'Search rings, earrings, necklaces...'}
+        placeholder={isFocused ? 'Search jewellery...' : typedHint}
         value={term}
         onChange={(e) => setTerm(e.target.value)}
-        onFocus={() => setIsOpen(true)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        onFocus={() => {
+          setIsOpen(true);
+          setIsFocused(true);
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          setTimeout(() => setIsOpen(false), 150);
+        }}
         aria-label="Search products"
       />
       {isHeader ? (

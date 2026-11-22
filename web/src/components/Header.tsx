@@ -15,7 +15,6 @@ import styles from './Header.module.css';
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const { isLoggedIn } = useCustomer();
   const { openLoginModal } = useAuthModal();
 
@@ -168,16 +167,6 @@ export function Header() {
         </div>
 
         <div className={styles.mobileActions}>
-          <button
-            type="button"
-            className={styles.mobileIconBtn}
-            aria-label="Search"
-            aria-expanded={isMobileSearchOpen}
-            aria-controls="mobile-search-row"
-            onClick={() => setIsMobileSearchOpen((v) => !v)}
-          >
-            <SearchIcon size={25} strokeWidth={1.7} />
-          </button>
           <Link to="/wishlist" className={styles.mobileIconBtn} aria-label="Wishlist">
             <HeartIcon size={25} strokeWidth={1.7} />
             {wishlistCount > 0 && (
@@ -191,11 +180,10 @@ export function Header() {
         </div>
       </div>
 
-      {isMobileSearchOpen && (
-        <div id="mobile-search-row" className={styles.mobileSearchRow}>
-          <SearchBar />
-        </div>
-      )}
+      {/* Phones: the search box is always shown under the logo row. */}
+      <div id="mobile-search-row" className={styles.mobileSearchRow}>
+        <SearchBar />
+      </div>
 
       {isMobileMenuOpen && (
         <MobileNavDrawer
@@ -249,17 +237,6 @@ function BagIcon({ size = 22, strokeWidth = 1.5 }: IconProps) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} aria-hidden="true">
       <path d="M6 8h12l-1 12H7L6 8z" />
       <path d="M9 8V6a3 3 0 0 1 6 0v2" />
-    </svg>
-  );
-}
-
-// Mobile-header-only (matches SearchBar's own inline search-icon glyph for
-// visual consistency between the icon that opens it and the field itself).
-function SearchIcon({ size = 22, strokeWidth = 1.5 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} aria-hidden="true">
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
     </svg>
   );
 }
