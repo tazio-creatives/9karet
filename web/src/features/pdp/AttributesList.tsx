@@ -23,6 +23,9 @@ interface AttributesListProps {
   liveGoldWeightGrams?: number | null;
   liveNetWeightGrams?: number | null;
   liveGrossWeightGrams?: number | null;
+  // 'lines': "Label : value" lines (product page Product Details), without
+  // the SKU row (shown separately as Product Code). Default: the table.
+  layout?: 'table' | 'lines';
 }
 
 export function AttributesList({
@@ -32,6 +35,7 @@ export function AttributesList({
   liveGoldWeightGrams,
   liveNetWeightGrams,
   liveGrossWeightGrams,
+  layout = 'table',
 }: AttributesListProps) {
   // Fixed trust line shown on every product, regardless of what (if
   // anything) is stored on product.certification — applies uniformly to
@@ -67,6 +71,20 @@ export function AttributesList({
 
   const sizeMeasurements = product.productSizeMeasurements;
   if (sizeMeasurements) rows.push(...sizeMeasurementRows(sizeMeasurements));
+
+  if (layout === 'lines') {
+    return (
+      <ul className={styles.lines}>
+        {rows
+          .filter(([label]) => label !== 'SKU')
+          .map(([label, value]) => (
+            <li key={label} className={styles.line}>
+              <span className={styles.lineLabel}>{label} :</span> {value}
+            </li>
+          ))}
+      </ul>
+    );
+  }
 
   return (
     <dl className={styles.list}>

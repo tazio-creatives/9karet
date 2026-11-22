@@ -84,3 +84,36 @@
     min-height: 44px;
   }
 }
+
+/* 2026-11: compact boxes (reference style). */
+.label {
+  margin-bottom: 8px;
+  color: #40171c;
+  font-size: 14px;
+}
+
+.card,
+.cardActive,
+.cardDisabled {
+  height: 34px;
+  padding: 0 12px;
+  border-width: 1px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.card {
+  border-color: #cfc9c2;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+}
+
+/* Selected: outlined, not filled. */
+.cardActive {
+  border: 1px solid var(--color-burgundy);
+  background: var(--color-white);
+  color: var(--color-burgundy);
+}

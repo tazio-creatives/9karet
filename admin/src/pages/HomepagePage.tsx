@@ -38,6 +38,7 @@ const AUTO_SYNCED_TYPES: HomepageSectionType[] = ['BENTO_CATEGORIES', 'FEATURED_
 // in the list below with its name, and can be edited or deleted.
 const SECTION_TYPES: HomepageSectionType[] = [
   'HERO',
+  'CATEGORY_STRIP',
   'PRODUCT_TABS',
   'COLLECTION_SPOTLIGHT',
   'EDIT_BANNERS',
@@ -56,6 +57,7 @@ const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
   HERO: 'Slider (sliding banners at the top of the homepage)',
   PRODUCT_TABS: 'Product Tabs (New Arrivals / Trending / Bestsellers + promo card)',
   COLLECTION_SPOTLIGHT: 'Our Collections (tall collection cards, scrolling sideways)',
+  CATEGORY_STRIP: 'Category Strip (row of rounded category photos with the name underneath — you choose the categories)',
   FULL_WIDTH_BANNER: 'Full Width Banner (one edge-to-edge image banner, no products)',
   PRODUCT_ROW: 'Product Row (heading + short description + one scrolling row of products from a category or collection)',
   PRODUCT_GRID: 'Product Grid (heading + 2 rows of products from a category or collection + View All button)',
@@ -456,6 +458,15 @@ export function HomepagePage() {
                       onSave={(input) => updateSectionMutation.mutate({ id: section.id, input })}
                     />
                   </>
+                )}
+                {section.type === 'CATEGORY_STRIP' && (
+                  <p className={sharedStyles.empty}>
+                    Add ONE item per category you want to show, in the order you want them (drag to reorder). For each
+                    item choose &quot;Link to Category&quot; and pick the category. The photo is optional: upload a square
+                    600 × 600 px image, or leave it empty to use the category&apos;s own image. The name under the photo is
+                    the category name — type a Heading to show a different label (e.g. &quot;Men&apos;s Special&quot;).
+                    The section heading above is optional (leave it empty for no title).
+                  </p>
                 )}
                 {section.type === 'FULL_WIDTH_BANNER' && (
                   <p className={sharedStyles.empty}>

@@ -34,6 +34,8 @@ interface GalleryPhoto {
   type: ProductImage['type'];
 }
 
+const GRID_INITIAL = 4;
+
 function groupPhotos(images: ProductImage[]): GalleryPhoto[] {
   const groups = new Map<number, ProductImage[]>();
   for (const img of images) {
@@ -70,6 +72,8 @@ export function ImageGallery({
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  // Desktop photo grid: first GRID_INITIAL photos, the rest behind "Show more".
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   // While zoomed: Esc closes it and the page behind doesn't scroll.
   useEffect(() => {
@@ -165,8 +169,44 @@ export function ImageGallery({
   // one needs the whole square visible, letterboxed instead of cropped.
   const isSizeGuide = activePhoto.type === 'PRODUCT_SIZE';
 
+  const gridPhotos = showAllPhotos ? displayImages : displayImages.slice(0, GRID_INITIAL);
+
   return (
-    <div className={styles.gallery}>
+    <div className={showAllPhotos ? `${styles.gallery} ${styles.galleryExpanded}` : styles.gallery}>
+      {/* Desktop / tablet (≥768px): every photo in a 2-column grid; click
+          one for the large view. Phones keep the swipe carousel below. */}
+      <div className={styles.gridView}>
+        <div className={styles.gridTiles}>
+          {gridPhotos.map((img, i) => (
+            <button
+              key={img.id}
+              type="button"
+              className={styles.gridTile}
+              onClick={() => {
+                setActiveIndex(i);
+                setLightboxOpen(true);
+              }}
+              aria-label={`View image ${i + 1} larger`}
+            >
+              <img
+                src={img.mainUrl}
+                alt={img.type === 'PRODUCT_SIZE' ? `${productName} size guide` : i === 0 ? imageAlt : ''}
+                loading={i < 2 ? 'eager' : 'lazy'}
+                decoding="async"
+                className={img.type === 'PRODUCT_SIZE' ? styles.gridTileContain : undefined}
+              />
+              {i === 0 && isNew && <span className={`${styles.badgeNew} ${styles.gridBadge}`}>New</span>}
+            </button>
+          ))}
+        </div>
+        {displayImages.length > GRID_INITIAL && (
+          <button type="button" className={styles.showMore} onClick={() => setShowAllPhotos((v) => !v)}>
+            {showAllPhotos ? 'Show less' : `Show more (${displayImages.length - GRID_INITIAL})`}
+          </button>
+        )}
+      </div>
+
+      <div className={styles.carouselView}>
       <div
         ref={mainRef}
         className={styles.main}
@@ -311,6 +351,7 @@ export function ImageGallery({
           </button>
         </div>
       )}
+      </div>
       {/* Portalled to <body>: the gallery column is position: sticky, which
           always forms its own stacking context, so an overlay rendered inside
           it sat underneath the product info (pincode box, price breakup) and

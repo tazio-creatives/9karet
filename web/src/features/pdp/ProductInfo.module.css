@@ -254,7 +254,7 @@
 
 .actions {
   display: grid;
-  grid-template-columns: 55fr 45fr;
+  grid-template-columns: minmax(0, 1fr) 56px 56px;
   gap: 14px;
   margin-top: 16px;
   margin-bottom: 16px;
@@ -562,4 +562,350 @@
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ---- 2026-11 layout: code, saving, delivery block, icon actions,
+   accordions, Why 9Karet ------------------------------------------------- */
+.productCode {
+  margin: 0 0 10px;
+  color: #687779;
+  font-size: 13px;
+}
+
+.saving {
+  margin: 2px 0 0;
+  color: #1f7a3d;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.blockTitle {
+  margin: 0 0 10px;
+  color: #40171c;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.deliveryBlock {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #ece9e2;
+}
+
+.actions .iconAction {
+  position: static;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #57121b;
+  border-radius: 8px;
+  background: #57121b;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.actions .iconAction:hover {
+  background: #480d15;
+}
+
+.actions .iconAction:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.shareNote {
+  margin: -8px 0 12px;
+  color: #1f7a3d;
+  font-size: 13px;
+  text-align: right;
+}
+
+.accordion {
+  border-top: 1px solid #ece9e2;
+}
+
+.accordion:last-of-type {
+  border-bottom: 1px solid #ece9e2;
+}
+
+.accordionSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  color: #40171c;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.accordionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.accordionSummary :global(.pdpAccordionChevron) {
+  transition: transform 0.2s ease;
+}
+
+.accordion[open] .accordionSummary :global(.pdpAccordionChevron) {
+  transform: rotate(180deg);
+}
+
+.accordionBody {
+  padding: 0 0 18px;
+}
+
+.accordionBody .description {
+  margin: 0 0 12px;
+}
+
+.accordionSubheading {
+  margin: 14px 0 6px;
+  color: #40171c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.whyBlock {
+  margin-top: 22px;
+}
+
+.helpLine {
+  margin: 18px 0 0;
+  color: #687779;
+  font-size: 14px;
+}
+
+.helpLine a {
+  color: var(--color-burgundy);
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .actions {
+    grid-template-columns: minmax(0, 1fr) 52px 52px;
+    gap: 10px;
+  }
+
+  .actions .iconAction {
+    width: 52px;
+  }
+}
+
+/* Wide Add to Cart: label left, price (+ struck MRP, tax note) right. */
+.actions .addToBagWide {
+  height: 56px;
+  justify-content: space-between;
+  padding: 0 18px;
+}
+
+.addToBagLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.addToBagPrice {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.addToBagMrp {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.addToBagTax {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.actions .buyNowWide {
+  grid-column: 1 / -1;
+  height: 48px;
+}
+
+/* Product Details (reference style). */
+.detailLine {
+  margin: 0;
+  padding: 3px 0;
+  color: #4a4a50;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.detailLabel {
+  color: #40171c;
+  font-weight: 600;
+}
+
+.disclaimer {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #f4f2ef;
+  color: #4a4a50;
+  font-size: 13px;
+}
+
+.disclaimer strong {
+  color: #40171c;
+}
+
+/* Options (reference style): plain label, small square boxes, no card. */
+.optionsBlock {
+  margin: 6px 0 14px;
+}
+
+.optionsBlock .fieldGroup {
+  margin-bottom: 14px;
+}
+
+.optionsBlock .fieldGroup:last-child {
+  margin-bottom: 0;
+}
+
+.optionLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: #40171c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.purityRow {
+  display: flex;
+  gap: 10px;
+}
+
+.purityOption {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.purityBox {
+  min-width: 52px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #57121b;
+  border-radius: 4px;
+  background: #57121b;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.purityWeight {
+  color: #687779;
+  font-size: 11px;
+}
+
+/* Narrow (30%) details column: keep the button on one line. */
+.actions {
+  grid-template-columns: minmax(0, 1fr) 48px 48px;
+  gap: 10px;
+}
+
+.actions .iconAction {
+  width: 48px;
+  height: 56px;
+}
+
+.addToBagLabel {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.actions .addToBagWide {
+  padding: 0 14px;
+  gap: 8px;
+}
+
+.addToBagPrice {
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* Selected options: outlined, not filled. */
+.purityBox {
+  border: 1px solid #57121b;
+  background: #ffffff;
+  color: #57121b;
+}
+
+/* Product Details section: smaller text. */
+.accordionBody .description,
+.detailLine {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.accordionSummary {
+  font-size: 15px;
+}
+
+.disclaimer {
+  font-size: 12px;
+}
+
+.whyTitle {
+  margin: 0 0 12px;
+  color: #2b2b33;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Trial colours (product page only): rose-burgundy #78333D buttons, white
+   text. */
+.actions .addToBagWide,
+.actions .iconAction,
+.mobileBarAddToBag {
+  border-color: #78333d;
+  background: #78333d;
+  color: #ffffff;
+}
+
+.actions .addToBagWide:hover:not(:disabled),
+.actions .iconAction:hover,
+.mobileBarAddToBag:hover:not(:disabled) {
+  border-color: #652a33;
+  background: #652a33;
+  color: #ffffff;
+}
+
+.actions .buyNowWide,
+.mobileBarBuyNow {
+  border-color: #78333d;
+  background: #ffffff;
+  color: #78333d;
+}
+
+.actions .buyNowWide:hover:not(:disabled),
+.mobileBarBuyNow:hover {
+  background: #f8eef0;
+}
+
+/* "New" tag: rose-burgundy #78333D. */
+.badgeNew {
+  background: #78333d;
+  color: #ffffff;
 }

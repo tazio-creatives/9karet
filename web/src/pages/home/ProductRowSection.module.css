@@ -12,6 +12,12 @@
   text-align: center;
 }
 
+/* Left-aligned variant (product page rows): title left, View all right. */
+.headerLeft {
+  padding: 0 120px 0 0;
+  text-align: left;
+}
+
 .title {
   margin: 0;
   color: #3e0a14;
@@ -134,7 +140,8 @@
     padding: var(--space-5) 12px;
   }
 
-  .header {
+  .header,
+  .headerLeft {
     margin-bottom: 16px;
     padding: 0;
   }

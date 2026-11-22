@@ -91,3 +91,34 @@
   }
 }
 
+
+/* 2026-11: compact boxes (reference style). */
+.label {
+  color: #40171c;
+  font-size: 14px;
+}
+
+.size,
+.sizeActive {
+  min-width: 40px;
+  height: 34px;
+  padding: 0 10px;
+  border-width: 1px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.size {
+  border-color: #cfc9c2;
+}
+
+.size:hover {
+  border-color: var(--color-burgundy);
+}
+
+/* Selected: outlined, not filled. */
+.sizeActive {
+  border: 1px solid var(--color-burgundy);
+  background: var(--color-white);
+  color: var(--color-burgundy);
+}

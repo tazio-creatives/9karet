@@ -94,6 +94,11 @@ export const IMAGE_SIZE_HINTS: Record<HomepageSectionType, ImageSizeHint> = {
     desktop: '800 × 800 px, square',
     mobile: 'not needed',
   },
+  CATEGORY_STRIP: {
+    summary: 'Square 600 × 600 px (optional — empty uses the category image)',
+    desktop: '600 × 600 px, square',
+    mobile: 'not needed',
+  },
   FULL_WIDTH_BANNER: {
     summary: 'Desktop 1920 × 600 px (wide 3.2:1) · Mobile 1200 × 900 px (4:3)',
     desktop: '1920 × 600 px, wide 3.2:1',

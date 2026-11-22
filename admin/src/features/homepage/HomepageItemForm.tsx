@@ -23,6 +23,7 @@ const HEADING_LABEL: Partial<Record<HomepageSectionType, string>> = {
   COLLECTION_SHOWCASE:
     'Heading (shown on the storefront as a small eyebrow line above the banner title)',
   NEW_ARRIVALS: 'Heading (shown on the storefront as the banner title)',
+  CATEGORY_STRIP: 'Label under the photo (optional — empty = the category name)',
   FULL_WIDTH_BANNER: 'Heading (optional big title on the banner — leave empty if the image has its own text)',
   PRODUCT_ROW: 'Heading (not shown — the section heading is the title)',
   PRODUCT_GRID: 'Heading (not shown — the section heading is the title)',

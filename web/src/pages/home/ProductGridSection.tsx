@@ -30,6 +30,7 @@ export function ProductGridSection({ items, heading }: { items: HomepageItem[]; 
             key={product.id}
             product={product}
             index={i}
+            hideNewTag
             onAdd={() => quickAdd.addToCart(product)}
             isAdding={quickAdd.pendingProductId === product.id}
             justAdded={quickAdd.justAddedProductId === product.id}

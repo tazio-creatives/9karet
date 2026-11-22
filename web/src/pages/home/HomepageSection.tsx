@@ -15,6 +15,7 @@ import { EditBanners } from './EditBanners';
 import { FullWidthBanner } from './FullWidthBanner';
 import { ProductGridSection } from './ProductGridSection';
 import { ProductRowSection } from './ProductRowSection';
+import { CategoryStrip } from './CategoryStrip';
 import { HeroCarousel } from './HeroCarousel';
 import { ProductTabsSection } from './ProductTabsSection';
 import { CollectionSpotlight } from './CollectionSpotlight';
@@ -143,6 +144,9 @@ export function HomepageSection({ section, alternate }: Props) {
           <CategoryShowcase items={section.items} heading={section.heading} />
         </section>
       );
+
+    case 'CATEGORY_STRIP':
+      return <CategoryStrip items={section.items} heading={section.heading} />;
 
     case 'FULL_WIDTH_BANNER':
       return <FullWidthBanner items={section.items} />;

@@ -357,3 +357,98 @@
     display: none;
   }
 }
+
+/* ---- Desktop / tablet photo grid (≥768px) ------------------------------ */
+.gridView {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .gridView {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .carouselView {
+    display: none;
+  }
+
+  /* The 2×2 grid stays in view beside the long details column (the
+     gallery is already sticky); once "Show more" makes it taller than the
+     screen it scrolls with the page instead. */
+  .galleryExpanded {
+    position: static;
+  }
+}
+
+.gridTiles {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gridTile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #ece9e2;
+  border-radius: 6px;
+  background: #faf9f7;
+  cursor: zoom-in;
+}
+
+.gridTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.gridTile:hover img {
+  transform: scale(1.04);
+}
+
+.gridTile .gridTileContain {
+  object-fit: contain;
+}
+
+.gridTile:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+
+.gridBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.showMore {
+  min-width: 160px;
+  height: 40px;
+  padding: 0 24px;
+  border: 1.5px solid var(--color-burgundy);
+  border-radius: 6px;
+  background: var(--color-white);
+  color: var(--color-burgundy);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.showMore:hover {
+  background: var(--color-burgundy);
+  color: var(--color-white);
+}
+
+/* "New" tag: rose-burgundy #78333D (matches the product page buttons). */
+.badgeNew {
+  background: #78333d;
+  color: #ffffff;
+}

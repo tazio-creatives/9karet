@@ -814,6 +814,7 @@ export type HomepageSectionType =
   | 'PRODUCT_GRID'
   | 'PRODUCT_ROW'
   | 'FULL_WIDTH_BANNER'
+  | 'CATEGORY_STRIP'
   | 'COLLECTION_CAROUSEL'
   | 'IMAGE_MOSAIC'
   | 'VIDEO_STORY'

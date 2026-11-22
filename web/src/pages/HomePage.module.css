@@ -48,3 +48,19 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Category Strip placed before the hero: above the slider on phones, below
+   it on desktop (see HomePage.tsx). */
+.desktopOnly {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .phoneOnly {
+    display: none;
+  }
+
+  .desktopOnly {
+    display: block;
+  }
+}

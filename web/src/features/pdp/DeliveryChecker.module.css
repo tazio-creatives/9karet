@@ -77,3 +77,13 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+/* Trial colours (product page): rose-burgundy #78333D, white text. */
+.checkButton {
+  background: #78333d;
+  color: #ffffff;
+}
+
+.checkButton:hover:not(:disabled) {
+  background: #652a33;
+}

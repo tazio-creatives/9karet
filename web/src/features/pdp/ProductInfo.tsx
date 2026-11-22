@@ -8,10 +8,9 @@ import { DeliveryChecker } from './DeliveryChecker';
 import { SizeSelector } from './SizeSelector';
 import type { SizeGuideType } from './SizeGuide';
 import { ColorSelector } from './ColorSelector';
-import { COLOR_SWATCH } from './goldColorSwatch';
-import { DetailsCard } from './DetailsCard';
 import { PriceBreakupTable } from './PriceBreakupTable';
 import { AttributesList } from './AttributesList';
+import { WishlistButton } from '../../components/WishlistButton';
 import styles from './ProductInfo.module.css';
 
 function StarRow({ ratingAvg }: { ratingAvg: number }) {
@@ -44,6 +43,17 @@ function BoltIcon() {
   );
 }
 
+function ShareIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="18" cy="5" r="2.5" />
+      <circle cx="6" cy="12" r="2.5" />
+      <circle cx="18" cy="19" r="2.5" />
+      <path d="M8.2 10.9l7.6-4.3M8.2 13.1l7.6 4.3" />
+    </svg>
+  );
+}
+
 function TagIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -53,11 +63,10 @@ function TagIcon() {
   );
 }
 
-function GemChipIcon() {
+function ChevronIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-      <path d="M6 8h12l3 4-9 9-9-9 3-4z" strokeLinejoin="round" />
-      <path d="M9 8l3 13 3-13M3 8h18" strokeLinejoin="round" />
+    <svg className="pdpAccordionChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -121,7 +130,6 @@ export function ProductInfo({
   // shown directly, no toggle/accordion, so the shopper sees every option
   // immediately; the section is simply absent for products with a single
   // fixed configuration.
-  const hasCustomizations = product.goldColorOptions.length > 0 || product.sizes.length > 0;
 
   // Buttons stay clickable rather than disabled — a missing selection is
   // surfaced as an inline message under the relevant field only once the
@@ -157,6 +165,28 @@ export function ProductInfo({
   // button looks broken. Scroll to whichever required field is first in the
   // page so the shopper actually sees why nothing happened. All fields are
   // always mounted now (no accordion to open first).
+  // Share: the phone's share sheet where available, else copy the link.
+  const [shareNote, setShareNote] = useState<string | null>(null);
+  async function handleShare() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: product.name, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShareNote('Link copied');
+    } catch {
+      return;
+    }
+    setTimeout(() => setShareNote(null), 2000);
+  }
+
+  // Product code for customers: the SKU, unless it is still a draft code.
+  const productCode = product.sku && !/^DRAFT/i.test(product.sku) ? product.sku : null;
+  const saving = displayMrp > displayPrice ? displayMrp - displayPrice : 0;
+  const purityWeight = displayGoldWeightGrams ?? product.goldWeightGrams ?? null;
+
   function scrollToFirstMissingField() {
     const target = colorRequired ? colorFieldRef.current : sizeRequired ? sizeFieldRef.current : null;
     target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -183,14 +213,9 @@ export function ProductInfo({
   // Quick-glance chips (no size) — reflect whatever's currently selected,
   // falling back to the product's own base attributes for axes that aren't
   // customer-selectable at all.
-  const chipGoldColor = selectedGoldColor ?? product.goldColor;
   const chipPurity = selectedPurity ?? product.purity ?? '9K';
-  const metalChipText = [chipPurity, chipGoldColor ? COLOR_SWATCH[chipGoldColor].label : 'Gold'].join(' ');
 
   // "Ruby & Cubic Zirconia" — each stone type once, in the admin's order.
-  const stoneNames = [...new Set(product.stones.map((s) => s.stoneTypeName))];
-  const stoneChipText =
-    stoneNames.length > 1 ? `${stoneNames.slice(0, -1).join(', ')} & ${stoneNames[stoneNames.length - 1]}` : stoneNames[0];
 
   return (
     <div className={styles.info}>
@@ -200,6 +225,7 @@ export function ProductInfo({
         </div>
       )}
       <h1 className={styles.name}>{product.name}</h1>
+      {productCode && <p className={styles.productCode}>Product Code: {productCode}</p>}
 
       {product.ratingCount > 0 && (
         <p className={styles.rating}>
@@ -209,10 +235,52 @@ export function ProductInfo({
         </p>
       )}
 
+      <div className={styles.optionsBlock}>
+        <div className={styles.fieldGroup}>
+          <span className={styles.optionLabel}>Gold Purity</span>
+          <div className={styles.purityRow}>
+            <span className={styles.purityOption}>
+              <span className={styles.purityBox} aria-current="true">
+                {chipPurity}T
+              </span>
+              {purityWeight != null && <span className={styles.purityWeight}>{purityWeight.toFixed(3)} g</span>}
+            </span>
+          </div>
+        </div>
+
+        {product.goldColorOptions.length > 0 && (
+          <div className={styles.fieldGroup} ref={colorFieldRef}>
+            <ColorSelector
+              colors={product.goldColorOptions}
+              selectedColor={selectedGoldColor}
+              onSelect={onSelectGoldColor}
+              isColorAvailable={isColorAvailable}
+            />
+            {showValidation && colorRequired && <p className={styles.fieldError}>Please select a gold color</p>}
+          </div>
+        )}
+
+        {product.sizes.length > 0 && (
+          <div className={styles.fieldGroup} ref={sizeFieldRef}>
+            <SizeSelector
+              sizes={product.sizes}
+              selectedSizeId={selectedSizeId}
+              onSelect={onSelectSize}
+              label={sizeFieldLabel}
+              guideType={sizeGuideType}
+            />
+            {showValidation && sizeRequired && (
+              <p className={styles.fieldError}>Please select a {sizeFieldLabel.toLowerCase()}</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <p className={styles.price}>
         {formatPrice(displayPrice)}
         {displayMrp > 0 && <span className={styles.mrp}>{formatPrice(displayMrp)}</span>}
       </p>
+      {saving > 0 && <p className={styles.saving}>You save {formatPrice(saving)}</p>}
       <p className={styles.taxNote}>Inclusive of all taxes</p>
 
       {(offerBadges.length > 0 || offerLabel) && (
@@ -237,123 +305,97 @@ export function ProductInfo({
         </div>
       )}
 
-      <div className={styles.stockDeliveryRow}>
-        {isOutOfStock && <p className={styles.stockBackorder}>Make to Order</p>}
-        {!isOutOfStock && isLowStock && (
-          <p className={styles.stockLow}>Only {product.availableStock} left</p>
-        )}
-        {!isOutOfStock && !isLowStock && <p className={styles.stockInfo}>In Stock</p>}
 
-        <DeliveryEstimateDetail estimate={product.deliveryEstimate} inline />
-      </div>
-
-      {product.showDeliveryChecker && <DeliveryChecker />}
-
-      {/* Return and Refund Policy: an unboxing video is mandatory for any
-          return — said here, before purchase, not only after delivery. */}
-      <p className={styles.unboxingNote}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="3" y="6" width="13" height="12" rx="2" />
-          <path d="m16 10.5 5-3v9l-5-3" />
-        </svg>
-        <span>
-          {product.nonReturnable ? (
-            <>
-              Not eligible for change-of-mind returns — returns are accepted only if the item arrives damaged,
-              defective or incorrect. Record a continuous unboxing video when it arrives.{' '}
-              <Link to="/refund-policy#non-returnable">Return policy</Link>
-            </>
-          ) : (
-            <>
-              Record a continuous unboxing video when your order arrives — it&rsquo;s required for any return.{' '}
-              <Link to="/refund-policy#unboxing-video">Return policy</Link>
-            </>
+      <section className={styles.deliveryBlock} aria-label="Delivery details">
+        <h2 className={styles.blockTitle}>Delivery Details</h2>
+        <div className={styles.stockDeliveryRow}>
+          {isOutOfStock && <p className={styles.stockBackorder}>Make to Order</p>}
+          {!isOutOfStock && isLowStock && (
+            <p className={styles.stockLow}>Only {product.availableStock} left</p>
           )}
-        </span>
-      </p>
-
-      {product.shortDescription && <p className={styles.description}>{product.shortDescription}</p>}
-
-      {metalChipText && (
-        <div className={styles.specChips}>
-          {metalChipText && (
-            <span className={styles.specChip}>
-              <span
-                className={styles.specChipDot}
-                style={chipGoldColor ? { background: COLOR_SWATCH[chipGoldColor].hex } : undefined}
-                aria-hidden="true"
-              />
-              {metalChipText}
-            </span>
-          )}
-          {stoneChipText && (
-            <span className={styles.specChip}>
-              <GemChipIcon />
-              {stoneChipText}
-            </span>
-          )}
+          {!isOutOfStock && !isLowStock && <p className={styles.stockInfo}>In Stock</p>}
+  
+          <DeliveryEstimateDetail estimate={product.deliveryEstimate} inline />
         </div>
-      )}
-
-      {hasCustomizations && (
-        <div className={styles.customizeSection}>
-          <span className={styles.customizeTitle}>Choose Your Options</span>
-
-          {product.goldColorOptions.length > 0 && (
-            <div className={styles.fieldGroup} ref={colorFieldRef}>
-              <ColorSelector
-                colors={product.goldColorOptions}
-                selectedColor={selectedGoldColor}
-                onSelect={onSelectGoldColor}
-                isColorAvailable={isColorAvailable}
-              />
-              {showValidation && colorRequired && (
-                <p className={styles.fieldError}>Please select a gold color</p>
-              )}
-            </div>
-          )}
-
-          {product.sizes.length > 0 && (
-            <div className={styles.fieldGroup} ref={sizeFieldRef}>
-              <SizeSelector
-                sizes={product.sizes}
-                selectedSizeId={selectedSizeId}
-                onSelect={onSelectSize}
-                label={sizeFieldLabel}
-                guideType={sizeGuideType}
-              />
-              {showValidation && sizeRequired && (
-                <p className={styles.fieldError}>Please select a {sizeFieldLabel.toLowerCase()}</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+  
+        {product.showDeliveryChecker && <DeliveryChecker />}
+  
+        {/* Return and Refund Policy: an unboxing video is mandatory for any
+            return — said here, before purchase, not only after delivery. */}
+        <p className={styles.unboxingNote}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="6" width="13" height="12" rx="2" />
+            <path d="m16 10.5 5-3v9l-5-3" />
+          </svg>
+          <span>
+            {product.nonReturnable ? (
+              <>
+                Not eligible for change-of-mind returns — returns are accepted only if the item arrives damaged,
+                defective or incorrect. Record a continuous unboxing video when it arrives.{' '}
+                <Link to="/refund-policy#non-returnable">Return policy</Link>
+              </>
+            ) : (
+              <>
+                Record a continuous unboxing video when your order arrives — it&rsquo;s required for any return.{' '}
+                <Link to="/refund-policy#unboxing-video">Return policy</Link>
+              </>
+            )}
+          </span>
+        </p>
+  
+      </section>
 
       <div className={styles.actions} ref={actionsRef}>
         <button
           type="button"
-          className={styles.addToBag}
+          className={`${styles.addToBag} ${styles.addToBagWide}`}
           disabled={isAddingToCart}
           onClick={handleAddToCart}
         >
-          <BagIcon />
-          {justAdded ? 'Added ✓' : 'Add to Cart'}
+          <span className={styles.addToBagLabel}>
+            <BagIcon />
+            {justAdded ? 'Added ✓' : 'Add to Cart'}
+          </span>
+          <span className={styles.addToBagPrice}>
+            <span>
+              {formatPrice(displayPrice)}
+              {displayMrp > displayPrice && <s className={styles.addToBagMrp}>{formatPrice(displayMrp)}</s>}
+            </span>
+            <span className={styles.addToBagTax}>Inclusive of all taxes</span>
+          </span>
         </button>
-        <button type="button" className={styles.buyNow} onClick={handleBuyNow}>
+        <WishlistButton productId={product.id} className={styles.iconAction} />
+        <button type="button" className={styles.iconAction} onClick={handleShare} aria-label="Share this product" title="Share">
+          <ShareIcon />
+        </button>
+        <button type="button" className={`${styles.buyNow} ${styles.buyNowWide}`} onClick={handleBuyNow}>
           <BoltIcon />
           Buy Now
         </button>
       </div>
+      {shareNote && (
+        <p className={styles.shareNote} role="status">
+          {shareNote}
+        </p>
+      )}
 
-      <ProductAssuranceGrid hasStones={product.stones.length > 0} />
-
-      <div className={styles.detailsStack}>
-        <DetailsCard title="Price Breakup" className={styles.detailsCardHeading}>
-          <PriceBreakupTable breakup={displayBreakup} purity={product.purity} />
-        </DetailsCard>
-
-        <DetailsCard title="Product Details" className={styles.detailsCardHeading}>
+      {/* Product details + price breakup: open sections (native details /
+          summary, so they work before the page script loads). */}
+      <details className={styles.accordion} open>
+        <summary className={styles.accordionSummary}>
+          Product Details
+          <ChevronIcon />
+        </summary>
+        <div className={styles.accordionBody}>
+          {product.shortDescription && <p className={styles.description}>{product.shortDescription}</p>}
+          {product.fullDescription && product.fullDescription !== product.shortDescription && (
+            <p className={styles.description}>{product.fullDescription}</p>
+          )}
+          {productCode && (
+            <p className={styles.detailLine}>
+              <span className={styles.detailLabel}>Product Code :</span> {productCode}
+            </p>
+          )}
           <AttributesList
             product={product}
             livePurity={selectedPurity}
@@ -361,9 +403,38 @@ export function ProductInfo({
             liveGoldWeightGrams={displayGoldWeightGrams}
             liveNetWeightGrams={displayNetWeightGrams}
             liveGrossWeightGrams={displayGrossWeightGrams}
+            layout="lines"
           />
-        </DetailsCard>
-      </div>
+          <p className={styles.disclaimer}>
+            <strong>Product Disclaimer:</strong> Weight and prices are subject to minor changes.
+          </p>
+          {product.careInstructions && (
+            <>
+              <h3 className={styles.accordionSubheading}>Care Instructions</h3>
+              <p className={styles.description}>{product.careInstructions}</p>
+            </>
+          )}
+        </div>
+      </details>
+
+      <details className={styles.accordion} open>
+        <summary className={styles.accordionSummary}>
+          Price Breakup
+          <ChevronIcon />
+        </summary>
+        <div className={styles.accordionBody}>
+          <PriceBreakupTable breakup={displayBreakup} purity={product.purity} />
+        </div>
+      </details>
+
+      <section className={styles.whyBlock} aria-label="What makes us stand out">
+        <h2 className={styles.whyTitle}>What Makes Us Stand Out</h2>
+        <ProductAssuranceGrid hasStones={product.stones.length > 0} variant="boxes" />
+      </section>
+
+      <p className={styles.helpLine}>
+        Any questions about this piece? <Link to="/contact">Contact us</Link>
+      </p>
 
       {showStickyBar && (
         <div className={styles.mobileBar}>

@@ -410,3 +410,41 @@ a.quickLink:hover {
     height: 22px;
   }
 }
+
+/* 2026-11: phones — slim, simple strip above the logo row: two text links
+   with small icons, a thin divider between them, no boxes. */
+@media (max-width: 767px) {
+  .mobileQuickRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    height: 32px;
+    padding: 0 12px;
+    background: #78333d;
+    border-bottom: none;
+  }
+
+  .mobileQuickLink,
+  .mobileQuickLink.diamondsLink,
+  .mobileQuickLink.storesLink {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .mobileQuickLink + .mobileQuickLink {
+    border-left: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .mobileQuickLink .quickLinkIcon {
+    width: 14px;
+    height: 14px;
+  }
+}

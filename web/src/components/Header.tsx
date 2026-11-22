@@ -117,6 +117,33 @@ export function Header() {
 
       <MegaMenu categories={categories} />
 
+      {/* Phones: "Explore Diamonds" + "Stores" as a slim strip ABOVE the
+          logo row. */}
+      <div className={styles.mobileQuickRow}>
+        {BOX_DIAMONDS_URL ? (
+          <a href={BOX_DIAMONDS_URL} className={`${styles.mobileQuickLink} ${styles.diamondsLink}`} target="_blank" rel="noopener noreferrer">
+            <DiamondIcon />
+            <span>Explore Diamonds</span>
+          </a>
+        ) : (
+          <span className={`${styles.mobileQuickLink} ${styles.diamondsLink}`}>
+            <DiamondIcon />
+            <span>Explore Diamonds</span>
+          </span>
+        )}
+        {STORES_URL ? (
+          <Link to={STORES_URL} className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
+            <StoreIcon />
+            <span>Stores</span>
+          </Link>
+        ) : (
+          <span className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
+            <StoreIcon />
+            <span>Stores</span>
+          </span>
+        )}
+      </div>
+
       {/* Mobile header (<768px) — hamburger / centred logo / search+wishlist
           +cart icons, built independently of the desktop block above so
           nothing here can affect it. */}
@@ -162,33 +189,6 @@ export function Header() {
             {cartCount > 0 && <span className={styles.mobileBadge}>{cartCount > 9 ? '9+' : cartCount}</span>}
           </Link>
         </div>
-      </div>
-
-      {/* Phones: "Explore Diamonds" + "Stores" side by side right under the
-          logo row (no room for them beside the centred logo). */}
-      <div className={styles.mobileQuickRow}>
-        {BOX_DIAMONDS_URL ? (
-          <a href={BOX_DIAMONDS_URL} className={`${styles.mobileQuickLink} ${styles.diamondsLink}`} target="_blank" rel="noopener noreferrer">
-            <DiamondIcon />
-            <span>Explore Diamonds</span>
-          </a>
-        ) : (
-          <span className={`${styles.mobileQuickLink} ${styles.diamondsLink}`}>
-            <DiamondIcon />
-            <span>Explore Diamonds</span>
-          </span>
-        )}
-        {STORES_URL ? (
-          <Link to={STORES_URL} className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
-            <StoreIcon />
-            <span>Stores</span>
-          </Link>
-        ) : (
-          <span className={`${styles.mobileQuickLink} ${styles.storesLink}`}>
-            <StoreIcon />
-            <span>Stores</span>
-          </span>
-        )}
       </div>
 
       {isMobileSearchOpen && (

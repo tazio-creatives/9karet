@@ -36,7 +36,7 @@ export function DeliveryChecker() {
             type="text"
             inputMode="numeric"
             maxLength={6}
-            placeholder="Enter pincode for delivery estimate"
+            placeholder="Enter pincode"
             className={styles.input}
             value={pincode}
             onChange={(e) => {

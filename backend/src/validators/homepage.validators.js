@@ -43,6 +43,8 @@ const SECTION_TYPES = [
   'PRODUCT_ROW',
   // One edge-to-edge image banner (desktop + mobile image), no products.
   'FULL_WIDTH_BANNER',
+  // Row of rounded category photos with the name underneath (one item per category).
+  'CATEGORY_STRIP',
   // Square collection images in a looping carousel — 3 visible on desktop
   // with the centre one enlarged, arrows + autoplay, swipe on mobile —
   // with the section's own subtitle and "View All" button.

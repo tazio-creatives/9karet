@@ -1,12 +1,10 @@
-/* Soft centre-lit gradient: lighter behind the centred categories, deeper
-   burgundy at both edges. */
+/* Solid rose-burgundy #78333D — same as the product page buttons (trial). */
 .megaNav {
-  background: var(--color-burgundy-header);
-  background: linear-gradient(90deg, #3e0710 0%, #6e1028 50%, #3e0710 100%);
+  background: #78333d;
   /* Soft drop shadow under the bar plus a faint top highlight. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 4px 10px rgba(62, 7, 16, 0.28);
+    0 4px 10px rgba(120, 51, 61, 0.28);
 }
 
 .list {
@@ -34,7 +32,7 @@
   background: none;
   border: none;
   color: var(--color-white);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   letter-spacing: 0.01em;
   text-decoration: none;

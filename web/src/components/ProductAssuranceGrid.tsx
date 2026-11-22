@@ -13,13 +13,15 @@ interface ProductAssuranceGridProps {
   // is decided once from the product record (plan: "Do not display claims
   // that are untrue for the selected product or variation").
   hasStones: boolean;
+  // 'boxes': separate outlined boxes, icon + title only (product page).
+  variant?: 'default' | 'boxes';
 }
 
 // Separate, deliberately lighter design from the homepage's dark
 // AssuranceStrip (pages/home/AssuranceStrip.tsx) — same icon set, its own
 // compact ivory/champagne layout. Renders only the claims that are actually
 // true for this product; Buyback/Exchange/Secure Payment are universal.
-export function ProductAssuranceGrid({ hasStones }: ProductAssuranceGridProps) {
+export function ProductAssuranceGrid({ hasStones, variant = 'default' }: ProductAssuranceGridProps) {
   const items = [
     {
       key: 'hallmark',
@@ -58,6 +60,21 @@ export function ProductAssuranceGrid({ hasStones }: ProductAssuranceGridProps) {
   // reference design's "final item spans both columns", generalized to
   // whatever count survives the conditional filtering above).
   const lastIndex = items.length - 1;
+
+  if (variant === 'boxes') {
+    return (
+      <section className={styles.boxGrid} aria-label="Product assurances">
+        {items.map(({ key, Icon, title }) => (
+          <div key={key} className={styles.box}>
+            <span className={styles.boxIcon}>
+              <Icon />
+            </span>
+            <span className={styles.boxTitle}>{title}</span>
+          </div>
+        ))}
+      </section>
+    );
+  }
 
   return (
     <section className={styles.grid} aria-label="Product assurances">

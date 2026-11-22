@@ -5,8 +5,10 @@ import styles from './ProductTabs.module.css';
 
 type TabId = 'description' | 'reviews';
 
-export function ProductTabs({ product }: { product: ProductDetail }) {
-  const hasDescription = !!product.fullDescription || !!product.careInstructions;
+// showDescription=false: the PDP now shows the description in its own
+// "Product Details" section, so only Reviews remain here.
+export function ProductTabs({ product, showDescription = true }: { product: ProductDetail; showDescription?: boolean }) {
+  const hasDescription = showDescription && (!!product.fullDescription || !!product.careInstructions);
   const hasReviews = product.ratingCount > 0;
 
   const tabs: { id: TabId; label: string }[] = [

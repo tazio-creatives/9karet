@@ -42,11 +42,29 @@ export function HomePage() {
           logo image. Visually hidden (the hero banner is the visual
           heading) but real text for search engines and screen readers. */}
       <h1 className={styles.visuallyHidden}>9KARET — Smart Gold: 9K Gold &amp; Gemstone Jewellery</h1>
-      {data.sections.map((section, i) => (
-        <Fragment key={section.id}>
-          <HomepageSection section={section} alternate={i % 2 === 1} />
-        </Fragment>
-      ))}
+      {data.sections.map((section, i) => {
+        // A Category Strip placed directly before the hero slider shows
+        // above it on phones and right below it on desktop.
+        const next = data.sections[i + 1];
+        const prev = data.sections[i - 1];
+        if (section.type === 'CATEGORY_STRIP' && next?.type === 'HERO') {
+          return (
+            <div key={section.id} className={styles.phoneOnly}>
+              <HomepageSection section={section} alternate={i % 2 === 1} />
+            </div>
+          );
+        }
+        return (
+          <Fragment key={section.id}>
+            <HomepageSection section={section} alternate={i % 2 === 1} />
+            {section.type === 'HERO' && prev?.type === 'CATEGORY_STRIP' && (
+              <div className={styles.desktopOnly}>
+                <HomepageSection section={prev} alternate={false} />
+              </div>
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

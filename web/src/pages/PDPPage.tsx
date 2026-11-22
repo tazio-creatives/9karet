@@ -22,7 +22,7 @@ import {
 import { ImageGallery } from '../features/pdp/ImageGallery';
 import { ProductInfo } from '../features/pdp/ProductInfo';
 import { ProductTabs } from '../features/pdp/ProductTabs';
-import { RelatedProducts } from '../features/pdp/RelatedProducts';
+import { ProductCarouselRow } from './home/ProductRowSection';
 import styles from './PDPPage.module.css';
 import placeholderStyles from './PlaceholderPage.module.css';
 
@@ -315,17 +315,21 @@ export function PDPPage() {
           </div>
         </div>
 
-        <ProductTabs product={product} />
+        {/* The description now sits in ProductInfo's "Product Details". */}
+        <ProductTabs product={product} showDescription={false} />
 
-        <RelatedProducts
+        <ProductCarouselRow
+          title="You May Also Like"
           products={relatedData?.products ?? []}
-          categorySlug={category?.slug ?? null}
+          viewAllHref={category ? `/${category.slug}` : null}
+          align="left"
         />
 
-        <RelatedProducts
+        <ProductCarouselRow
+          title="Most Loved"
           products={mostLovedData?.products ?? []}
-          categorySlug={category?.slug ?? null}
-          heading="Most Loved"
+          viewAllHref={category ? `/${category.slug}` : null}
+          align="left"
         />
       </div>
     </div>

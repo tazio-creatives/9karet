@@ -52,6 +52,7 @@ export function ProductTabsSection({ items, heading }: { items: HomepageItem[]; 
             key={product.id}
             product={product}
             index={i}
+            hideNewTag
             onAdd={() => quickAdd.addToCart(product)}
             isAdding={quickAdd.pendingProductId === product.id}
             justAdded={quickAdd.justAddedProductId === product.id}
@@ -73,6 +74,7 @@ export function TabProductCard({
   isAdding,
   justAdded,
   hasError,
+  hideNewTag = false,
 }: {
   product: ProductCardType;
   index: number;
@@ -80,9 +82,17 @@ export function TabProductCard({
   isAdding: boolean;
   justAdded: boolean;
   hasError: boolean;
+  // Homepage: no "New" ribbon (Trending / Bestseller still show).
+  hideNewTag?: boolean;
 }) {
   const href = productUrl(product);
-  const ribbon = product.isBestSeller ? 'Bestseller' : product.isTrending ? 'Trending' : product.isNew ? 'New' : null;
+  const ribbon = product.isBestSeller
+    ? 'Bestseller'
+    : product.isTrending
+      ? 'Trending'
+      : product.isNew && !hideNewTag
+        ? 'New'
+        : null;
   const isOutOfStock = product.availableStock <= 0;
 
   return (

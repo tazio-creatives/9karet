@@ -31,3 +31,28 @@
     font-weight: 500;
   }
 }
+
+/* "lines" layout — product page Product Details. */
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  padding: 3px 0;
+  color: #4a4a50;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lineLabel {
+  color: #40171c;
+  font-weight: 600;
+}
+
+.line {
+  padding: 2px 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
