@@ -41,6 +41,7 @@ const SECTION_TYPES: HomepageSectionType[] = [
   'CATEGORY_STRIP',
   'PRODUCT_TABS',
   'COLLECTION_SPOTLIGHT',
+  'COLLECTION_GRID',
   'EDIT_BANNERS',
   'PRODUCT_GRID',
   'PRODUCT_ROW',
@@ -57,6 +58,7 @@ const SECTION_TYPE_LABELS: Record<HomepageSectionType, string> = {
   HERO: 'Slider (sliding banners at the top of the homepage)',
   PRODUCT_TABS: 'Product Tabs (New Arrivals / Trending / Bestsellers + promo card)',
   COLLECTION_SPOTLIGHT: 'Our Collections (tall collection cards, scrolling sideways)',
+  COLLECTION_GRID: 'Collection Grid (tall collection cards, 3 per row — swipe on phones)',
   CATEGORY_STRIP: 'Category Strip (row of rounded category photos with the name underneath — you choose the categories)',
   FULL_WIDTH_BANNER: 'Full Width Banner (one edge-to-edge image banner, no products)',
   PRODUCT_ROW: 'Product Row (heading + short description + one scrolling row of products from a category or collection)',
@@ -511,7 +513,7 @@ export function HomepagePage() {
                     Label empty — then only the image is shown.
                   </p>
                 )}
-                {section.type === 'COLLECTION_SPOTLIGHT' && (
+                {(section.type === 'COLLECTION_SPOTLIGHT' || section.type === 'COLLECTION_GRID') && (
                   <p className={sharedStyles.empty}>
                     Add one item per collection and choose it with &quot;Link to Collection&quot; — the card opens that
                     collection. Upload a portrait image (about 800 × 960 px). The collection name is written on the card

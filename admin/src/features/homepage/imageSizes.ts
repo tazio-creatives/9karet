@@ -124,6 +124,11 @@ export const IMAGE_SIZE_HINTS: Record<HomepageSectionType, ImageSizeHint> = {
     desktop: '800 × 960 px, portrait 5:6',
     mobile: 'optional — same shape as desktop',
   },
+  COLLECTION_GRID: {
+    summary: 'Each card: 800 × 960 px (portrait 5:6) — keep the bottom fairly plain, the name is written there',
+    desktop: '800 × 960 px, portrait 5:6',
+    mobile: 'optional — same shape as desktop',
+  },
   PRODUCT_TABS: {
     summary: 'Promo card: 600 × 1000 px (portrait 3:5) — products need no upload',
     desktop: '600 × 1000 px, portrait 3:5',

@@ -96,14 +96,14 @@
 
 .cardName {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 3.2vw, 3rem);
+  font-size: clamp(1.25rem, 2.3vw, 32px);
   line-height: 1.05;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.25);
 }
 
 .cardTagline {
   max-width: 28ch;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.4;
   opacity: 0.92;
 }
@@ -181,6 +181,56 @@
 
   .arrow {
     display: none;
+  }
+}
+
+/* Collection Grid homepage section: same cards, 3 per row on desktop
+   (bigger name), 2 on tablets, swipe row on phones. */
+.gridSection .row {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  overflow: visible;
+}
+
+.gridSection .card {
+  flex: none;
+}
+
+.gridSection .cardName {
+  font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+}
+
+.gridSection .cardTagline {
+  font-size: 15px;
+}
+
+@media (max-width: 1024px) {
+  .gridSection .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .gridSection .row {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+  }
+
+  .gridSection .card {
+    flex: 0 0 74%;
+  }
+
+  .gridSection .cardName {
+    font-size: 1.5rem;
+  }
+
+  .gridSection .cardTagline {
+    font-size: 13px;
   }
 }
 

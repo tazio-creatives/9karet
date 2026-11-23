@@ -1,5 +1,6 @@
 /* Solid rose-burgundy #78333D — same as the product page buttons (trial). */
 .megaNav {
+  position: relative;
   background: #78333d;
   /* Soft drop shadow under the bar plus a faint top highlight. */
   box-shadow:
@@ -19,8 +20,10 @@
   list-style: none;
 }
 
+/* The panel spans the full width under the bar, so items are not the
+   positioning parent — the nav is. */
 .item {
-  position: relative;
+  position: static;
 }
 
 .topLink {
@@ -49,99 +52,168 @@
   outline-offset: -2px;
 }
 
+/* Full-width panel: By Style | Shop By | By Price | photo. */
 .panel {
   position: absolute;
   top: 100%;
   left: 0;
+  right: 0;
   z-index: 45;
-  min-width: 620px;
-  background: var(--color-surface);
-  border: 1px solid rgba(83, 7, 17, 0.2);
-  border-radius: var(--radius-md);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
-  padding: var(--space-5) 0;
+  background: #fbf8f7;
+  border-top: 1px solid rgba(120, 51, 61, 0.12);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.12);
 }
 
-.panelColumns {
+.panelInner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 24px 40px;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
+  gap: 56px;
 }
 
-.panelCol {
-  flex: 1;
+.styleCol {
+  flex: 0 1 400px;
   min-width: 0;
-  padding: 0 var(--space-5);
 }
 
-.panelColRight {
-  border-left: 1px solid var(--color-border);
+.col {
+  flex: 0 1 230px;
+  min-width: 0;
 }
 
 .colHeading {
   display: block;
-  margin-bottom: var(--space-3);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px dashed var(--color-border);
-  color: #40171c;
+  margin-bottom: 18px;
+  color: #3e0a14;
   font-size: 15px;
   font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .subGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2px var(--space-4);
-  margin-bottom: var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin-bottom: 22px;
 }
 
-.subLink {
+.subLink,
+.priceLink,
+.shopLink {
   display: flex;
   align-items: center;
-  min-height: 30px;
-  color: var(--color-text-muted);
-  font-size: 14px;
+  min-height: 38px;
+  color: #5a4a50;
+  font-size: 15px;
   text-align: left;
   text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
 }
 
-.subLink:hover {
-  color: var(--color-burgundy);
+.subLink:hover,
+.subLink:focus-visible,
+.priceLink:hover,
+.shopLink:hover {
+  color: #78333d;
 }
 
-.viewAllButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.viewAllButton:hover {
-  border-color: var(--color-burgundy);
-  color: var(--color-burgundy);
-}
-
-.priceList {
+.priceList,
+.shopList {
   display: flex;
   flex-direction: column;
 }
 
-.priceLink {
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  text-decoration: none;
+.shopList {
+  gap: 6px;
+  margin-bottom: 22px;
 }
 
-.priceLink:hover {
-  color: var(--color-burgundy);
+.shopLink {
+  gap: 14px;
+}
+
+/* Round gold icon in front of each Shop By link. */
+.shopIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #f6e6b8, #d8b66f 60%, #b8924a);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  color: #5b3a12;
+}
+
+.viewAllButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  min-height: 42px;
+  padding: 0 24px;
+  border: 1px solid #3e0a14;
+  border-radius: 6px;
+  color: #3e0a14;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.viewAllButton:hover {
+  background: #78333d;
+  border-color: #78333d;
+  color: var(--color-white);
+}
+
+.photo {
+  position: relative;
+  flex: 0 0 340px;
+  margin-left: auto;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f1e9e4;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.photo:hover img {
+  transform: scale(1.04);
+}
+
+.photoLabel {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #3e0a14;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (max-width: 1150px) {
+  .panelInner {
+    gap: 32px;
+  }
+
+  .photo {
+    flex-basis: 260px;
+  }
 }
 
 @media (max-width: 900px) {

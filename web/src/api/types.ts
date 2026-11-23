@@ -136,6 +136,7 @@ export type HomepageSectionType =
   | 'BANNER_TRIO'
   | 'PRODUCT_TABS'
   | 'COLLECTION_SPOTLIGHT'
+  | 'COLLECTION_GRID'
   | 'EDIT_BANNERS'
   | 'PRODUCT_GRID'
   | 'PRODUCT_ROW'

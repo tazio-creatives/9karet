@@ -32,6 +32,8 @@ const SECTION_TYPES = [
   // Tall collection cards in a sideways-scrolling row (one item per
   // collection) with a "View All Collections" button underneath.
   'COLLECTION_SPOTLIGHT',
+  // Same collection cards in a 3-per-row grid (swipe row on phones).
+  'COLLECTION_GRID',
   // Two wide banners side by side, each with a small label, a serif title
   // and a "Discover more" link written over the left of the image.
   'EDIT_BANNERS',

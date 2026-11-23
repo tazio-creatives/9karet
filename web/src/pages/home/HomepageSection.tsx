@@ -163,6 +163,9 @@ export function HomepageSection({ section, alternate }: Props) {
     case 'COLLECTION_SPOTLIGHT':
       return <CollectionSpotlight items={section.items} heading={section.heading} />;
 
+    case 'COLLECTION_GRID':
+      return <CollectionSpotlight items={section.items} heading={section.heading} layout="grid" />;
+
     case 'PRODUCT_TABS':
       return <ProductTabsSection items={section.items} heading={section.heading} />;
 

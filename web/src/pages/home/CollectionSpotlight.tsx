@@ -50,9 +50,13 @@ export function CollectionCard({
 export function CollectionSpotlight({
   items,
   heading,
+  layout = 'row',
 }: {
   items: HomepageItem[];
   heading?: string | null;
+  // 'grid' = Collection Grid section: 3 big cards per row on desktop,
+  // 2 on tablets, a swipe row on phones.
+  layout?: 'row' | 'grid';
 }) {
   const cards = items
     .map((item) => {
@@ -93,7 +97,7 @@ export function CollectionSpotlight({
   const title = heading || '9Karet Collections';
 
   return (
-    <section className={styles.section} aria-label={title}>
+    <section className={`${styles.section} ${layout === 'grid' ? styles.gridSection : ''}`} aria-label={title}>
       <h2 className={styles.title}>{title}</h2>
 
       <div className={styles.rowWrap}>
@@ -110,12 +114,12 @@ export function CollectionSpotlight({
             />
           ))}
         </div>
-        {canPrev && (
+        {layout === 'row' && canPrev && (
           <button type="button" className={`${styles.arrow} ${styles.arrowPrev}`} aria-label="Previous collections" onClick={() => scrollByCard(-1)}>
             <Chevron direction="left" />
           </button>
         )}
-        {canNext && (
+        {layout === 'row' && canNext && (
           <button type="button" className={`${styles.arrow} ${styles.arrowNext}`} aria-label="More collections" onClick={() => scrollByCard(1)}>
             <Chevron direction="right" />
           </button>

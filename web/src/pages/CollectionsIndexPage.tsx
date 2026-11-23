@@ -24,7 +24,7 @@ export function CollectionsIndexPage() {
 
   const spotlight = new Map<string, HomepageItem>();
   for (const section of homepage?.sections ?? []) {
-    if (section.type !== 'COLLECTION_SPOTLIGHT') continue;
+    if (section.type !== 'COLLECTION_SPOTLIGHT' && section.type !== 'COLLECTION_GRID') continue;
     for (const item of section.items) {
       if (item.collection && !spotlight.has(item.collection.id)) spotlight.set(item.collection.id, item);
     }
