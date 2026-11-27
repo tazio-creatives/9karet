@@ -853,6 +853,26 @@ export function isCatalogueAssetType(assetType) {
 
 // Rose-gold outputs (9karet): only the metal changes — the design, the
 // stones and everything around the piece stay exactly as they are.
+// Pieces with diamonds / CZ / other white stones: the prompts copied the
+// stones' layout faithfully but never said how they should LOOK, so the model
+// reproduced the dull grey of CAD references (grey-background renders) and
+// rendered pavé as flat milky-grey dots with dark gaps between them.
+export const WHITE_STONE_FINISH_NOTE =
+  'Diamonds and colourless (white) stones: render every one as a real, bright, clean, icy-white faceted stone with crisp facets, sharp sparkle and lively light — never grey, smoky, milky, cloudy, dull, dark or black. Keep the stones clearly brighter than the gold around them, with no dark outlines, dark rims or black gaps between neighbouring stones; the gold prongs and seats between pavé stones stay fine, polished and gold. If the reference is a CAD render or was shot on a grey background, do not carry that grey tint into the stones. Keep the exact number, size and position of every stone, and keep any coloured gemstones their exact colour.';
+
+// Free-text gemstone from the analysis (e.g. "DIAMOND", "Diamonds",
+// "YELLOW AND WHITE STONES", "BLACK AND CLEAR STONES", "Emerald and Diamonds")
+// → does the piece have diamonds or white/colourless stones? A plain yellow
+// diamond on its own is a coloured stone, not a white one.
+const WHITE_STONE_PATTERN = /diamond|white|clear|colou?rless|\bcz\b|cubic|zircon|crystal|moissanite|sugar/i;
+export function hasWhiteStones(analysis) {
+  const gemstone = typeof analysis === 'string' ? analysis : analysis?.gemstone;
+  if (!gemstone) return false;
+  if (!WHITE_STONE_PATTERN.test(gemstone)) return false;
+  const onlyYellowDiamond = /yellow[\s_-]*diamond/i.test(gemstone) && !/white|clear|colou?rless|and\s+diamond/i.test(gemstone);
+  return !onlyYellowDiamond;
+}
+
 const ROSE_GOLD_CONVERSION_NOTE =
   'Rose gold: convert only the metal to a realistic, premium rose-gold tone. Keep diamonds and colourless stones colourless, keep coloured gemstones their exact colour, and do not change the design, the stones or the proportions. Do not make the whole image pink, and do not add a pink colour cast to the background, the skin or the clothing.';
 
@@ -1697,6 +1717,8 @@ function buildAssetPromptSections({
   bangleQuantity,
   bangleSetType,
   necklaceSetType,
+  // true when the analysis found diamonds / white stones (see hasWhiteStones).
+  whiteStones = false,
 }) {
   const metalColor = metalColorForAssetType(assetType, generateRoseGold);
   const metalColourNote = `The metal colour is ${metalColor.toLowerCase()} gold — preserve it exactly.`;
@@ -1722,6 +1744,8 @@ function buildAssetPromptSections({
         ? `${fidelityBlockFor(confirmedType)} ${PRODUCT_REPRODUCTION_NOTE} ${referenceOrderNote(slotReferences)}`
         : fidelityBlockFor(confirmedType),
     metalColour: metalColourNote,
+    // Empty for pieces without white stones, so their prompts are unchanged.
+    stoneFinish: whiteStones ? WHITE_STONE_FINISH_NOTE : '',
     outputSpecs: 'Photorealistic, premium e-commerce jewellery photography. No text, logos, or watermarks.',
   };
 
@@ -2089,6 +2113,7 @@ function assemblePrompt({ locked, categoryPlacement, creative, negativeInstructi
     locked.confirmedCustomerCategory,
     locked.designPreservation,
     locked.metalColour,
+    locked.stoneFinish,
     creative.composition,
     creative.cameraAngle,
     creative.presenterPose,
@@ -2117,6 +2142,7 @@ function buildPrompt({
   bangleQuantity,
   bangleSetType,
   necklaceSetType,
+  whiteStones,
 }) {
   return assemblePrompt(
     buildAssetPromptSections({
@@ -2133,6 +2159,7 @@ function buildPrompt({
       bangleQuantity,
       bangleSetType,
       necklaceSetType,
+      whiteStones,
     }),
   );
 }
@@ -2158,6 +2185,8 @@ export function previewPromptsForJob({
   bangleQuantity,
   bangleSetType,
   necklaceSetType,
+  // Diamonds / white stones detected (hasWhiteStones(job.analysis)).
+  whiteStones = false,
 }) {
   const plan = buildJobPlan({
     jewelleryCategory: confirmedType,
@@ -2182,6 +2211,7 @@ export function previewPromptsForJob({
       bangleQuantity,
       bangleSetType,
       necklaceSetType,
+      whiteStones,
     });
     return {
       slotKey,
@@ -2198,6 +2228,7 @@ export function previewPromptsForJob({
         sections.locked.confirmedCustomerCategory,
         sections.locked.designPreservation,
         sections.locked.metalColour,
+        sections.locked.stoneFinish,
         sections.locked.outputSpecs,
       ].filter(Boolean),
       categoryPlacementRules: sections.categoryPlacement ? [sections.categoryPlacement] : [],
@@ -2245,6 +2276,7 @@ export async function generateShot({
   bangleQuantity,
   bangleSetType,
   necklaceSetType,
+  whiteStones = false,
 }) {
   const openai = getClient();
   const extension = extensionFor(mimetype);
@@ -2269,6 +2301,7 @@ export async function generateShot({
       bangleQuantity,
       bangleSetType,
       necklaceSetType,
+      whiteStones,
     });
 
   // Identity reference (Gents master or the first presenter image) goes

@@ -17,6 +17,7 @@ import {
   bangleSetChoiceForJob,
   banglePresenterUsesSingleSource,
   necklaceSetTypeForJob,
+  hasWhiteStones,
   bangleUsesLocalPairComposite,
   bangleCatalogueShotFor,
 } from '../services/aiStudioService.js';
@@ -192,6 +193,8 @@ async function generateOneAsset({
   bangleSetType,
   // Necklace only — the admin-confirmed 'NECKLACE_ONLY' | 'NECKLACE_SET' | null.
   necklaceSetType,
+  // Diamonds / white stones detected — adds the stone-finish note when a retry rebuilds the prompt.
+  whiteStones,
   // Identical bangle pair, presenter images: the single bangle generated for
   // a catalogue image, sent to the image model INSTEAD of the stacked pair
   // reference (validation still compares against the original reference).
@@ -244,6 +247,7 @@ async function generateOneAsset({
         bangleQuantity,
         bangleSetType,
         necklaceSetType,
+        whiteStones,
       });
 
       // Identical two-bangle set, catalogue slot: the model generated ONE
@@ -456,6 +460,7 @@ export async function generateHandler(jobs) {
       bangleQuantity: bangleQuantityForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis, bangleSetChoiceForJob(aiStudioJob)),
       bangleSetType: bangleSetTypeForJob(aiStudioJob.jewellery_type, aiStudioJob.analysis, bangleSetChoiceForJob(aiStudioJob)),
       necklaceSetType: necklaceSetTypeForJob(aiStudioJob),
+      whiteStones: hasWhiteStones(aiStudioJob.analysis),
     };
     const { firstWave, chained } = splitGenerationWaves(targets, manifest);
 

@@ -9,6 +9,7 @@ import {
   effectiveGenerateRoseGold,
   JEWELLERY_TYPES,
   previewPromptsForJob,
+  hasWhiteStones,
   buildJobPlan,
   assertValidManifest,
   REFERENCE_ROLES,
@@ -473,6 +474,7 @@ export async function confirmJob(req, res, next) {
       bangleQuantity: bangleQuantityForJob(input.jewelleryType, job.analysis, bangleSetChoice),
       bangleSetType: bangleSetTypeForJob(input.jewelleryType, job.analysis, bangleSetChoice),
       necklaceSetType,
+      whiteStones: hasWhiteStones(job.analysis),
     });
 
     const insertedAssets = await insertAssets(
@@ -548,6 +550,7 @@ export async function previewPrompts(req, res, next) {
         jewelleryType === 'NECKLACE'
           ? (input.necklaceSetType ?? necklaceSetTypeForJob(job) ?? necklaceSetTypeSuggestion(job.analysis))
           : null,
+      whiteStones: hasWhiteStones(job.analysis),
     });
 
     res.json({ prompts: previews });
@@ -581,6 +584,7 @@ async function refreshBraceletPrompt(job, asset) {
     bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
     bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
     necklaceSetType: necklaceSetTypeForJob(job),
+    whiteStones: hasWhiteStones(job.analysis),
   }).find((p) => p.assetType === asset.asset_type);
   if (preview) await updateAsset(asset.id, { assembled_final_prompt: preview.finalPrompt });
 }
@@ -704,6 +708,7 @@ export async function updateAssetSelection(req, res, next) {
         bangleQuantity: bangleQuantityForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
         bangleSetType: bangleSetTypeForJob(job.jewellery_type, job.analysis, bangleSetChoiceForJob(job)),
         necklaceSetType: necklaceSetTypeForJob(job),
+        whiteStones: hasWhiteStones(job.analysis),
       });
       const preview = previews.find((p) => p.assetType === asset.asset_type);
       if (!preview) throw new AppError(400, 'This asset type is not part of the current generation plan');
